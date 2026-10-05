@@ -6,11 +6,11 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [
         .executable(name: "PawnShop", targets: ["PawnShop"]),
-        .library(name: "PawnShopCore", targets: ["PawnShopCore"]),
+        .library(name: "PawnShopCore", targets: ["PawnShopCore"])
     ],
     targets: [
         .target(name: "PawnShopCore"),
         .executableTarget(name: "PawnShop", dependencies: ["PawnShopCore"]),
-        .testTarget(name: "PawnShopCoreTests", dependencies: ["PawnShopCore"]),
+        .testTarget(name: "PawnShopCoreTests", dependencies: ["PawnShopCore"])
     ]
 )
