@@ -13,7 +13,7 @@ public struct ExtractedPawn: Equatable, Sendable {
     public var copies: Int
 }
 
-/// A cut outline whose label could not be read.
+/// A cut outline with no name printed in it.
 public struct UnnamedOutline: Equatable, Sendable {
     public let pageIndex: Int
     public let rect: CGRect
@@ -46,15 +46,25 @@ public enum PawnExtractor {
     static func extract(from document: CGPDFDocument, labels: LabelReader) -> ExtractionResult {
         var result = ExtractionResult()
         for found in outlinedPawns(in: document) {
+            guard let size = PawnSize.classify(found.front.uprightSize) else { continue }
             let name = PawnLabel.name(from: labels.runs(onPage: found.front.pageIndex, in: found.front.rect))
-            guard !name.isEmpty, let size = PawnSize.classify(found.front.uprightSize) else {
+            if name.isEmpty {
                 result.unnamed.append(UnnamedOutline(pageIndex: found.front.pageIndex, rect: found.front.rect))
-                continue
             }
             add(ExtractedPawn(name: name, size: size, front: found.front, back: found.back,
                               fingerprint: found.fingerprint, copies: 1), to: &result.pawns)
         }
+        numberUnnamed(&result.pawns)
         return result
+    }
+
+    /// Some products print no names; their pawns are numbered so they can still be listed and renamed.
+    private static func numberUnnamed(_ pawns: inout [ExtractedPawn]) {
+        var number = 0
+        for index in pawns.indices where pawns[index].name.isEmpty {
+            number += 1
+            pawns[index].name = "Unnamed \(number)"
+        }
     }
 
     /// A pawn's faces and art, before its label is read.

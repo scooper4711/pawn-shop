@@ -1,0 +1,87 @@
+import CoreGraphics
+import Foundation
+
+/// The game a product belongs to, read from its title.
+public enum Game: String, Codable, CaseIterable, Sendable {
+    case pathfinder, starfinder
+
+    public var displayName: String { rawValue.capitalized }
+}
+
+/// An imported pawn PDF.
+public struct PawnSource: Codable, Identifiable, Hashable, Sendable {
+    /// SHA-256 of the file, so the same PDF is recognized wherever it was imported from.
+    public let id: String
+    public var title: String
+    public var importedAt: Date
+    /// Where the file was imported from, and its size then, to recognize it again without hashing it.
+    public var originalPath: String
+    public var byteCount: Int
+
+    public var game: Game { title.localizedCaseInsensitiveContains("Starfinder") ? .starfinder : .pathfinder }
+
+    /// A readable title from a file name: "PZO1234 Pathfinder Pawns- Bestiary Box PDF.pdf" becomes
+    /// "Pathfinder Pawns: Bestiary Box".
+    public static func title(fromFileName name: String) -> String {
+        var title = (name as NSString).deletingPathExtension
+        title = title.replacingOccurrences(of: #"^PZO\w+\s+"#, with: "", options: .regularExpression)
+        title = title.replacingOccurrences(of: #"\s+PDF$"#, with: "", options: [.regularExpression, .caseInsensitive])
+        return title.replacingOccurrences(of: "- ", with: ": ")
+    }
+}
+
+/// Where a pawn's art comes from.
+public enum PawnArt: Codable, Hashable, Sendable {
+    /// Faces on the pages of an imported PDF.
+    case pdf(sourceID: String, front: PawnFace, back: PawnFace)
+    /// An image the user added; the back is the front mirrored.
+    case custom(CustomArt)
+}
+
+/// A user's image and how it sits in the pawn's outline.
+public struct CustomArt: Codable, Hashable, Sendable {
+    /// File name in the library's custom art folder.
+    public var imageFile: String
+    /// Where the image's center sits, as a fraction of its overflow: (0.5, 0.5) centers it.
+    public var focus: CGPoint
+    /// Whether the pawn's name is printed at its foot.
+    public var showsName: Bool
+
+    public init(imageFile: String, focus: CGPoint = CGPoint(x: 0.5, y: 0.5), showsName: Bool = true) {
+        self.imageFile = imageFile
+        self.focus = focus
+        self.showsName = showsName
+    }
+}
+
+/// A product a pawn is printed in, and how many copies it prints.
+public struct Appearance: Codable, Hashable, Sendable {
+    public var sourceID: String
+    public var copies: Int
+}
+
+/// One piece of pawn art with one name, in one size.
+public struct Pawn: Codable, Identifiable, Hashable, Sendable {
+    public let id: UUID
+    public var name: String
+    public var size: PawnSize
+    public var art: PawnArt
+    public var fingerprint: ArtFingerprint
+    /// Every product printing this art, the first being the one its faces come from. Empty for custom pawns.
+    public var appearances: [Appearance]
+
+    public init(id: UUID = UUID(), name: String, size: PawnSize, art: PawnArt,
+                fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = []) {
+        self.id = id
+        self.name = name
+        self.size = size
+        self.art = art
+        self.fingerprint = fingerprint
+        self.appearances = appearances
+    }
+
+    public var isCustom: Bool {
+        if case .custom = art { return true }
+        return false
+    }
+}

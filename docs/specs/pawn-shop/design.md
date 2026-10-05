@@ -46,15 +46,26 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
 ## Library (`PawnShopCore/Library`)
 - Stored under `~/Library/Application Support/Pawn Shop/`:
   - `Sources/<sha256>.pdf`: a copy of each imported PDF;
-  - `Custom/<id>.png`: custom pawn art;
-  - `library.json`: sources (id = SHA-256, title, import date) and pawns.
-- `Pawn`: id, name, size, fingerprint, `art` (`.pdf(front: PawnFace, back: PawnFace)` or
-  `.custom(imageFile, offset)`), `appearances` (source id and copies in that source).
-  `PawnFace`: source id, page index, rect, rotation, mirrored flag (for a missing back).
-- `PawnLibrary` imports a PDF (no-op when its hash is known), merges by fingerprint, adds custom pawns,
-  removes pawns, and searches: case- and diacritic-insensitive over name and source titles, filtered by size
-  and source, ordered by name so same-name pawns sit together.
-- `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "Pawn".
+  - `Custom/<file>`: custom pawn art;
+  - `library.json`: sources and pawns (`StoredLibrary`, with a version number). Thumbnails are stored as
+    base64 data; the whole collection (about 8,000 pawns from 61 PDFs) is under 10 MB.
+- `PawnSource`: id (SHA-256 of the file), title (from the file name, without product codes and " PDF"),
+  import date, original path and byte count (to recognize a file again without hashing it), and the game,
+  read from the title.
+- `Pawn`: id, name, size, fingerprint, `art` (`.pdf(sourceID, front, back)` or `.custom(CustomArt)`) and
+  `appearances` (each product printing the art, with its copies; the first supplies the faces).
+  `CustomArt`: image file name, focus point (where the image sits when it overflows the outline), and
+  whether the name is printed.
+- `PawnLibrary`:
+  - `prepareImport(of:)` hashes and extracts a PDF without touching the library, so it can run off the main
+    thread; `commit(_:)` copies the file, adds the source, and merges each pawn into an existing one with the
+    same name, size and matching art (adding an appearance) or adds it; then saves. A known file is a no-op.
+  - `add`, `update` (rename) and `remove` (deleting custom art files) save immediately.
+  - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name or a product title;
+    filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
+- `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn".
+- Importing all 61 PDFs takes about 25 seconds (release build); about 420 pawns merge across products, such as
+  Monster Core reusing Bestiary art.
 
 ## Sheets and layout (`PawnShopCore/Sheet`)
 - `PawnSheet` (Codable, the `.pawnsheet` document): entries (pawn id, count) and `SheetSettings`: cut style

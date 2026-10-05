@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 
 /// Identifies a pawn's art by the images drawn inside its outline. Copies of a pawn, and reprints that reuse
 /// the same image, match; different art of the same creature does not.
@@ -18,6 +19,21 @@ public struct ArtFingerprint: Codable, Hashable, Sendable {
     public init(imageDigests: [String], thumbnail: [UInt8] = []) {
         self.imageDigests = Array(Set(imageDigests)).sorted()
         self.thumbnail = thumbnail
+    }
+
+    private enum CodingKeys: String, CodingKey { case imageDigests, thumbnail }
+
+    /// The thumbnail is stored as data (base64 in JSON) rather than an array of numbers.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        imageDigests = try container.decode([String].self, forKey: .imageDigests)
+        thumbnail = [UInt8](try container.decode(Data.self, forKey: .thumbnail))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(imageDigests, forKey: .imageDigests)
+        try container.encode(Data(thumbnail), forKey: .thumbnail)
     }
 
     /// The art drawn inside `rect`: images at least `smallestArt` across whose centers lie in it.

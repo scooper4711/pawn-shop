@@ -18,7 +18,10 @@ is cut out and folded at the heads, giving a two-ply pawn.
   in another product) are stored once; pawns with the same name and different art (1e and 2e, Pathfinder and
   Starfinder, variants) are kept apart.
 - R1.7 Importing a PDF that is already in the library changes nothing.
-- R1.8 Importing shows progress, then a report of the pawns added and any outline that could not be named.
+- R1.8 Importing shows progress, then a report of the pawns added, the pawns whose art was already in the
+  library, and the outlines with no name printed.
+- R1.10 Pawns with no name printed (Heroes & Villains prints none) are imported as "Unnamed 1", "Unnamed 2"…
+  and can be renamed.
 - R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved.
 
 ## R2 The library
@@ -26,7 +29,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R2.2 Search matches names and product titles, ignoring case and accents.
 - R2.3 Results can be filtered by size and by product.
 - R2.4 Pawns with the same name are shown next to each other with their product, so the art can be compared.
-- R2.5 A pawn can be removed from the library.
+- R2.5 A pawn can be removed from the library, or renamed.
+- R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
 
 ## R3 Custom pawns
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen or dropped) with a name and a size:

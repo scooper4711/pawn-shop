@@ -54,7 +54,7 @@ func pawnPDF(pages: [[DrawnPawn]]) -> Data {
         let result = try extract([fronts, fronts.map { $0.mirrored(pageWidth: letterPage.width) }])
         let goblins = result.pawns.filter { $0.name == "Goblin Warrior" }
         #expect(goblins.map(\.copies).sorted() == [1, 2])
-        #expect(result.pawns.count == 3)
+        #expect(result.pawns.count == 4)
     }
 
     @Test func takesBacksFromTheMirroredPage() throws {
@@ -71,10 +71,11 @@ func pawnPDF(pages: [[DrawnPawn]]) -> Data {
         #expect(result.pawns.allSatisfy { $0.back == $0.front.mirroredCopy() })
     }
 
-    @Test func reportsOutlinesWithoutALabel() throws {
+    @Test func numbersPawnsWithoutANameAndReportsThem() throws {
         let result = try extract([fronts])
         #expect(result.unnamed.count == 1)
         #expect(abs((result.unnamed.first?.rect.minX ?? 0) - 320) < 0.5)
+        #expect(result.pawns.contains { $0.name == "Unnamed 1" && $0.copies == 1 })
     }
 
     @Test func rejectsFilesThatAreNotPDFs() throws {
