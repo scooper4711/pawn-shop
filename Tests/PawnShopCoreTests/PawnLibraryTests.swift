@@ -37,6 +37,18 @@ func writePawnPDF(_ pawns: [DrawnPawn], named name: String, in folder: URL) thro
         #expect(FileManager.default.fileExists(atPath: reopened.fileURL(forSource: id).path))
     }
 
+    @Test func keepsACopyOfLinkedPDFs() throws {
+        let pdf = try writePawnPDF([goblin], named: "Real.pdf", in: folder)
+        let link = folder.appendingPathComponent("Link.pdf")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: pdf)
+        let library = try library()
+        try library.importPDF(at: link)
+        let copy = library.fileURL(forSource: try #require(library.sources.first).id)
+        try FileManager.default.removeItem(at: pdf)
+        let type = try FileManager.default.attributesOfItem(atPath: copy.path)[.type] as? FileAttributeType
+        #expect(type == .typeRegular)
+    }
+
     @Test func importsEachPDFOnce() throws {
         let pdf = try writePawnPDF([goblin], named: "Box.pdf", in: folder)
         let library = try library()

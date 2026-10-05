@@ -162,7 +162,8 @@ public final class PawnLibrary {
         let destination = fileURL(forSource: prepared.digest)
         guard !FileManager.default.fileExists(atPath: destination.path) else { return }
         do {
-            try FileManager.default.copyItem(at: prepared.file, to: destination)
+            // Copy the PDF itself, not a link to it, so the library survives the original moving.
+            try FileManager.default.copyItem(at: prepared.file.resolvingSymlinksInPath(), to: destination)
         } catch {
             let file = prepared.file.lastPathComponent
             throw PawnLibraryError.saveFailed("copying \(file): \(error.localizedDescription)")
