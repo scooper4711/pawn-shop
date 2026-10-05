@@ -1,25 +1,44 @@
 import CoreGraphics
 import Foundation
 
-/// Walks a page's content stream, tracking the transformation matrix, and records the stroked pawn outlines.
-final class OutlineScanner {
+/// An image drawn on a page.
+struct ImagePlacement: Equatable {
+    /// Bounds in page space.
+    let rect: CGRect
+    /// What the image shows.
+    let identity: ImageIdentity
+}
+
+/// The pawn outlines and images on a page.
+struct PageContent {
+    var outlines: [Outline] = []
+    var images: [ImagePlacement] = []
+}
+
+/// Walks a page's content stream, tracking the transformation matrix, and records the stroked pawn outlines
+/// and the images drawn.
+final class PageScanner {
     private static let maximumFormDepth = 8
 
     private var transform = CGAffineTransform.identity
     private var savedTransforms: [CGAffineTransform] = []
     private var formDepth = 0
     private var subpaths: [Subpath] = []
-    private var outlines: [Outline] = []
+    private var content = PageContent()
+    private var identities: [Int: ImageIdentity] = [:]
     private let operators: CGPDFOperatorTableRef
 
-    /// The pawn outlines stroked on `page`, in page space and drawing order.
-    static func outlines(on page: CGPDFPage) -> [Outline] {
-        let scanner = OutlineScanner()
+    /// The pawn outlines stroked and the images drawn on `page`, in page space and drawing order.
+    static func scan(_ page: CGPDFPage) -> PageContent {
+        let scanner = PageScanner()
         let stream = CGPDFContentStreamCreateWithPage(page)
         scanner.scan(stream)
         CGPDFContentStreamRelease(stream)
-        return scanner.outlines
+        return scanner.content
     }
+
+    /// The pawn outlines stroked on `page`.
+    static func outlines(on page: CGPDFPage) -> [Outline] { scan(page).outlines }
 
     private init() {
         operators = CGPDFOperatorTableCreate()!
@@ -31,44 +50,44 @@ final class OutlineScanner {
     deinit { CGPDFOperatorTableRelease(operators) }
 
     private func registerStateOperators() {
-        CGPDFOperatorTableSetCallback(operators, "q") { _, info in OutlineScanner.from(info).saveState() }
-        CGPDFOperatorTableSetCallback(operators, "Q") { _, info in OutlineScanner.from(info).restoreState() }
+        CGPDFOperatorTableSetCallback(operators, "q") { _, info in PageScanner.from(info).saveState() }
+        CGPDFOperatorTableSetCallback(operators, "Q") { _, info in PageScanner.from(info).restoreState() }
         CGPDFOperatorTableSetCallback(operators, "cm") { scanner, info in
-            OutlineScanner.from(info).concatenateMatrix(scanner)
+            PageScanner.from(info).concatenateMatrix(scanner)
         }
         CGPDFOperatorTableSetCallback(operators, "Do") { scanner, info in
-            OutlineScanner.from(info).drawXObject(scanner)
+            PageScanner.from(info).drawXObject(scanner)
         }
     }
 
     private func registerPathOperators() {
-        CGPDFOperatorTableSetCallback(operators, "m") { scanner, info in OutlineScanner.from(info).moveTo(scanner) }
-        CGPDFOperatorTableSetCallback(operators, "l") { scanner, info in OutlineScanner.from(info).lineTo(scanner) }
+        CGPDFOperatorTableSetCallback(operators, "m") { scanner, info in PageScanner.from(info).moveTo(scanner) }
+        CGPDFOperatorTableSetCallback(operators, "l") { scanner, info in PageScanner.from(info).lineTo(scanner) }
         CGPDFOperatorTableSetCallback(operators, "c") { scanner, info in
-            OutlineScanner.from(info).curveTo(scanner, count: 3, repeatsStart: false)
+            PageScanner.from(info).curveTo(scanner, count: 3, repeatsStart: false)
         }
         CGPDFOperatorTableSetCallback(operators, "v") { scanner, info in
-            OutlineScanner.from(info).curveTo(scanner, count: 2, repeatsStart: true)
+            PageScanner.from(info).curveTo(scanner, count: 2, repeatsStart: true)
         }
         CGPDFOperatorTableSetCallback(operators, "y") { scanner, info in
-            OutlineScanner.from(info).curveTo(scanner, count: 2, repeatsStart: false)
+            PageScanner.from(info).curveTo(scanner, count: 2, repeatsStart: false)
         }
         CGPDFOperatorTableSetCallback(operators, "re") { scanner, info in
-            OutlineScanner.from(info).rectangle(scanner)
+            PageScanner.from(info).rectangle(scanner)
         }
     }
 
     private func registerPaintOperators() {
         for name in ["S", "s", "B", "B*", "b", "b*"] {
-            CGPDFOperatorTableSetCallback(operators, name) { _, info in OutlineScanner.from(info).stroke() }
+            CGPDFOperatorTableSetCallback(operators, name) { _, info in PageScanner.from(info).stroke() }
         }
         for name in ["f", "F", "f*", "n"] {
-            CGPDFOperatorTableSetCallback(operators, name) { _, info in OutlineScanner.from(info).endPath() }
+            CGPDFOperatorTableSetCallback(operators, name) { _, info in PageScanner.from(info).endPath() }
         }
     }
 
-    private static func from(_ info: UnsafeMutableRawPointer?) -> OutlineScanner {
-        Unmanaged<OutlineScanner>.fromOpaque(info!).takeUnretainedValue()
+    private static func from(_ info: UnsafeMutableRawPointer?) -> PageScanner {
+        Unmanaged<PageScanner>.fromOpaque(info!).takeUnretainedValue()
     }
 
     private func scan(_ stream: CGPDFContentStreamRef) {
@@ -124,7 +143,7 @@ final class OutlineScanner {
     }
 
     private func stroke() {
-        outlines += subpaths.compactMap { $0.outline() }
+        content.outlines += subpaths.compactMap { $0.outline() }
         subpaths.removeAll()
     }
 
@@ -146,7 +165,7 @@ final class OutlineScanner {
         return values
     }
 
-    // MARK: Form XObjects
+    // MARK: XObjects
 
     private func drawXObject(_ scanner: CGPDFScannerRef) {
         var namePointer: UnsafePointer<CChar>?
@@ -157,10 +176,21 @@ final class OutlineScanner {
 
         var xObject: CGPDFStreamRef?
         guard CGPDFObjectGetValue(object, .stream, &xObject), let xObject,
-              let dictionary = CGPDFStreamGetDictionary(xObject),
-              Self.name(in: dictionary, key: "Subtype") == "Form"
+              let dictionary = CGPDFStreamGetDictionary(xObject)
         else { return }
-        scanForm(xObject, dictionary: dictionary, parent: stream)
+        switch Self.name(in: dictionary, key: "Subtype") {
+        case "Form": scanForm(xObject, dictionary: dictionary, parent: stream)
+        case "Image": recordImage(xObject)
+        default: break
+        }
+    }
+
+    private func recordImage(_ stream: CGPDFStreamRef) {
+        let key = unsafeBitCast(stream, to: Int.self)
+        let identity = identities[key] ?? EmbeddedImage.identity(of: stream)
+        identities[key] = identity
+        let rect = CGRect(x: 0, y: 0, width: 1, height: 1).applying(transform)
+        content.images.append(ImagePlacement(rect: rect, identity: identity))
     }
 
     private func scanForm(_ stream: CGPDFStreamRef, dictionary: CGPDFDictionaryRef, parent: CGPDFContentStreamRef) {

@@ -1,6 +1,7 @@
 import CoreGraphics
 import CoreText
 import Foundation
+import ImageIO
 @testable import PawnShopCore
 
 /// Letter paper, in points.
@@ -67,7 +68,7 @@ func rawPDF(content: String, size: CGSize = letterPage) -> CGPDFDocument {
         "<< /Type /Catalog /Pages 2 0 R >>",
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
         "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 \(Int(size.width)) \(Int(size.height))] /Contents 4 0 R >>",
-        "<< /Length \(content.utf8.count) >>\nstream\n\(content)\nendstream",
+        "<< /Length \(content.utf8.count) >>\nstream\n\(content)\nendstream"
     ]
     var pdf = "%PDF-1.4\n"
     var offsets: [Int] = []
@@ -86,4 +87,30 @@ func rawPDF(content: String, size: CGSize = letterPage) -> CGPDFDocument {
 func wrappedInForms(_ source: CGPDFDocument) -> Data {
     let pages = (1...source.numberOfPages).compactMap { source.page(at: $0) }
     return makePDF(pages: pages.map { page in { context in context.drawPDFPage(page) } })
+}
+
+/// A test picture: a diagonal gradient, turned by `variant` quarter turns so variants look different.
+func artImage(variant: Int = 0, width: Int = 60, height: Int = 90) -> CGImage {
+    let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+    let colors = [CGColor(srgbRed: 0.1, green: 0.2, blue: 0.6, alpha: 1),
+                  CGColor(srgbRed: 0.9, green: 0.8, blue: 0.2, alpha: 1)]
+    let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors as CFArray, locations: nil)!
+    let corners = [CGPoint(x: 0, y: 0), CGPoint(x: width, y: 0),
+                   CGPoint(x: width, y: height), CGPoint(x: 0, y: height)]
+    context.drawLinearGradient(gradient, start: corners[variant % 4], end: corners[(variant + 2) % 4], options: [])
+    context.setFillColor(CGColor(gray: 0, alpha: 1))
+    context.fillEllipse(in: CGRect(x: width / 4 + variant * 3, y: height / 2, width: width / 3, height: height / 4))
+    return context.makeImage()!
+}
+
+/// `image` re-encoded as JPEG, so a PDF embeds it with DCT compression.
+func jpegImage(_ image: CGImage, quality: Double = 0.9) -> CGImage {
+    let data = NSMutableData()
+    let destination = CGImageDestinationCreateWithData(data, "public.jpeg" as CFString, 1, nil)!
+    let options = [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary
+    CGImageDestinationAddImage(destination, image, options)
+    CGImageDestinationFinalize(destination)
+    return CGImage(jpegDataProviderSource: CGDataProvider(data: data)!, decode: nil, shouldInterpolate: true,
+                   intent: .defaultIntent)!
 }

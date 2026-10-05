@@ -39,7 +39,7 @@ import Testing
     }
 }
 
-@Suite struct OutlineScannerTests {
+@Suite struct PageScannerTests {
     @Test func findsOutlinesWithTheirHeadEdge() throws {
         let medium = CGRect(x: 20, y: 600, width: 81, height: 138)
         let large = CGRect(x: 200, y: 600, width: 180, height: 138)
@@ -47,7 +47,7 @@ import Testing
             strokeOutline(context, medium)
             strokeOutline(context, large, head: .right)
         }])
-        let outlines = OutlineScanner.outlines(on: try #require(document(data).page(at: 1)))
+        let outlines = PageScanner.outlines(on: try #require(document(data).page(at: 1)))
         #expect(outlines.count == 2)
         #expect(outlines[0].headEdge == .top)
         #expect(outlines[0].size == .medium)
@@ -61,7 +61,7 @@ import Testing
         let rect = head == .left ? CGRect(x: 50, y: 50, width: 138, height: 81)
                                  : CGRect(x: 50, y: 50, width: 81, height: 138)
         let data = makePDF(pages: [{ context in strokeOutline(context, rect, head: head) }])
-        let outlines = OutlineScanner.outlines(on: try #require(document(data).page(at: 1)))
+        let outlines = PageScanner.outlines(on: try #require(document(data).page(at: 1)))
         #expect(outlines.map(\.headEdge) == [head])
     }
 
@@ -71,13 +71,14 @@ import Testing
             context.addPath(outlinePath(CGRect(x: 200, y: 10, width: 81, height: 138)))
             context.fillPath()
         }])
-        #expect(OutlineScanner.outlines(on: try #require(document(data).page(at: 1))).isEmpty)
+        #expect(PageScanner.outlines(on: try #require(document(data).page(at: 1))).isEmpty)
     }
 
     @Test func findsOutlinesInsideFormXObjects() throws {
-        let inner = makePDF(pages: [{ context in strokeOutline(context, CGRect(x: 20, y: 30, width: 81, height: 60), head: .left) }])
+        let small = CGRect(x: 20, y: 30, width: 81, height: 60)
+        let inner = makePDF(pages: [{ context in strokeOutline(context, small, head: .left) }])
         let outer = document(wrappedInForms(document(inner)))
-        let outlines = OutlineScanner.outlines(on: try #require(outer.page(at: 1)))
+        let outlines = PageScanner.outlines(on: try #require(outer.page(at: 1)))
         #expect(outlines.count == 1)
         #expect(outlines.first?.size == .small)
         #expect(abs((outlines.first?.rect.minY ?? 0) - 30) < 0.5)
@@ -91,7 +92,7 @@ import Testing
         Q Q
         q 1 0 0 1 300 100 cm 0 0 m 0 112 l 0 137.67 29.3 137.67 y 51.6 137.67 l 80.9 137.67 80.9 112 y 80.9 0 l h S Q
         """
-        let outlines = OutlineScanner.outlines(on: try #require(rawPDF(content: content).page(at: 1)))
+        let outlines = PageScanner.outlines(on: try #require(rawPDF(content: content).page(at: 1)))
         #expect(outlines.count == 2)
         #expect(outlines.allSatisfy { $0.headEdge == .top && $0.size == .medium })
         #expect(abs((outlines.first?.rect.minX ?? 0) - 17.15) < 0.1)
@@ -103,6 +104,6 @@ import Testing
         0 0 m 0 112 l 0 137.67 29.3 137.67 y 51.6 137.67 l 80.9 137.67 80.9 112 y 80.9 0 l h n
         10 10 50 50 re S
         """
-        #expect(OutlineScanner.outlines(on: try #require(rawPDF(content: content).page(at: 1))).isEmpty)
+        #expect(PageScanner.outlines(on: try #require(rawPDF(content: content).page(at: 1))).isEmpty)
     }
 }
