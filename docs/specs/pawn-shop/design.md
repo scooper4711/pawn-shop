@@ -88,13 +88,21 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   the layout, each page's drawing (shared by preview and print), and the PDF at 100% scale.
 
 ## App (`PawnShop`)
-- `DocumentGroup` for `.pawnsheet`. `LibraryModel` (`@Observable`, main actor) wraps the shared library.
-- Window: library browser (search, size and source filters, thumbnail grid, add with count), sheet preview
-  (pages from `SheetLayout`, select a strip, Delete removes a copy), inspector (entries with steppers, sheet
-  settings).
-- Menus: Import PDF…, Import from Scrollkeeper…, Add Custom Pawn…, Page Setup…, Export PDF… (⌘E), Print… (⌘P).
-  Export and Print offer the cut style for that run. Printing uses zero margins, no scaling, no auto-rotate.
-- Imports run in a background task with progress and end with a report.
+- `DocumentGroup` for `.pawnsheet` (`PawnSheetDocument`, JSON). `LibraryModel` (`@Observable`, main actor) wraps
+  the shared library: imports read each PDF off the main thread (`prepareImport`) and commit on the main
+  thread, one at a time, with progress and a summary afterwards.
+- `BackgroundRenderer` renders thumbnails (kept in an `NSCache`) and preview pages on one background queue
+  with its own `PawnRenderer`.
+- Window: `LibraryBrowser` (search field, filter menu for size, game, product and custom; a lazy grid of
+  tiles with name, size and short product title; double-click adds the chosen number of copies; context menu
+  adds 1–6, renames or removes), `SheetPreview` (pages from `SheetExporter.layout()`, each rendered in the
+  background; click a strip to select its pawn, Delete removes one copy), and `SheetInspector` (entries with
+  steppers, cut style, gap and fold line, and the page count). PDFs dropped on the window are imported.
+- Menus: Library ▸ Import PDF… (⇧⌘I) and Import from Scrollkeeper.
+- For trying the app from a script: `PAWN_SHOP_LIBRARY` points it at another library folder, and
+  `PAWN_SHOP_SNAPSHOT=<prefix>` draws each window, and the library and inspector panels on their own, to
+  PNG files a few seconds after launch (drawing its own views needs no screen-recording access; glass panels
+  come out blank in window drawings, hence the separate panels).
 
 ## Icon
 `scripts-build/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
