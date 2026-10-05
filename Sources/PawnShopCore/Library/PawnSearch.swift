@@ -41,6 +41,12 @@ public extension PawnLibrary {
         return source(id: sourceID)?.title ?? "Unknown product"
     }
 
+    /// The short title of the product a pawn's faces come from, or "Custom".
+    func shortSourceTitle(of pawn: Pawn) -> String {
+        guard case .pdf(let sourceID, _, _) = pawn.art else { return "Custom" }
+        return source(id: sourceID)?.shortTitle ?? "Unknown product"
+    }
+
     /// Every product title a pawn appears in.
     func sourceTitles(of pawn: Pawn) -> [String] {
         pawn.isCustom ? ["Custom"] : pawn.appearances.compactMap { source(id: $0.sourceID)?.title }

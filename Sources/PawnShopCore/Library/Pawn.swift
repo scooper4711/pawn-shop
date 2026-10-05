@@ -20,6 +20,17 @@ public struct PawnSource: Codable, Identifiable, Hashable, Sendable {
 
     public var game: Game { title.localizedCaseInsensitiveContains("Starfinder") ? .starfinder : .pathfinder }
 
+    /// The title without the words every product shares: "Pathfinder Pawns: Bestiary 2 Box" becomes
+    /// "Bestiary 2", "Starfinder Alien Archive Pawn Box" becomes "Alien Archive".
+    public var shortTitle: String {
+        var short = title
+        for pattern in [#"^(Pathfinder|Starfinder)\s+"#, #"^Pawns:\s*"#, #"^(Pathfinder|Starfinder)\s+"#,
+                        #"\s+(Pawn\s+)?(Collection|Box)$"#, #"\s+Pawn$"#] {
+            short = short.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
+        }
+        return short.isEmpty ? title : short
+    }
+
     /// A readable title from a file name: "PZO1234 Pathfinder Pawns- Bestiary Box PDF.pdf" becomes
     /// "Pathfinder Pawns: Bestiary Box".
     public static func title(fromFileName name: String) -> String {

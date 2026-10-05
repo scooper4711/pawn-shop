@@ -88,6 +88,16 @@ func writePawnPDF(_ pawns: [DrawnPawn], named name: String, in folder: URL) thro
         #expect(PawnLibraryError.saveFailed("disk full").description.contains("disk full"))
     }
 
+    @Test(arguments: [("Pathfinder Pawns: Bestiary 2 Box", "Bestiary 2"),
+                      ("Starfinder Alien Archive Pawn Box", "Alien Archive"),
+                      ("Pathfinder Pawns: Pathfinder Society Pawn Collection", "Society"),
+                      ("Pathfinder Monster Core 2 Pawn Box", "Monster Core 2"),
+                      ("Box", "Box")])
+    func shortensProductTitles(title: String, short: String) {
+        let source = PawnSource(id: "x", title: title, importedAt: Date(), originalPath: "", byteCount: 0)
+        #expect(source.shortTitle == short)
+    }
+
     @Test func titlesProductsFromFileNames() {
         #expect(PawnSource.title(fromFileName: "PZO10013E Pathfinder Monster Core 2 Pawn Box PDF.pdf")
                 == "Pathfinder Monster Core 2 Pawn Box")
@@ -136,6 +146,8 @@ func writePawnPDF(_ pawns: [DrawnPawn], named name: String, in folder: URL) thro
         #expect(library.sourceTitle(of: custom) == "Custom" && library.sourceTitles(of: custom) == ["Custom"])
         let drone = try #require(library.pawns.first { $0.name == "Security Drone" })
         #expect(library.sourceTitle(of: drone) == "Starfinder Pawns: Pact Worlds")
+        #expect(library.shortSourceTitle(of: drone) == "Pact Worlds")
+        #expect(library.shortSourceTitle(of: custom) == "Custom")
     }
 }
 

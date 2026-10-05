@@ -35,6 +35,10 @@ public struct PlacedStrip: Equatable, Sendable {
 public struct SheetLayout: Equatable, Sendable {
     public var pages: [[PlacedStrip]]
 
+    public init(pages: [[PlacedStrip]]) {
+        self.pages = pages
+    }
+
     /// Packs every copy into the printable area in rows, largest strips first, over as many pages as needed.
     /// Strips are laid out upright or sideways, whichever takes fewer pages; a strip that only fits the other
     /// way is turned.
