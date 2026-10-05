@@ -49,19 +49,49 @@ public enum PawnArt: Codable, Hashable, Sendable {
     case custom(CustomArt)
 }
 
+/// How a custom image is sized to the pawn.
+public enum ArtScaling: String, Codable, CaseIterable, Sendable {
+    /// Covers the whole pawn; what overflows is cut off.
+    case fill
+    /// Shows the whole picture above the name, with white around it.
+    case fit
+
+    public var displayName: String {
+        switch self {
+        case .fill: "Fill Pawn"
+        case .fit: "Fit Whole Picture"
+        }
+    }
+}
+
 /// A user's image and how it sits in the pawn's outline.
 public struct CustomArt: Codable, Hashable, Sendable {
     /// File name in the library's custom art folder.
     public var imageFile: String
-    /// Where the image's center sits, as a fraction of its overflow: (0.5, 0.5) centers it.
+    /// Where the image sits, as a fraction of the room it has to move on each axis (its overflow when filling,
+    /// the free space when fitting): (0.5, 0.5) centers it.
     public var focus: CGPoint
     /// Whether the pawn's name is printed at its foot.
     public var showsName: Bool
+    public var scaling: ArtScaling
 
-    public init(imageFile: String, focus: CGPoint = CGPoint(x: 0.5, y: 0.5), showsName: Bool = true) {
+    public init(imageFile: String, focus: CGPoint = CGPoint(x: 0.5, y: 0.5), showsName: Bool = true,
+                scaling: ArtScaling = .fill) {
         self.imageFile = imageFile
         self.focus = focus
         self.showsName = showsName
+        self.scaling = scaling
+    }
+
+    private enum CodingKeys: String, CodingKey { case imageFile, focus, showsName, scaling }
+
+    /// Art saved before `scaling` existed fills the pawn.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        imageFile = try container.decode(String.self, forKey: .imageFile)
+        focus = try container.decode(CGPoint.self, forKey: .focus)
+        showsName = try container.decode(Bool.self, forKey: .showsName)
+        scaling = try container.decodeIfPresent(ArtScaling.self, forKey: .scaling) ?? .fill
     }
 }
 

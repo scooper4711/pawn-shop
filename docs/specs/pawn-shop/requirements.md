@@ -39,7 +39,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied
   from Pluck) with a name and a size:
   small, medium, large, huge or gargantuan.
-- R3.2 The image fills the pawn's outline; its position can be adjusted in a live preview.
+- R3.2 The image either fills the pawn (cropping what overflows) or fits whole above the name, with white
+  around it; its position can be adjusted in a live preview either way.
 - R3.3 The back is the mirrored front.
 
 ## R4 Sheets

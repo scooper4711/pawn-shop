@@ -10,6 +10,7 @@ public struct NewCustomPawn: @unchecked Sendable {
     /// Where the image sits when it overflows the outline (see `CustomArt.focus`).
     public var focus: CGPoint
     public var showsName: Bool
+    public var scaling: ArtScaling = .fill
 
     public init(image: CGImage, name: String, size: PawnSize = .medium,
                 focus: CGPoint = CGPoint(x: 0.5, y: 0.5), showsName: Bool = true) {
@@ -30,7 +31,8 @@ public extension PawnLibrary {
         try Self.writePNG(new.image, to: customFolder.appendingPathComponent(file))
         let trimmed = new.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let pawn = Pawn(id: id, name: trimmed.isEmpty ? "Custom Pawn" : trimmed, size: new.size,
-                        art: .custom(CustomArt(imageFile: file, focus: new.focus, showsName: new.showsName)))
+                        art: .custom(CustomArt(imageFile: file, focus: new.focus, showsName: new.showsName,
+                                               scaling: new.scaling)))
         try add(pawn)
         return pawn
     }

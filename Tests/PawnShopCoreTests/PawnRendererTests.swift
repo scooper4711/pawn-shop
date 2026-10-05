@@ -114,11 +114,41 @@ struct Canvas {
 
     @Test func coversTheOutlineWithCustomArt() {
         let rect = CGRect(x: 0, y: 0, width: 50, height: 50)
-        #expect(PawnRenderer.fillRect(for: CGSize(width: 100, height: 50), in: rect, focus: CGPoint(x: 0.5, y: 0.5))
+        let wide = CGSize(width: 100, height: 50), center = CGPoint(x: 0.5, y: 0.5)
+        #expect(PawnRenderer.artRect(for: wide, in: rect, focus: center, scaling: .fill)
                 == CGRect(x: -25, y: 0, width: 100, height: 50))
-        #expect(PawnRenderer.fillRect(for: CGSize(width: 100, height: 50), in: rect, focus: CGPoint(x: 2, y: 0)).minX
-                == -50)
-        #expect(PawnRenderer.fillRect(for: .zero, in: rect, focus: .zero) == rect)
+        #expect(PawnRenderer.artRect(for: wide, in: rect, focus: CGPoint(x: 2, y: 0), scaling: .fill).minX == -50)
+        #expect(PawnRenderer.artRect(for: .zero, in: rect, focus: .zero, scaling: .fill) == rect)
+    }
+
+    @Test func fitsTheWholePictureWhenAsked() {
+        let rect = CGRect(x: 0, y: 0, width: 50, height: 50), wide = CGSize(width: 100, height: 50)
+        #expect(PawnRenderer.artRect(for: wide, in: rect, focus: CGPoint(x: 0.5, y: 0.5), scaling: .fit)
+                == CGRect(x: 0, y: 12.5, width: 50, height: 25))
+        #expect(PawnRenderer.artRect(for: wide, in: rect, focus: CGPoint(x: 0.5, y: 1), scaling: .fit).maxY == 50)
+        let face = CGRect(x: 0, y: 0, width: 81, height: 138)
+        let fitted = CustomArt(imageFile: "x", scaling: .fit)
+        let area = PawnRenderer.artArea(for: fitted, named: "Goblin", in: face)
+        #expect(area.minY == PawnRenderer.nameBandHeight(for: "Goblin", in: face) && area.maxY == 138)
+        #expect(PawnRenderer.artArea(for: CustomArt(imageFile: "x"), named: "Goblin", in: face) == face)
+        #expect(PawnRenderer.nameBandHeight(for: "Nodocite Experimenter", in: face)
+                > PawnRenderer.nameBandHeight(for: "Goblin", in: face))
+        #expect(ArtScaling.fit.displayName == "Fit Whole Picture" && ArtScaling.fill.displayName == "Fill Pawn")
+    }
+
+    @Test func leavesWhiteBesideAFittedPicture() throws {
+        var fitted = custom
+        fitted.art = .custom(CustomArt(imageFile: "hero.png", showsName: false, scaling: .fit))
+        let canvas = Canvas(size: CGSize(width: 81, height: 138))
+        renderer.drawFace(of: fitted, side: .front, in: CGRect(x: 0, y: 0, width: 81, height: 138),
+                          context: canvas.context)
+        // The 1:2 picture is narrower than the pawn: white at the sides, red in the middle.
+        #expect(canvas.color(atX: 1, y: 100) == "other")
+        #expect(canvas.color(atX: 40, y: 100) == "red")
+        let filled = Canvas(size: CGSize(width: 81, height: 138))
+        renderer.drawFace(of: custom, side: .front, in: CGRect(x: 0, y: 0, width: 81, height: 138),
+                          context: filled.context)
+        #expect(filled.color(atX: 1, y: 100) == "red")
     }
 
     @Test func printsTheNameOnCustomPawns() throws {

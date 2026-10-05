@@ -47,7 +47,10 @@ public final class PawnRenderer {
         case .pdf(let sourceID, let front, let back):
             drawPDFFace(side == .front ? front : back, sourceID: sourceID, in: rect, context: context)
         case .custom(let art):
-            drawCustomImage(art, in: rect, mirrored: side == .back, context: context)
+            context.setFillColor(gray: 1, alpha: 1)
+            context.fill(rect)
+            drawCustomImage(art, in: Self.artArea(for: art, named: pawn.name, in: rect), mirrored: side == .back,
+                            context: context)
             // The name reads the right way round on both faces.
             if art.showsName { drawNameBand(pawn.name, in: rect, context: context) }
         }
@@ -110,24 +113,32 @@ public final class PawnRenderer {
 
     private func drawCustomImage(_ art: CustomArt, in rect: CGRect, mirrored: Bool, context: CGContext) {
         context.saveGState()
-        context.setFillColor(gray: 1, alpha: 1)
-        context.fill(rect)
         if mirrored {
             context.translateBy(x: rect.midX * 2, y: 0)
             context.scaleBy(x: -1, y: 1)
         }
         if let image = image(art.imageFile) {
             context.interpolationQuality = .high
-            context.draw(image, in: Self.fillRect(for: CGSize(width: image.width, height: image.height),
-                                                  in: rect, focus: art.focus))
+            context.draw(image, in: Self.artRect(for: CGSize(width: image.width, height: image.height),
+                                                 in: rect, focus: art.focus, scaling: art.scaling))
         }
         context.restoreGState()
     }
 
-    /// The image scaled to cover `rect`, its overflow split according to `focus` (0…1 on each axis).
-    public static func fillRect(for imageSize: CGSize, in rect: CGRect, focus: CGPoint) -> CGRect {
+    /// Where custom art may go: the whole face, or above the name when fitting the whole picture.
+    public static func artArea(for art: CustomArt, named name: String, in rect: CGRect) -> CGRect {
+        guard art.scaling == .fit, art.showsName else { return rect }
+        let band = nameBandHeight(for: name, in: rect)
+        return CGRect(x: rect.minX, y: rect.minY + band, width: rect.width, height: rect.height - band)
+    }
+
+    /// The image scaled to cover `rect` (fill) or to fit inside it (fit), placed by `focus` (0…1 on each axis)
+    /// within the room it has to move: its overflow, or the free space.
+    public static func artRect(for imageSize: CGSize, in rect: CGRect, focus: CGPoint,
+                               scaling: ArtScaling) -> CGRect {
         guard imageSize.width > 0, imageSize.height > 0 else { return rect }
-        let scale = max(rect.width / imageSize.width, rect.height / imageSize.height)
+        let widthScale = rect.width / imageSize.width, heightScale = rect.height / imageSize.height
+        let scale = scaling == .fill ? max(widthScale, heightScale) : min(widthScale, heightScale)
         let size = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
         let clamped = CGPoint(x: min(max(focus.x, 0), 1), y: min(max(focus.y, 0), 1))
         return CGRect(x: rect.minX - (size.width - rect.width) * clamped.x,
@@ -137,12 +148,10 @@ public final class PawnRenderer {
     /// The name across the foot on a white band: one line if it fits, else two at the same size (the band
     /// grows to hold them), and only then smaller type.
     private func drawNameBand(_ name: String, in rect: CGRect, context: CGContext) {
-        let lineHeight = rect.height * Self.nameBandFraction
-        let layout = NameLayout.fit(name.uppercased(), width: rect.width * Self.nameWidthFraction,
-                                    fontSize: lineHeight * 0.6)
+        let layout = Self.nameLayout(for: name, in: rect)
         let leading = layout.fontSize * 1.15
         let block = leading * CGFloat(layout.lines.count)
-        let height = max(lineHeight, block + lineHeight * 0.3)
+        let height = Self.nameBandHeight(for: name, in: rect)
         context.setFillColor(gray: 1, alpha: 0.85)
         context.fill(CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: height))
         // Lines are centered in the band as a block; each baseline sits 80% of the leading below its top.
@@ -151,6 +160,18 @@ public final class PawnRenderer {
             let baseline = blockTop - leading * (CGFloat(index) + 0.8)
             drawLine(text, size: layout.fontSize, at: CGPoint(x: rect.midX, y: baseline), context: context)
         }
+    }
+
+    /// The height of the band holding the name: one line's worth, or more when the name wraps.
+    public static func nameBandHeight(for name: String, in rect: CGRect) -> CGFloat {
+        let lineHeight = rect.height * nameBandFraction
+        let layout = nameLayout(for: name, in: rect)
+        return max(lineHeight, layout.fontSize * 1.15 * CGFloat(layout.lines.count) + lineHeight * 0.3)
+    }
+
+    public static func nameLayout(for name: String, in rect: CGRect) -> NameLayout {
+        NameLayout.fit(name.uppercased(), width: rect.width * nameWidthFraction,
+                       fontSize: rect.height * nameBandFraction * 0.6)
     }
 
     private func drawPlaceholder(in rect: CGRect, context: CGContext) {

@@ -21,6 +21,19 @@ import Testing
         #expect(library.pawn(id: pawn.id) == pawn)
     }
 
+    @Test func keepsTheChosenScaling() throws {
+        var new = NewCustomPawn(image: headRedImage(), name: "Nodocite")
+        new.scaling = .fit
+        let pawn = try library.addCustomPawn(new)
+        guard case .custom(let art) = pawn.art else { Issue.record("not custom art"); return }
+        #expect(art.scaling == .fit)
+    }
+
+    @Test func readsArtSavedBeforeScalingExisted() throws {
+        let json = #"{"imageFile":"old.png","focus":[0.5,0.5],"showsName":true}"#
+        #expect(try JSONDecoder().decode(CustomArt.self, from: Data(json.utf8)).scaling == .fill)
+    }
+
     @Test func namesUnnamedArt() throws {
         #expect(try library.addCustomPawn(NewCustomPawn(image: headRedImage(), name: " ")).name == "Custom Pawn")
     }

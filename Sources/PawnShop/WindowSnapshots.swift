@@ -29,8 +29,8 @@ enum WindowSnapshots {
             ("inspector", AnyView(SheetInspector(sheet: .constant(sheet), selectedEntry: .constant(nil),
                                                  pageCount: 1))),
             ("review", AnyView(ReviewNamesView().frame(width: 520, height: 560))),
-            ("custom", AnyView(CustomPawnPreview(image: sampleArt, name: "Sample Hero", size: .medium,
-                                                 focus: .constant(CGPoint(x: 0.3, y: 0.5)), showsName: true)
+            ("custom", AnyView(CustomPawnPreview(image: sampleArt, name: "Nodocite Experimenter", size: .medium,
+                                                 art: .constant(CustomArt(imageFile: "", scaling: .fit)))
                 .frame(width: 200, height: 300)))
         ]
         for (name, panel) in panels {

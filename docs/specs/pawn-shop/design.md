@@ -54,8 +54,9 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   read from the title.
 - `Pawn`: id, name, size, fingerprint, `needsName`, `art` (`.pdf(sourceID, front, back)` or `.custom(CustomArt)`) and
   `appearances` (each product printing the art, with its copies; the first supplies the faces).
-  `CustomArt`: image file name, focus point (where the image sits when it overflows the outline), and
-  whether the name is printed.
+  `CustomArt`: image file name, scaling (`.fill` covers the face; `.fit` shows the whole picture in the area
+  above the name band), focus point (where the image sits within its room to move: the overflow when filling,
+  the free space when fitting), and whether the name is printed.
 - `PawnLibrary`:
   - `prepareImport(of:)` hashes and extracts a PDF without touching the library, so it can run off the main
     thread; `commit(_:)` copies the file, adds the source, and merges each pawn into an existing one with the
@@ -119,8 +120,8 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   this review only. Closing the review loses nothing; reopening starts with the pawns still unnamed.
 - Library ▸ Add Custom Pawn… (⌥⌘N) opens `AddCustomPawnView`: choose, drop or paste (⌘V or Paste Image; image data or a copied
   file) an image, name, size and whether
-  the name prints; the preview shows the front as it will print and dragging moves the art within its
-  overflow (the focus point, using `PawnRenderer.fillRect`). `PawnLibrary.addCustomPawn(_:)` saves the image as
+  the name prints, and Fill Pawn or Fit Whole Picture; the preview uses `PawnRenderer.artArea`, `artRect`,
+  `nameLayout` and `nameBandHeight`, so it matches the printed front, and dragging moves the art within its room. `PawnLibrary.addCustomPawn(_:)` saves the image as
   PNG in `Custom/` and adds the pawn; the window also adds one copy to its sheet.
 - For trying the app from a script: `PAWN_SHOP_LIBRARY` points it at another library folder, and
   `PAWN_SHOP_SNAPSHOT=<prefix>` draws each window, and the library and inspector panels on their own, to
