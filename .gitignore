@@ -1,0 +1,11 @@
+.build/
+build/
+.swiftpm/
+DerivedData/
+*.xcodeproj/xcuserdata/
+.DS_Store
+tmp/
+coverage/
+
+# Copyrighted pawn PDFs used for local testing only — never commit.
+TestData/
