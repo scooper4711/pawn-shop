@@ -8,7 +8,8 @@ public enum PawnSide: Sendable {
 }
 
 /// Draws pawns from the library: single faces for thumbnails, and folded strips for printing.
-/// It keeps the source PDFs and custom images it has opened.
+/// It keeps the source PDFs and custom images it has opened. It needs only the library's folders, so a
+/// renderer can be made for a background thread; each renderer must stay on one thread.
 public final class PawnRenderer {
     static let cutLineWidth: CGFloat = 0.3
     static let cutLineGray: CGFloat = 0.55
@@ -16,12 +17,16 @@ public final class PawnRenderer {
     /// The share of a custom pawn's height given to its name.
     static let nameBandFraction: CGFloat = 0.13
 
-    private let library: PawnLibrary
+    private let folders: LibraryFolders
     private var documents: [String: CGPDFDocument] = [:]
     private var images: [String: CGImage] = [:]
 
-    public init(library: PawnLibrary) {
-        self.library = library
+    public init(folders: LibraryFolders) {
+        self.folders = folders
+    }
+
+    public convenience init(library: PawnLibrary) {
+        self.init(folders: library.folders)
     }
 
     /// The pawn's outline size, upright.
@@ -180,14 +185,14 @@ public final class PawnRenderer {
 
     private func document(_ sourceID: String) -> CGPDFDocument? {
         if let document = documents[sourceID] { return document }
-        let document = CGPDFDocument(library.fileURL(forSource: sourceID) as CFURL)
+        let document = CGPDFDocument(folders.sourceFile(id: sourceID) as CFURL)
         documents[sourceID] = document
         return document
     }
 
     private func image(_ file: String) -> CGImage? {
         if let image = images[file] { return image }
-        let url = library.customFolder.appendingPathComponent(file)
+        let url = folders.custom.appendingPathComponent(file)
         let image = CGImageSourceCreateWithURL(url as CFURL, nil)
             .flatMap { CGImageSourceCreateImageAtIndex($0, 0, nil) }
         images[file] = image

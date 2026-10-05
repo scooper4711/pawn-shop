@@ -59,11 +59,13 @@ public final class PawnLibrary {
         pawns = stored.pawns
     }
 
-    var sourcesFolder: URL { folder.appendingPathComponent("Sources", isDirectory: true) }
-    public var customFolder: URL { folder.appendingPathComponent("Custom", isDirectory: true) }
+    /// Where the library keeps its files; safe to hand to other threads.
+    public var folders: LibraryFolders { LibraryFolders(root: folder) }
+    var sourcesFolder: URL { folders.sources }
+    public var customFolder: URL { folders.custom }
 
     /// The library's copy of an imported PDF.
-    public func fileURL(forSource id: String) -> URL { sourcesFolder.appendingPathComponent("\(id).pdf") }
+    public func fileURL(forSource id: String) -> URL { folders.sourceFile(id: id) }
 
     public func source(id: String) -> PawnSource? { sources.first { $0.id == id } }
 
@@ -120,6 +122,14 @@ public final class PawnLibrary {
         guard let index = pawns.firstIndex(where: { $0.id == pawn.id }) else { return }
         pawns[index] = pawn
         try save()
+    }
+
+    /// Renames a pawn and saves; a blank name is ignored.
+    public func rename(_ id: UUID, to name: String) throws {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, var pawn = pawn(id: id) else { return }
+        pawn.name = trimmed
+        try update(pawn)
     }
 
     /// Removes pawns, and any custom art files only they used, and saves.
@@ -181,6 +191,20 @@ public final class PawnLibrary {
         }
         return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
+}
+
+/// The folders inside a library folder.
+public struct LibraryFolders: Hashable, Sendable {
+    public let root: URL
+
+    public init(root: URL) { self.root = root }
+
+    /// Copies of the imported PDFs, named by their digest.
+    public var sources: URL { root.appendingPathComponent("Sources", isDirectory: true) }
+    /// Images for custom pawns.
+    public var custom: URL { root.appendingPathComponent("Custom", isDirectory: true) }
+
+    public func sourceFile(id: String) -> URL { sources.appendingPathComponent("\(id).pdf") }
 }
 
 /// The library file's contents.

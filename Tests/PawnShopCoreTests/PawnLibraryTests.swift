@@ -70,6 +70,11 @@ func writePawnPDF(_ pawns: [DrawnPawn], named name: String, in folder: URL) thro
         pawn.name = "Heroine"
         try library.update(pawn)
         #expect(try self.library().pawn(id: pawn.id)?.name == "Heroine")
+        try library.rename(pawn.id, to: "  Champion ")
+        try library.rename(pawn.id, to: " ")
+        try library.rename(UUID(), to: "Nobody")
+        #expect(library.pawn(id: pawn.id)?.name == "Champion")
+        #expect(library.folders.sourceFile(id: "abc").lastPathComponent == "abc.pdf")
         try library.remove([pawn.id])
         #expect(library.pawns.isEmpty)
         #expect(!FileManager.default.fileExists(atPath: library.customFolder.appendingPathComponent(artFile).path))
