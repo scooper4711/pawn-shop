@@ -1,0 +1,90 @@
+import Foundation
+
+/// Products that print no names on their pawns. Their pawns borrow the name of the same art printed in
+/// another product; the rest wait, under a stand-in name, for the user to name them.
+enum NamelessProducts {
+    static let titleFragments = ["Heroes & Villains"]
+
+    static func contains(_ source: PawnSource) -> Bool {
+        titleFragments.contains { source.title.localizedCaseInsensitiveContains($0) }
+    }
+
+    /// The stand-in name for a pawn with no name printed.
+    static func standInName(for source: PawnSource) -> String { "Unknown \(source.title)" }
+}
+
+extension ArtFingerprint {
+    /// Thumbnails at most this far apart are taken for the same art when giving a pawn another product's name.
+    /// Stricter than `matchingDistance`, which also requires equal names: across the whole library, pawns
+    /// up to about 15 apart showed the same figure and those from about 16 on did not.
+    static let namingDistance = 15.0
+
+    /// True when both show the same images, or look the same by the stricter naming distance.
+    func isSameArt(as other: ArtFingerprint) -> Bool {
+        guard !imageDigests.isEmpty, !other.imageDigests.isEmpty else { return false }
+        return imageDigests == other.imageDigests || thumbnailDistance(from: other) <= Self.namingDistance
+    }
+}
+
+extension PawnLibrary {
+    /// Adds an extracted pawn: as another product printing art the library has, by giving its name to
+    /// nameless art, or as a new pawn.
+    func merge(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) {
+        let appearance = Appearance(sourceID: source.id, copies: found.copies)
+        if found.name.isEmpty {
+            mergeNameless(found, from: source, into: &report)
+        } else if let index = pawns.firstIndex(where: {
+            $0.name == found.name && $0.size == found.size && $0.fingerprint.matches(found.fingerprint)
+        }) {
+            pawns[index].appearances.append(appearance)
+            report.alreadyKnown += 1
+        } else if let index = waitingForName(sameArtAs: found) {
+            pawns[index].name = found.name
+            pawns[index].needsName = false
+            pawns[index].appearances.append(appearance)
+            report.alreadyKnown += 1
+        } else {
+            add(found, from: source, into: &report)
+        }
+    }
+
+    private func mergeNameless(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) {
+        let appearance = Appearance(sourceID: source.id, copies: found.copies)
+        if NamelessProducts.contains(source), let index = pawns.firstIndex(where: {
+            !$0.needsName && !$0.isCustom && $0.size == found.size && $0.fingerprint.isSameArt(as: found.fingerprint)
+        }) {
+            pawns[index].appearances.append(appearance)
+            report.namedFromOtherProducts += 1
+        } else if let index = pawns.firstIndex(where: {
+            $0.needsName && $0.size == found.size && $0.fingerprint.matches(found.fingerprint)
+        }) {
+            pawns[index].appearances.append(appearance)
+            report.alreadyKnown += 1
+        } else {
+            var nameless = found
+            nameless.name = NamelessProducts.standInName(for: source)
+            add(nameless, from: source, into: &report)
+        }
+    }
+
+    /// A pawn from a nameless product still waiting for its name whose art matches `found`.
+    private func waitingForName(sameArtAs found: ExtractedPawn) -> Int? {
+        pawns.firstIndex { pawn in
+            guard pawn.needsName, pawn.size == found.size, pawn.fingerprint.isSameArt(as: found.fingerprint),
+                  let sourceID = pawn.appearances.first?.sourceID, let source = source(id: sourceID)
+            else { return false }
+            return NamelessProducts.contains(source)
+        }
+    }
+
+    /// Adds a new pawn; one carrying a stand-in name is marked as needing a name.
+    private func add(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) {
+        let needsName = found.name == NamelessProducts.standInName(for: source)
+        let appearance = Appearance(sourceID: source.id, copies: found.copies)
+        pawns.append(Pawn(name: found.name, size: found.size,
+                          art: .pdf(sourceID: source.id, front: found.front, back: found.back),
+                          fingerprint: found.fingerprint, appearances: [appearance], needsName: needsName))
+        report.added += 1
+        if needsName { report.needingNames += 1 }
+    }
+}

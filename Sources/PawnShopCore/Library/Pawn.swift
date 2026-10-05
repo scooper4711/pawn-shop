@@ -80,15 +80,33 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     public var fingerprint: ArtFingerprint
     /// Every product printing this art, the first being the one its faces come from. Empty for custom pawns.
     public var appearances: [Appearance]
+    /// True while the pawn has a stand-in name because none was printed; renaming clears it.
+    public var needsName: Bool
 
     public init(id: UUID = UUID(), name: String, size: PawnSize, art: PawnArt,
-                fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = []) {
+                fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = [],
+                needsName: Bool = false) {
         self.id = id
         self.name = name
         self.size = size
         self.art = art
         self.fingerprint = fingerprint
         self.appearances = appearances
+        self.needsName = needsName
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, name, size, art, fingerprint, appearances, needsName }
+
+    /// Libraries saved before `needsName` existed read as having every name.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        size = try container.decode(PawnSize.self, forKey: .size)
+        art = try container.decode(PawnArt.self, forKey: .art)
+        fingerprint = try container.decode(ArtFingerprint.self, forKey: .fingerprint)
+        appearances = try container.decode([Appearance].self, forKey: .appearances)
+        needsName = try container.decodeIfPresent(Bool.self, forKey: .needsName) ?? false
     }
 
     public var isCustom: Bool {

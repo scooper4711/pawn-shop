@@ -12,14 +12,17 @@ public struct PawnQuery: Equatable, Sendable {
     public var sourceIDs: Set<String> = []
     /// Show only (or hide) the user's own pawns; nil shows both.
     public var custom: Bool?
+    /// Show only pawns still waiting for a name.
+    public var needingNamesOnly = false
 
     public init(text: String = "", sizes: Set<PawnSize> = [], games: Set<Game> = [], sourceIDs: Set<String> = [],
-                custom: Bool? = nil) {
+                custom: Bool? = nil, needingNamesOnly: Bool = false) {
         self.text = text
         self.sizes = sizes
         self.games = games
         self.sourceIDs = sourceIDs
         self.custom = custom
+        self.needingNamesOnly = needingNamesOnly
     }
 }
 
@@ -34,6 +37,9 @@ public extension PawnLibrary {
                                              : order == .orderedAscending
             }
     }
+
+    /// Pawns still waiting for a name, in library order, so a review picks up where it stopped.
+    var pawnsNeedingNames: [Pawn] { pawns.filter(\.needsName) }
 
     /// The title of the product a pawn's faces come from, or "Custom".
     func sourceTitle(of pawn: Pawn) -> String {
@@ -53,7 +59,7 @@ public extension PawnLibrary {
     }
 
     private func matches(_ pawn: Pawn, query: PawnQuery, words: [String]) -> Bool {
-        guard query.sizes.isEmpty || query.sizes.contains(pawn.size),
+        guard query.sizes.isEmpty || query.sizes.contains(pawn.size), !query.needingNamesOnly || pawn.needsName,
               query.custom.map({ $0 == pawn.isCustom }) ?? true
         else { return false }
         let sources = pawn.appearances.compactMap { source(id: $0.sourceID) }

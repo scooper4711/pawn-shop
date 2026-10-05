@@ -16,8 +16,12 @@ public struct ImportReport: Equatable, Sendable {
     public var added = 0
     /// Pawns whose art was already in the library from another product.
     public var alreadyKnown = 0
-    /// Outlines with no name printed, imported as numbered "Unnamed" pawns.
+    /// Outlines with no name printed.
     public var unnamed: [UnnamedOutline] = []
+    /// Pawns with no name printed that took the name of the same art in another product.
+    public var namedFromOtherProducts = 0
+    /// Pawns added with a stand-in name, waiting to be named.
+    public var needingNames = 0
     /// True when the PDF had been imported before, so nothing changed.
     public var wasImported = false
 }
@@ -40,7 +44,7 @@ public final class PawnLibrary {
 
     public let folder: URL
     public private(set) var sources: [PawnSource] = []
-    public private(set) var pawns: [Pawn] = []
+    public internal(set) var pawns: [Pawn] = []
 
     /// `~/Library/Application Support/Pawn Shop`.
     public static var defaultFolder: URL {
@@ -98,8 +102,9 @@ public final class PawnLibrary {
         try copySource(prepared)
         sources.append(PawnSource(id: prepared.digest, title: title, importedAt: Date(),
                                   originalPath: prepared.file.path, byteCount: prepared.byteCount))
+        let source = sources[sources.count - 1]
         for found in prepared.extraction.pawns {
-            merge(found, from: prepared.digest, into: &report)
+            merge(found, from: source, into: &report)
         }
         try save()
         return report
@@ -129,6 +134,7 @@ public final class PawnLibrary {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, var pawn = pawn(id: id) else { return }
         pawn.name = trimmed
+        pawn.needsName = false
         try update(pawn)
     }
 
@@ -141,21 +147,6 @@ public final class PawnLibrary {
         }
         pawns.removeAll { ids.contains($0.id) }
         try save()
-    }
-
-    private func merge(_ found: ExtractedPawn, from sourceID: String, into report: inout ImportReport) {
-        let appearance = Appearance(sourceID: sourceID, copies: found.copies)
-        if let index = pawns.firstIndex(where: {
-            $0.name == found.name && $0.size == found.size && $0.fingerprint.matches(found.fingerprint)
-        }) {
-            pawns[index].appearances.append(appearance)
-            report.alreadyKnown += 1
-        } else {
-            pawns.append(Pawn(name: found.name, size: found.size,
-                              art: .pdf(sourceID: sourceID, front: found.front, back: found.back),
-                              fingerprint: found.fingerprint, appearances: [appearance]))
-            report.added += 1
-        }
     }
 
     private func copySource(_ prepared: PreparedImport) throws {

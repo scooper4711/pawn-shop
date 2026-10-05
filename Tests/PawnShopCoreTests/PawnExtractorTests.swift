@@ -71,11 +71,11 @@ func pawnPDF(pages: [[DrawnPawn]]) -> Data {
         #expect(result.pawns.allSatisfy { $0.back == $0.front.mirroredCopy() })
     }
 
-    @Test func numbersPawnsWithoutANameAndReportsThem() throws {
+    @Test func leavesPawnsWithoutANameNamelessAndReportsThem() throws {
         let result = try extract([fronts])
         #expect(result.unnamed.count == 1)
         #expect(abs((result.unnamed.first?.rect.minX ?? 0) - 320) < 0.5)
-        #expect(result.pawns.contains { $0.name == "Unnamed 1" && $0.copies == 1 })
+        #expect(result.pawns.contains { $0.name.isEmpty && $0.copies == 1 })
     }
 
     @Test func rejectsFilesThatAreNotPDFs() throws {

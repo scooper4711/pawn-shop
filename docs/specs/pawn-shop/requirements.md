@@ -21,8 +21,11 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.8 Importing shows progress, then a report of the pawns added, the pawns whose art was already in the
   library, and the outlines with no name printed.
 - R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved.
-- R1.10 Pawns with no name printed (Heroes & Villains prints none) are imported as "Unnamed 1", "Unnamed 2"…
-  and can be renamed.
+- R1.10 Pawns with no name printed are imported as "Unknown <product title>" and marked as needing a name.
+- R1.11 Heroes & Villains is the one product known to print no names. Its pawns take the name of the same art
+  in another product, whichever is imported first; the rest need naming.
+- R1.12 Library ▸ Review Unnamed Pawns… steps through the pawns needing a name, showing each large with a name
+  field. Each name is saved as it is entered, so the review can be closed and resumed at any time.
 
 ## R2 The library
 - R2.1 The library is kept between launches and shared by every sheet.

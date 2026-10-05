@@ -52,7 +52,7 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
 - `PawnSource`: id (SHA-256 of the file), title (from the file name, without product codes and " PDF"),
   import date, original path and byte count (to recognize a file again without hashing it), and the game,
   read from the title.
-- `Pawn`: id, name, size, fingerprint, `art` (`.pdf(sourceID, front, back)` or `.custom(CustomArt)`) and
+- `Pawn`: id, name, size, fingerprint, `needsName`, `art` (`.pdf(sourceID, front, back)` or `.custom(CustomArt)`) and
   `appearances` (each product printing the art, with its copies; the first supplies the faces).
   `CustomArt`: image file name, focus point (where the image sits when it overflows the outline), and
   whether the name is printed.
@@ -60,7 +60,14 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   - `prepareImport(of:)` hashes and extracts a PDF without touching the library, so it can run off the main
     thread; `commit(_:)` copies the file, adds the source, and merges each pawn into an existing one with the
     same name, size and matching art (adding an appearance) or adds it; then saves. A known file is a no-op.
-  - `add`, `update` (rename) and `remove` (deleting custom art files) save immediately.
+  - `add`, `update`, `rename` (which clears `needsName`) and `remove` (deleting custom art files) save
+    immediately.
+  - Nameless pawns (`PawnMerging.swift`): an extracted pawn with no name merges into a pawn with the same art
+    when its product is in `NamelessProducts` (Heroes & Villains) and `ArtFingerprint.isSameArt(as:)` holds:
+    equal digests or a thumbnail distance of at most 15, stricter than the 20 used with equal names because
+    across the whole library 16 and up were different figures. Otherwise it is added as
+    "Unknown <product title>" with `needsName`. A named pawn imported later that matches such a pawn gives it
+    its name. `pawnsNeedingNames` lists them in library order.
   - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name or a product title;
     filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
 - `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn".

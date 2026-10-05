@@ -4,6 +4,7 @@ import PDFKit
 
 /// A distinct pawn found in a PDF: one piece of art with one name, however many copies were printed.
 public struct ExtractedPawn: Equatable, Sendable {
+    /// Empty when no name is printed.
     public var name: String
     public var size: PawnSize
     public var front: PawnFace
@@ -54,17 +55,7 @@ public enum PawnExtractor {
             add(ExtractedPawn(name: name, size: size, front: found.front, back: found.back,
                               fingerprint: found.fingerprint, copies: 1), to: &result.pawns)
         }
-        numberUnnamed(&result.pawns)
         return result
-    }
-
-    /// Some products print no names; their pawns are numbered so they can still be listed and renamed.
-    private static func numberUnnamed(_ pawns: inout [ExtractedPawn]) {
-        var number = 0
-        for index in pawns.indices where pawns[index].name.isEmpty {
-            number += 1
-            pawns[index].name = "Unnamed \(number)"
-        }
     }
 
     /// A pawn's faces and art, before its label is read.
