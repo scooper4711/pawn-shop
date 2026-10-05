@@ -100,6 +100,18 @@ struct Canvas {
         #expect(renderer.thumbnail(of: custom, height: 0) == nil)
     }
 
+    @Test func growsTheNameBandForTwoLines() throws {
+        var named = custom
+        named.name = "Nodocite Experimenter"
+        named.art = .custom(CustomArt(imageFile: "hero.png", showsName: true))
+        let canvas = Canvas(size: CGSize(width: 81, height: 138))
+        renderer.drawFace(of: named, side: .front, in: CGRect(x: 0, y: 0, width: 81, height: 138),
+                          context: canvas.context)
+        // One line takes 13% of the height (18 pt); two lines take more.
+        #expect(canvas.color(atX: 2, y: 20) == "other")
+        #expect(canvas.color(atX: 2, y: 40) == "blue")
+    }
+
     @Test func coversTheOutlineWithCustomArt() {
         let rect = CGRect(x: 0, y: 0, width: 50, height: 50)
         #expect(PawnRenderer.fillRect(for: CGSize(width: 100, height: 50), in: rect, focus: CGPoint(x: 0.5, y: 0.5))

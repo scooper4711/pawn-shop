@@ -82,7 +82,9 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   288×360 so their 10" strip fits on Letter.
 - `PawnRenderer` (keeps opened PDFs and images) draws a face: the source PDF page clipped to the face rect
   and turned upright (vector text and full-resolution art kept), or a custom image covering the outline around
-  its focus point, mirrored for the back, with the name in a band at the foot. It draws strips with a hairline
+  its focus point, mirrored for the back, with the name in a band at the foot. `NameLayout` fits the name: one line at full size
+  (60% of a 13% band) if it fits 92% of the width, else two lines at that size (the band grows), and only then
+  smaller type, down to 3 pt. It draws strips with a hairline
   gray cut outline and a dashed fold line, a gray placeholder for a missing pawn, and face thumbnails.
 - `SheetExporter` (sheet, library, renderer) builds the layout items (a missing pawn takes a medium strip),
   the layout, each page's drawing (shared by preview and print), and the PDF at 100% scale.

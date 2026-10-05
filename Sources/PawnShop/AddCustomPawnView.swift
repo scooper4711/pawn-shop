@@ -106,9 +106,13 @@ struct CustomPawnPreview: View {
                     Text(name.uppercased())
                         .font(.system(size: max(6, outline.height * 0.06), weight: .bold))
                         .foregroundStyle(.black)
-                        .lineLimit(1)
+                        // Like the printed pawn: a second line before smaller type.
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
                         .minimumScaleFactor(0.4)
-                        .frame(width: outline.width, height: outline.height * 0.13)
+                        .padding(.horizontal, outline.width * 0.04)
+                        .frame(width: outline.width)
+                        .frame(minHeight: outline.height * 0.13)
                         .background(.white.opacity(0.85))
                 }
             }

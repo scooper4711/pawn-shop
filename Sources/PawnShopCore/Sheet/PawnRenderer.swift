@@ -16,6 +16,8 @@ public final class PawnRenderer {
     static let foldDash: [CGFloat] = [3, 3]
     /// The share of a custom pawn's height given to its name.
     static let nameBandFraction: CGFloat = 0.13
+    /// The share of the pawn's width a name may use.
+    static let nameWidthFraction: CGFloat = 0.92
 
     private let folders: LibraryFolders
     private var documents: [String: CGPDFDocument] = [:]
@@ -132,39 +134,39 @@ public final class PawnRenderer {
                       y: rect.minY - (size.height - rect.height) * clamped.y, width: size.width, height: size.height)
     }
 
+    /// The name across the foot on a white band: one line if it fits, else two at the same size (the band
+    /// grows to hold them), and only then smaller type.
     private func drawNameBand(_ name: String, in rect: CGRect, context: CGContext) {
-        let band = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: rect.height * Self.nameBandFraction)
+        let lineHeight = rect.height * Self.nameBandFraction
+        let layout = NameLayout.fit(name.uppercased(), width: rect.width * Self.nameWidthFraction,
+                                    fontSize: lineHeight * 0.6)
+        let leading = layout.fontSize * 1.15
+        let block = leading * CGFloat(layout.lines.count)
+        let height = max(lineHeight, block + lineHeight * 0.3)
         context.setFillColor(gray: 1, alpha: 0.85)
-        context.fill(band)
-        drawCenteredText(name.uppercased(), in: band, maximumSize: band.height * 0.6, context: context)
+        context.fill(CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: height))
+        // Lines are centered in the band as a block; each baseline sits 80% of the leading below its top.
+        let blockTop = rect.minY + (height + block) / 2
+        for (index, text) in layout.lines.enumerated() {
+            let baseline = blockTop - leading * (CGFloat(index) + 0.8)
+            drawLine(text, size: layout.fontSize, at: CGPoint(x: rect.midX, y: baseline), context: context)
+        }
     }
 
     private func drawPlaceholder(in rect: CGRect, context: CGContext) {
         context.setFillColor(gray: 0.9, alpha: 1)
         context.fill(rect)
-        drawCenteredText("Missing pawn", in: rect, maximumSize: min(10, rect.width / 8), context: context)
+        let size = NameLayout.fit("Missing pawn", width: rect.width * Self.nameWidthFraction,
+                                  fontSize: min(10, rect.width / 8)).fontSize
+        drawLine("Missing pawn", size: size, at: CGPoint(x: rect.midX, y: rect.midY - size * 0.35), context: context)
     }
 
-    private func drawCenteredText(_ text: String, in rect: CGRect, maximumSize: CGFloat, context: CGContext) {
-        var size = maximumSize
-        var line = Self.line(text, size: size)
-        while CTLineGetTypographicBounds(line, nil, nil, nil) > Double(rect.width * 0.92), size > 3 {
-            size -= 0.5
-            line = Self.line(text, size: size)
-        }
-        let width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+    /// One line of text centered on `anchor.x`, with its baseline at `anchor.y`.
+    private func drawLine(_ text: String, size: CGFloat, at anchor: CGPoint, context: CGContext) {
+        let width = NameLayout.textWidth(text, size: size)
         context.textMatrix = .identity
-        context.textPosition = CGPoint(x: rect.midX - width / 2, y: rect.midY - size * 0.35)
-        CTLineDraw(line, context)
-    }
-
-    private static func line(_ text: String, size: CGFloat) -> CTLine {
-        let font = CTFontCreateUIFontForLanguage(.emphasizedSystem, size, nil)
-            ?? CTFontCreateWithName("Helvetica-Bold" as CFString, size, nil)
-        let attributes: [NSAttributedString.Key: Any] = [.init(kCTFontAttributeName as String): font,
-                                                         .init(kCTForegroundColorAttributeName as String):
-                                                            CGColor(gray: 0, alpha: 1)]
-        return CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: attributes))
+        context.textPosition = CGPoint(x: anchor.x - width / 2, y: anchor.y)
+        CTLineDraw(NameLayout.line(text, size: size), context)
     }
 
     // MARK: Cut marks
