@@ -104,7 +104,8 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   first show `OutputOptionsView` (cut style, gap, fold line, starting from the sheet's settings, applied to
   that run only), then write the exporter's PDF or print it with zero margins, no scaling and no
   auto-rotation. The inspector shows the paper size with a Page Setup button.
-- Library ▸ Add Custom Pawn… (⌥⌘N) opens `AddCustomPawnView`: choose or drop an image, name, size and whether
+- Library ▸ Add Custom Pawn… (⌥⌘N) opens `AddCustomPawnView`: choose, drop or paste (⌘V or Paste Image; image data or a copied
+  file) an image, name, size and whether
   the name prints; the preview shows the front as it will print and dragging moves the art within its
   overflow (the focus point, using `PawnRenderer.fillRect`). `PawnLibrary.addCustomPawn(_:)` saves the image as
   PNG in `Custom/` and adds the pawn; the window also adds one copy to its sheet.

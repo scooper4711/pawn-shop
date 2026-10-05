@@ -3,8 +3,8 @@ import PawnShopCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Makes a pawn from the user's own art: choose or drop an image, name it, pick its size, and drag the
-/// preview to place the art in the outline.
+/// Makes a pawn from the user's own art: choose, drop or paste an image (such as one copied from Pluck), name
+/// it, pick its size, and drag the preview to place the art in the outline.
 struct AddCustomPawnView: View {
     /// Called with the new pawn, which is already in the library.
     let added: (Pawn) -> Void
@@ -22,19 +22,24 @@ struct AddCustomPawnView: View {
                 .frame(width: 200, height: 300)
                 .dropDestination(for: URL.self) { urls, _ in load(urls.first) }
             Form {
-                Button("Choose Image…", action: chooseImage)
+                HStack {
+                    Button("Choose Image…", action: chooseImage)
+                    Button("Paste Image", action: paste)
+                        .disabled(!Self.pasteboardHasImage)
+                }
                 TextField("Name", text: $name)
                 Picker("Size", selection: $size) {
                     ForEach(PawnSize.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
                 Toggle("Print the name", isOn: $showsName)
-                Text("Drop an image on the preview, then drag the art to place it.")
+                Text("Drop or paste (⌘V) an image, then drag the art in the preview to place it.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             .frame(width: 260)
         }
         .padding()
+        .onPasteCommand(of: [.image, .fileURL]) { _ in paste() }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
@@ -48,6 +53,21 @@ struct AddCustomPawnView: View {
         panel.allowedContentTypes = [.image]
         guard panel.runModal() == .OK else { return }
         _ = load(panel.url)
+    }
+
+    static var pasteboardHasImage: Bool {
+        NSImage.canInit(with: .general)
+    }
+
+    /// Takes the image on the clipboard: image data (as Pluck copies it) or a copied image file.
+    private func paste() {
+        let pasteboard = NSPasteboard.general
+        if let url = (pasteboard.readObjects(forClasses: [NSURL.self]) as? [URL])?.first, load(url) { return }
+        guard let pasted = NSImage(pasteboard: pasteboard),
+              let cgImage = pasted.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        else { return }
+        image = cgImage
+        focus = CGPoint(x: 0.5, y: 0.5)
     }
 
     @discardableResult

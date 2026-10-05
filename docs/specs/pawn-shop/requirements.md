@@ -33,7 +33,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
 
 ## R3 Custom pawns
-- R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen or dropped) with a name and a size:
+- R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied
+  from Pluck) with a name and a size:
   small, medium, large, huge or gargantuan.
 - R3.2 The image fills the pawn's outline; its position can be adjusted in a live preview.
 - R3.3 The back is the mirrored front.
