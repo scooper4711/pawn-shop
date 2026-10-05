@@ -9,6 +9,7 @@ struct SheetWindow: View {
     @State private var selectedEntry: UUID?
     @State private var showsInspector = true
     @State private var outputRequest: OutputKind?
+    @State private var addingCustomPawn = false
 
     var body: some View {
         NavigationSplitView {
@@ -39,6 +40,9 @@ struct SheetWindow: View {
                 SheetOutput.perform(kind, sheet: sheet, title: title, library: library)
             }
         }
+        .sheet(isPresented: $addingCustomPawn) {
+            AddCustomPawnView { document.sheet.add($0.id) }
+        }
         .dropDestination(for: URL.self) { urls, _ in
             let pdfs = urls.filter { $0.pathExtension.lowercased() == "pdf" }
             library.importPDFs(pdfs)
@@ -59,6 +63,7 @@ struct SheetWindow: View {
     private var actions: SheetActions {
         SheetActions(pageSetup: { SheetOutput.runPageSetup(for: &document.sheet) },
                      output: { outputRequest = $0 },
+                     addCustomPawn: { addingCustomPawn = true },
                      hasPawns: !document.sheet.entries.isEmpty)
     }
 

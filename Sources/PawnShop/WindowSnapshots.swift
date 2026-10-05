@@ -26,7 +26,11 @@ enum WindowSnapshots {
         library.pawns.prefix(3).forEach { sheet.add($0.id, copies: 2) }
         let panels: [(String, AnyView)] = [
             ("library", AnyView(LibraryBrowser(sheet: .constant(sheet)))),
-            ("inspector", AnyView(SheetInspector(sheet: .constant(sheet), selectedEntry: .constant(nil), pageCount: 1)))
+            ("inspector", AnyView(SheetInspector(sheet: .constant(sheet), selectedEntry: .constant(nil),
+                                                 pageCount: 1))),
+            ("custom", AnyView(CustomPawnPreview(image: sampleArt, name: "Sample Hero", size: .medium,
+                                                 focus: .constant(CGPoint(x: 0.3, y: 0.5)), showsName: true)
+                .frame(width: 200, height: 300)))
         ]
         for (name, panel) in panels {
             let window = NSWindow(contentRect: CGRect(x: -3000, y: 0, width: 380, height: 640), styleMask: [.titled],
@@ -37,6 +41,10 @@ enum WindowSnapshots {
             save(window, to: URL(fileURLWithPath: "\(prefix)-\(name).png"))
             window.orderOut(nil)
         }
+    }
+
+    private static var sampleArt: CGImage? {
+        NSApp.applicationIconImage.cgImage(forProposedRect: nil, context: nil, hints: nil)
     }
 
     private static func save(_ window: NSWindow, to url: URL) {

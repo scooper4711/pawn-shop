@@ -136,6 +136,13 @@ final class LibraryModel {
         perform { try $0.add(pawn) }
     }
 
+    /// Adds a pawn made from the user's art; nil when it could not be saved.
+    func addCustomPawn(_ new: NewCustomPawn) -> Pawn? {
+        var pawn: Pawn?
+        perform { pawn = try $0.addCustomPawn(new) }
+        return pawn
+    }
+
     private func perform(_ change: (PawnLibrary) throws -> Void) {
         guard let library else { return }
         do {

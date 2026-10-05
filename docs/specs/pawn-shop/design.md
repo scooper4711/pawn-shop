@@ -104,6 +104,10 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   first show `OutputOptionsView` (cut style, gap, fold line, starting from the sheet's settings, applied to
   that run only), then write the exporter's PDF or print it with zero margins, no scaling and no
   auto-rotation. The inspector shows the paper size with a Page Setup button.
+- Library ▸ Add Custom Pawn… (⌥⌘N) opens `AddCustomPawnView`: choose or drop an image, name, size and whether
+  the name prints; the preview shows the front as it will print and dragging moves the art within its
+  overflow (the focus point, using `PawnRenderer.fillRect`). `PawnLibrary.addCustomPawn(_:)` saves the image as
+  PNG in `Custom/` and adds the pawn; the window also adds one copy to its sheet.
 - For trying the app from a script: `PAWN_SHOP_LIBRARY` points it at another library folder, and
   `PAWN_SHOP_SNAPSHOT=<prefix>` draws each window, and the library and inspector panels on their own, to
   PNG files a few seconds after launch (drawing its own views needs no screen-recording access; glass panels

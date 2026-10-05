@@ -123,7 +123,7 @@ public final class PawnRenderer {
     }
 
     /// The image scaled to cover `rect`, its overflow split according to `focus` (0…1 on each axis).
-    static func fillRect(for imageSize: CGSize, in rect: CGRect, focus: CGPoint) -> CGRect {
+    public static func fillRect(for imageSize: CGSize, in rect: CGRect, focus: CGPoint) -> CGRect {
         guard imageSize.width > 0, imageSize.height > 0 else { return rect }
         let scale = max(rect.width / imageSize.width, rect.height / imageSize.height)
         let size = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)

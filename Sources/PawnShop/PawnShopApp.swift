@@ -25,12 +25,17 @@ struct PawnShopApp: App {
 /// The Library menu.
 struct LibraryCommands: Commands {
     let library: LibraryModel
+    @FocusedValue(\.sheetActions) private var actions
 
     var body: some Commands {
         CommandMenu("Library") {
             Button("Import PDF…") { library.chooseAndImportPDFs() }
                 .keyboardShortcut("i", modifiers: [.command, .shift])
             Button("Import from Scrollkeeper") { library.importFromScrollkeeper() }
+            Divider()
+            Button("Add Custom Pawn…") { actions?.addCustomPawn() }
+                .keyboardShortcut("n", modifiers: [.command, .option])
+                .disabled(actions == nil)
         }
     }
 }

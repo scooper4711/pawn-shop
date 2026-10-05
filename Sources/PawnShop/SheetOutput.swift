@@ -16,6 +16,7 @@ enum OutputKind: String, Identifiable {
 struct SheetActions {
     let pageSetup: () -> Void
     let output: (OutputKind) -> Void
+    let addCustomPawn: () -> Void
     let hasPawns: Bool
 }
 
