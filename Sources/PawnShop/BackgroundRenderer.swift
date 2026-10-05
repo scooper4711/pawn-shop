@@ -26,16 +26,16 @@ final class BackgroundRenderer: @unchecked Sendable {
     }
 
     /// The thumbnail if it is ready.
-    func cachedThumbnail(of pawn: Pawn, side: PawnSide = .front) -> CGImage? {
-        thumbnails.object(forKey: key(pawn.id, side))
+    func cachedThumbnail(of pawn: Pawn, side: PawnSide = .front, height: Int = thumbnailHeight) -> CGImage? {
+        thumbnails.object(forKey: key(pawn.id, side, height))
     }
 
     /// The thumbnail, rendering it first if needed.
-    func thumbnail(of pawn: Pawn, side: PawnSide = .front) async -> CGImage? {
-        if let image = cachedThumbnail(of: pawn, side: side) { return image }
+    func thumbnail(of pawn: Pawn, side: PawnSide = .front, height: Int = thumbnailHeight) async -> CGImage? {
+        if let image = cachedThumbnail(of: pawn, side: side, height: height) { return image }
         return await onQueue { renderer in
-            let image = renderer.thumbnail(of: pawn, side: side, height: Self.thumbnailHeight)
-            if let image { self.thumbnails.setObject(image, forKey: self.key(pawn.id, side)) }
+            let image = renderer.thumbnail(of: pawn, side: side, height: height)
+            if let image { self.thumbnails.setObject(image, forKey: self.key(pawn.id, side, height)) }
             return image
         }
     }
@@ -62,8 +62,9 @@ final class BackgroundRenderer: @unchecked Sendable {
 
     /// Drops a pawn's thumbnails, after it changed or was removed.
     func forget(_ id: UUID) {
-        thumbnails.removeObject(forKey: key(id, .front))
-        thumbnails.removeObject(forKey: key(id, .back))
+        for side in [PawnSide.front, .back] {
+            thumbnails.removeObject(forKey: key(id, side, Self.thumbnailHeight))
+        }
     }
 
     private func onQueue(_ work: @escaping @Sendable (PawnRenderer) -> CGImage?) async -> CGImage? {
@@ -76,7 +77,7 @@ final class BackgroundRenderer: @unchecked Sendable {
         }
     }
 
-    private func key(_ id: UUID, _ side: PawnSide) -> NSString {
-        "\(id)-\(side == .front ? "front" : "back")" as NSString
+    private func key(_ id: UUID, _ side: PawnSide, _ height: Int) -> NSString {
+        "\(id)-\(side == .front ? "front" : "back")-\(height)" as NSString
     }
 }

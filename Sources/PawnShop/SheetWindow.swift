@@ -10,10 +10,11 @@ struct SheetWindow: View {
     @State private var showsInspector = true
     @State private var outputRequest: OutputKind?
     @State private var addingCustomPawn = false
+    @State private var reviewingNames = false
 
     var body: some View {
         NavigationSplitView {
-            LibraryBrowser(sheet: $document.sheet)
+            LibraryBrowser(sheet: $document.sheet) { reviewingNames = true }
                 .navigationSplitViewColumnWidth(min: 280, ideal: 360, max: 600)
         } detail: {
             SheetPreview(sheet: $document.sheet, selectedEntry: $selectedEntry)
@@ -40,6 +41,7 @@ struct SheetWindow: View {
                 SheetOutput.perform(kind, sheet: sheet, title: title, library: library)
             }
         }
+        .sheet(isPresented: $reviewingNames) { ReviewNamesView() }
         .sheet(isPresented: $addingCustomPawn) {
             AddCustomPawnView { document.sheet.add($0.id) }
         }
@@ -64,6 +66,7 @@ struct SheetWindow: View {
         SheetActions(pageSetup: { SheetOutput.runPageSetup(for: &document.sheet) },
                      output: { outputRequest = $0 },
                      addCustomPawn: { addingCustomPawn = true },
+                     reviewNames: { reviewingNames = true },
                      hasPawns: !document.sheet.entries.isEmpty)
     }
 

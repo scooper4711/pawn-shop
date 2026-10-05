@@ -5,6 +5,8 @@ import SwiftUI
 /// The library: search, filters, and a grid of pawns to add to the sheet.
 struct LibraryBrowser: View {
     @Binding var sheet: PawnSheet
+    /// Opens the review of pawns needing a name.
+    var reviewNames: () -> Void = {}
     @Environment(LibraryModel.self) private var library
     @State private var query = PawnQuery()
     @State private var selection: Set<UUID> = []
@@ -18,6 +20,10 @@ struct LibraryBrowser: View {
         VStack(spacing: 0) {
             LibraryFilterBar(query: $query, sources: library.sources)
             Divider()
+            if !library.pawnsNeedingNames.isEmpty {
+                NeedsNamesBanner(count: library.pawnsNeedingNames.count, review: reviewNames)
+                Divider()
+            }
             if library.pawns.isEmpty {
                 EmptyLibraryView()
             } else {
@@ -125,6 +131,7 @@ struct LibraryFilterBar: View {
             }
             Toggle("Custom Pawns Only", isOn: Binding(get: { query.custom == true },
                                                       set: { query.custom = $0 ? true : nil }))
+            Toggle("Needs a Name", isOn: $query.needingNamesOnly)
             Divider()
             Button("Clear Filters") { query = PawnQuery(text: query.text) }
         } label: {
@@ -136,6 +143,7 @@ struct LibraryFilterBar: View {
 
     private var isFiltered: Bool {
         !query.sizes.isEmpty || !query.games.isEmpty || !query.sourceIDs.isEmpty || query.custom != nil
+            || query.needingNamesOnly
     }
 
     private func membership<Value: Hashable>(of value: Value,
@@ -176,6 +184,8 @@ struct PawnTile: View {
 struct PawnThumbnail: View {
     let pawn: Pawn
     var side: PawnSide = .front
+    /// Pixel height to render; larger for big previews.
+    var pixelHeight = BackgroundRenderer.thumbnailHeight
     @Environment(LibraryModel.self) private var library
     @State private var image: CGImage?
 
@@ -188,8 +198,9 @@ struct PawnThumbnail: View {
             }
         }
         .task(id: pawn) {
-            image = library.backgroundRenderer?.cachedThumbnail(of: pawn, side: side)
-            if image == nil { image = await library.backgroundRenderer?.thumbnail(of: pawn, side: side) }
+            let renderer = library.backgroundRenderer
+            image = renderer?.cachedThumbnail(of: pawn, side: side, height: pixelHeight)
+            if image == nil { image = await renderer?.thumbnail(of: pawn, side: side, height: pixelHeight) }
         }
     }
 }

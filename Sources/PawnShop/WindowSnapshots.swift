@@ -28,12 +28,13 @@ enum WindowSnapshots {
             ("library", AnyView(LibraryBrowser(sheet: .constant(sheet)))),
             ("inspector", AnyView(SheetInspector(sheet: .constant(sheet), selectedEntry: .constant(nil),
                                                  pageCount: 1))),
+            ("review", AnyView(ReviewNamesView().frame(width: 520, height: 560))),
             ("custom", AnyView(CustomPawnPreview(image: sampleArt, name: "Sample Hero", size: .medium,
                                                  focus: .constant(CGPoint(x: 0.3, y: 0.5)), showsName: true)
                 .frame(width: 200, height: 300)))
         ]
         for (name, panel) in panels {
-            let window = NSWindow(contentRect: CGRect(x: -3000, y: 0, width: 380, height: 640), styleMask: [.titled],
+            let window = NSWindow(contentRect: CGRect(x: -3000, y: 0, width: 540, height: 640), styleMask: [.titled],
                                   backing: .buffered, defer: false)
             window.contentView = NSHostingView(rootView: panel.environment(library))
             window.orderFront(nil)

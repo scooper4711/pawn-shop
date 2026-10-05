@@ -48,6 +48,9 @@ final class LibraryModel {
 
     func pawn(id: UUID) -> Pawn? { library?.pawn(id: id) }
 
+    /// Pawns waiting for a name; observed through `pawns`.
+    var pawnsNeedingNames: [Pawn] { pawns.filter(\.needsName) }
+
     func search(_ query: PawnQuery) -> [Pawn] { library?.search(query) ?? [] }
 
     func sourceTitle(of pawn: Pawn) -> String { library?.sourceTitle(of: pawn) ?? "" }
@@ -111,11 +114,17 @@ final class LibraryModel {
     static func summary(of reports: [ImportReport], failures: [String]) -> String {
         let added = reports.reduce(0) { $0 + $1.added }
         let known = reports.reduce(0) { $0 + $1.alreadyKnown }
-        let unnamed = reports.reduce(0) { $0 + $1.unnamed.count }
+        let borrowed = reports.reduce(0) { $0 + $1.namedFromOtherProducts }
+        let needingNames = reports.reduce(0) { $0 + $1.needingNames }
         let empty = reports.filter { $0.added + $0.alreadyKnown == 0 }.map(\.sourceTitle)
         var lines = ["Added \(added) pawns from \(reports.count) PDF\(reports.count == 1 ? "" : "s")."]
         if known > 0 { lines.append("\(known) were already in the library from other products.") }
-        if unnamed > 0 { lines.append("\(unnamed) outlines had no name printed; they are listed as \"Unnamed\".") }
+        if borrowed > 0 {
+            lines.append("\(borrowed) pawns with no name printed took the name of the same art elsewhere.")
+        }
+        if needingNames > 0 {
+            lines.append("\(needingNames) pawns have no name yet; name them with Library › Review Unnamed Pawns.")
+        }
         if !empty.isEmpty { lines.append("No pawns were found in: \(empty.joined(separator: ", ")).") }
         if !failures.isEmpty { lines.append("Could not import: \(failures.joined(separator: "; ")).") }
         return lines.joined(separator: "\n")

@@ -17,6 +17,7 @@ struct SheetActions {
     let pageSetup: () -> Void
     let output: (OutputKind) -> Void
     let addCustomPawn: () -> Void
+    let reviewNames: () -> Void
     let hasPawns: Bool
 }
 

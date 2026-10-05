@@ -113,6 +113,10 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   first show `OutputOptionsView` (cut style, gap, fold line, starting from the sheet's settings, applied to
   that run only), then write the exporter's PDF or print it with zero margins, no scaling and no
   auto-rotation. The inspector shows the paper size with a Page Setup button.
+- Library ▸ Review Unnamed Pawns… (also a banner above the grid, and a "Needs a Name" filter) opens
+  `ReviewNamesView`: the first pawn still needing a name, front and back large, its size and products, and a
+  name field. Save and Next (Return) renames it, which saves and clears `needsName`; Skip passes it over for
+  this review only. Closing the review loses nothing; reopening starts with the pawns still unnamed.
 - Library ▸ Add Custom Pawn… (⌥⌘N) opens `AddCustomPawnView`: choose, drop or paste (⌘V or Paste Image; image data or a copied
   file) an image, name, size and whether
   the name prints; the preview shows the front as it will print and dragging moves the art within its
