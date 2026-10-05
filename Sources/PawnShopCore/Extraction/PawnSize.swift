@@ -14,8 +14,9 @@ public enum PawnSize: String, Codable, CaseIterable, Sendable, Comparable {
         case .medium: CGSize(width: 81, height: 138)
         case .large: CGSize(width: 138, height: 180)
         case .huge: CGSize(width: 215, height: 281)
-        // Paizo prints no gargantuan pawns; this extends the table one step for custom art.
-        case .gargantuan: CGSize(width: 292, height: 382)
+        // Paizo prints no gargantuan pawns; this extends the table for custom art, kept short enough that
+        // its folded strip (10") fits on Letter paper.
+        case .gargantuan: CGSize(width: 288, height: 360)
         }
     }
 

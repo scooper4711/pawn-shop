@@ -68,17 +68,24 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   Monster Core reusing Bestiary art.
 
 ## Sheets and layout (`PawnShopCore/Sheet`)
-- `PawnSheet` (Codable, the `.pawnsheet` document): entries (pawn id, count) and `SheetSettings`: cut style
-  (`.shared` or `.gaps(points)`), show fold line, paper size and imageable rect.
+- `PawnSheet` (Codable, the `.pawnsheet` document): entries (pawn id, count; adding a pawn again adds to its
+  entry) and `SheetSettings`: cut style (`.sharedLines` or `.gaps(points)`, default gap 0.1"), show fold line,
+  and `PaperSetup` (paper size and imageable rect; Letter with ¼" margins by default).
 - A pawn prints as a strip of `w × 2h`: the front face in the lower half, the back face rotated 180° in the
   upper half, heads meeting at the fold. Folding over a horizontal line and viewing from behind is a 180°
   rotation, so the back reads upright, and because Paizo's back art is already mirrored the silhouettes match.
-- `SheetLayout.pages(for:settings:)` is shelf packing: strips sorted by size (largest first, then entry order),
-  placed left to right in rows, rows top to bottom, new pages as needed. With shared cut lines strips touch;
-  with gaps they are separated by the gap. Strips taller or wider than the printable area get a page each.
-- `PawnRenderer` draws a face: the source PDF page clipped to the face rect and rotated upright (vector text
-  and full-resolution art kept), or a custom image aspect-filled into the outline.
-- `SheetExporter` renders the layout to PDF: strips, cut lines (hairline gray) and dashed fold lines.
+- `SheetLayout.arrange(_:settings:)` is shelf packing: strips sorted tallest first (then widest, then sheet
+  order), placed left to right in rows from the top, rows top to bottom, new pages as needed, separated by the
+  gap (none with shared cut lines). It packs once with strips upright and once on their side (foot left, head
+  right) and keeps whichever needs fewer pages, upright on a tie: on Letter, sideways fits 18 medium strips a
+  page against 14 upright. A strip that fits only the other way is turned. Gargantuan custom pawns are
+  288×360 so their 10" strip fits on Letter.
+- `PawnRenderer` (keeps opened PDFs and images) draws a face: the source PDF page clipped to the face rect
+  and turned upright (vector text and full-resolution art kept), or a custom image covering the outline around
+  its focus point, mirrored for the back, with the name in a band at the foot. It draws strips with a hairline
+  gray cut outline and a dashed fold line, a gray placeholder for a missing pawn, and face thumbnails.
+- `SheetExporter` (sheet, library, renderer) builds the layout items (a missing pawn takes a medium strip),
+  the layout, each page's drawing (shared by preview and print), and the PDF at 100% scale.
 
 ## App (`PawnShop`)
 - `DocumentGroup` for `.pawnsheet`. `LibraryModel` (`@Observable`, main actor) wraps the shared library.

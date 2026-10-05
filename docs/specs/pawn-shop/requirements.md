@@ -20,9 +20,9 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.7 Importing a PDF that is already in the library changes nothing.
 - R1.8 Importing shows progress, then a report of the pawns added, the pawns whose art was already in the
   library, and the outlines with no name printed.
+- R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved.
 - R1.10 Pawns with no name printed (Heroes & Villains prints none) are imported as "Unnamed 1", "Unnamed 2"…
   and can be renamed.
-- R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved.
 
 ## R2 The library
 - R2.1 The library is kept between launches and shared by every sheet.
@@ -44,7 +44,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R4.3 The number of copies of each pawn can be raised or lowered, and a pawn removed.
 - R4.4 The sheet's pages are previewed live as pawns are added and removed; a strip can be selected in the
   preview and deleted.
-- R4.5 Strips are packed onto as many pages as needed, larger pawns first, within the printable area.
+- R4.5 Strips are packed onto as many pages as needed, larger pawns first, within the printable area, upright
+  or on their side, whichever takes fewer pages.
 - R4.6 Each sheet has a cut style: shared cut lines (strips edge to edge, so one cut separates two pawns) or
   gaps (each strip outlined separately, with an adjustable gap). The fold line can be shown or hidden.
 - R4.7 Paper size and margins come from File ▸ Page Setup… and are saved with the sheet.
