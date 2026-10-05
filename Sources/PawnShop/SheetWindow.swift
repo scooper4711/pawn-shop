@@ -4,9 +4,11 @@ import SwiftUI
 /// A sheet's window: the library on the left, the pages in the middle, the sheet's pawns on the right.
 struct SheetWindow: View {
     @Binding var document: PawnSheetDocument
+    let fileURL: URL?
     @Environment(LibraryModel.self) private var library
     @State private var selectedEntry: UUID?
     @State private var showsInspector = true
+    @State private var outputRequest: OutputKind?
 
     var body: some View {
         NavigationSplitView {
@@ -19,13 +21,24 @@ struct SheetWindow: View {
                         .inspectorColumnWidth(min: 240, ideal: 280)
                 }
                 .toolbar {
-                    ToolbarItem {
+                    ToolbarItemGroup {
+                        Button { outputRequest = .print } label: { Label("Print", systemImage: "printer") }
+                            .help("Print the sheet")
+                            .disabled(document.sheet.entries.isEmpty)
                         Button { showsInspector.toggle() } label: { Label("Sheet", systemImage: "sidebar.right") }
                             .help("Show or hide the sheet's pawns")
                     }
                 }
         }
         .overlay(alignment: .bottom) { ImportStatusBanner() }
+        .focusedSceneValue(\.sheetActions, actions)
+        .sheet(item: $outputRequest) { kind in
+            OutputOptionsView(kind: kind, settings: document.sheet.settings) { settings in
+                var sheet = document.sheet
+                sheet.settings = settings
+                SheetOutput.perform(kind, sheet: sheet, title: title, library: library)
+            }
+        }
         .dropDestination(for: URL.self) { urls, _ in
             let pdfs = urls.filter { $0.pathExtension.lowercased() == "pdf" }
             library.importPDFs(pdfs)
@@ -41,6 +54,16 @@ struct SheetWindow: View {
         } message: {
             Text(library.errorMessage ?? "")
         }
+    }
+
+    private var actions: SheetActions {
+        SheetActions(pageSetup: { SheetOutput.runPageSetup(for: &document.sheet) },
+                     output: { outputRequest = $0 },
+                     hasPawns: !document.sheet.entries.isEmpty)
+    }
+
+    private var title: String {
+        fileURL?.deletingPathExtension().lastPathComponent ?? "Pawns"
     }
 
     private var pageCount: Int {

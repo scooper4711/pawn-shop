@@ -11,11 +11,12 @@ struct PawnShopApp: App {
 
     var body: some Scene {
         DocumentGroup(newDocument: PawnSheetDocument()) { file in
-            SheetWindow(document: file.$document)
+            SheetWindow(document: file.$document, fileURL: file.fileURL)
                 .environment(library)
                 .frame(minWidth: 960, minHeight: 600)
         }
         .commands {
+            SheetFileCommands()
             LibraryCommands(library: library)
         }
     }

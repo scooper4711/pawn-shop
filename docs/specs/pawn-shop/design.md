@@ -98,7 +98,12 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   adds 1–6, renames or removes), `SheetPreview` (pages from `SheetExporter.layout()`, each rendered in the
   background; click a strip to select its pawn, Delete removes one copy), and `SheetInspector` (entries with
   steppers, cut style, gap and fold line, and the page count). PDFs dropped on the window are imported.
-- Menus: Library ▸ Import PDF… (⇧⌘I) and Import from Scrollkeeper.
+- Menus: Library ▸ Import PDF… (⇧⌘I) and Import from Scrollkeeper; File ▸ Page Setup… (⇧⌘P), Export PDF… (⌘E)
+  and Print… (⌘P), routed to the frontmost window through a focused scene value (`SheetActions`).
+- `SheetOutput`: Page Setup stores the chosen paper size and imageable area in the sheet. Export and Print
+  first show `OutputOptionsView` (cut style, gap, fold line, starting from the sheet's settings, applied to
+  that run only), then write the exporter's PDF or print it with zero margins, no scaling and no
+  auto-rotation. The inspector shows the paper size with a Page Setup button.
 - For trying the app from a script: `PAWN_SHOP_LIBRARY` points it at another library folder, and
   `PAWN_SHOP_SNAPSHOT=<prefix>` draws each window, and the library and inspector panels on their own, to
   PNG files a few seconds after launch (drawing its own views needs no screen-recording access; glass panels

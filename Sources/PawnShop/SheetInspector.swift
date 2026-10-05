@@ -22,12 +22,24 @@ struct SheetInspector: View {
             }
             Divider()
             CutSettingsForm(settings: $sheet.settings)
+            HStack {
+                Text(paperDescription).font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button("Page Setup…") { SheetOutput.runPageSetup(for: &sheet) }
+            }
+            .padding(.horizontal, 8)
+            .padding(.bottom, 8)
             Divider()
             Text(summary)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(8)
         }
+    }
+
+    private var paperDescription: String {
+        let size = sheet.settings.paper.paperSize
+        return String(format: "Paper %.4g × %.4g in", size.width / pointsPerInch, size.height / pointsPerInch)
     }
 
     private var summary: String {
