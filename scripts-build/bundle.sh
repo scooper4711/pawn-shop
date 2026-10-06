@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build "Pawn Shop.app" into build/ (release configuration, ad-hoc signed).
-# Usage: scripts-build/bundle.sh [--install]   (--install copies it to /Applications)
+# Usage: scripts-build/bundle.sh [--install]   (--install moves it to /Applications)
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -20,5 +20,9 @@ echo "Built $APP"
 if [[ "${1:-}" == "--install" ]]; then
     rm -rf "/Applications/Pawn Shop.app"
     cp -R "$APP" /Applications/
+    # Leave only the installed copy registered, so Finder and Spotlight launch that one.
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+        -u "$APP"
+    rm -rf "$APP"
     echo "Installed to /Applications/Pawn Shop.app"
 fi

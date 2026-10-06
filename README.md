@@ -41,7 +41,7 @@ Requires macOS 15+ and Xcode 16+ (Swift 6).
 swift test                         # unit tests
 swiftlint                          # lint
 scripts-build/bundle.sh            # builds "build/Pawn Shop.app"
-scripts-build/bundle.sh --install  # …and copies it to /Applications
+scripts-build/bundle.sh --install  # …and moves it to /Applications
 scripts-build/make-icon.sh         # redraws Resources/AppIcon.icns
 ```
 
