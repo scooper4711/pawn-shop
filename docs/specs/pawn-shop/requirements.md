@@ -64,4 +64,4 @@ is cut out and folded at the heads, giving a two-ply pawn.
 
 ## R6 The app
 - R6.1 macOS 15 or later.
-- R6.2 The app has its own icon: a folded paper pawn in front of a pawnshop sign.
+- R6.2 The app has its own icon, legible at small sizes: a wizard on a pawn standing in its base.

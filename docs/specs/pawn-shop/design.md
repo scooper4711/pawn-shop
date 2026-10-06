@@ -130,5 +130,6 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
 
 ## Icon
 `scripts-build/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
-`Resources/AppIcon.icns`: a folded paper pawn in a black base, in front of a brass three-ball pawnshop sign on
-deep green.
+`Resources/AppIcon.icns`: a cream pawn with Paizo's rounded top and red cut line, standing in a black base on
+green, with a wizard on it (pointed hat, white beard, blue robe, staff with a glowing orb). It uses few, bold
+shapes so the pawn and the hat still read at 32 px.
