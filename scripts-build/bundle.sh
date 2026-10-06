@@ -22,7 +22,7 @@ if [[ "${1:-}" == "--install" ]]; then
     cp -R "$APP" /Applications/
     # Leave only the installed copy registered, so Finder and Spotlight launch that one.
     /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
-        -u "$APP"
+        -u "$APP" 2>/dev/null || true  # Fails when it was never registered, which is fine.
     rm -rf "$APP"
     echo "Installed to /Applications/Pawn Shop.app"
 fi
