@@ -13,7 +13,9 @@ struct PawnShopApp: App {
         DocumentGroup(newDocument: PawnSheetDocument()) { file in
             SheetWindow(document: file.$document, fileURL: file.fileURL)
                 .environment(library)
-                .frame(minWidth: 960, minHeight: 600)
+                // Wide enough for the library and inspector at their ideal widths plus the page; any narrower and
+                // the split view clips both side columns instead of shrinking their contents.
+                .frame(minWidth: 1100, minHeight: 600)
         }
         .commands {
             SheetFileCommands()
