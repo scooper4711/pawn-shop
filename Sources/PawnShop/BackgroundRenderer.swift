@@ -40,6 +40,11 @@ final class BackgroundRenderer: @unchecked Sendable {
         }
     }
 
+    /// The front's art without its printed words, not kept, for work that looks at every pawn once.
+    func artImage(of pawn: Pawn, height: Int) async -> CGImage? {
+        await onQueue { $0.artImage(of: pawn, height: height) }
+    }
+
     /// A page `width` pixels wide.
     func image(of page: PageDrawing, width: Int) async -> CGImage? {
         await onQueue { renderer in

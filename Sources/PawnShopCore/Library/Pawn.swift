@@ -112,6 +112,10 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     public var appearances: [Appearance]
     /// True while the pawn has a stand-in name because none was printed; renaming clears it.
     public var needsName: Bool
+    /// Search keywords for what the art shows, such as "woman", "warrior" and "scimitar".
+    public var tags: [String] = []
+    /// The model that chose `tags`; empty until the pawn is tagged.
+    public var tagModel = ""
 
     public init(id: UUID = UUID(), name: String, size: PawnSize, art: PawnArt,
                 fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = [],
@@ -125,9 +129,11 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
         self.needsName = needsName
     }
 
-    private enum CodingKeys: String, CodingKey { case id, name, size, art, fingerprint, appearances, needsName }
+    private enum CodingKeys: String, CodingKey {
+        case id, name, size, art, fingerprint, appearances, needsName, tags, tagModel
+    }
 
-    /// Libraries saved before `needsName` existed read as having every name.
+    /// Libraries saved before `needsName` existed read as having every name, and before tags as untagged.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -137,6 +143,8 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
         fingerprint = try container.decode(ArtFingerprint.self, forKey: .fingerprint)
         appearances = try container.decode([Appearance].self, forKey: .appearances)
         needsName = try container.decodeIfPresent(Bool.self, forKey: .needsName) ?? false
+        tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
+        tagModel = try container.decodeIfPresent(String.self, forKey: .tagModel) ?? ""
     }
 
     public var isCustom: Bool {

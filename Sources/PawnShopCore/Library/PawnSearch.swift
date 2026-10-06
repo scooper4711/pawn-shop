@@ -2,7 +2,8 @@ import Foundation
 
 /// What to look for in the library.
 public struct PawnQuery: Equatable, Sendable {
-    /// Words that must all appear in the pawn's name or one of its products' titles.
+    /// Words that must all appear in the pawn's name or one of its products' titles, or begin a word of one of its
+    /// tags, so "man" finds the tag "man" but not "woman".
     public var text = ""
     /// Sizes to show; empty shows every size.
     public var sizes: Set<PawnSize> = []
@@ -38,6 +39,9 @@ public extension PawnLibrary {
             }
     }
 
+    /// Pawns not yet tagged by `model`, in library order.
+    func pawnsNeedingTags(by model: String) -> [Pawn] { pawns.filter { $0.tagModel != model } }
+
     /// Pawns still waiting for a name, in library order, so a review picks up where it stopped.
     var pawnsNeedingNames: [Pawn] { pawns.filter(\.needsName) }
 
@@ -67,8 +71,14 @@ public extension PawnLibrary {
               query.games.isEmpty || pawn.isCustom || sources.contains(where: { query.games.contains($0.game) })
         else { return false }
         let haystack = ([pawn.name] + sourceTitles(of: pawn)).joined(separator: " ")
-        return words.allSatisfy { haystack.range(of: $0, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+        let tagWords = pawn.tags.flatMap { $0.split(whereSeparator: \.isWhitespace) }
+        return words.allSatisfy { word in
+            haystack.range(of: word, options: Self.searchOptions) != nil
+                || tagWords.contains { $0.range(of: word, options: Self.searchOptions.union(.anchored)) != nil }
+        }
     }
+
+    private static var searchOptions: String.CompareOptions { [.caseInsensitive, .diacriticInsensitive] }
 }
 
 /// Finds the pawn PDFs Scrollkeeper has downloaded.

@@ -7,6 +7,7 @@ struct PawnShopApp: App {
 
     init() {
         WindowSnapshots.scheduleIfRequested()
+        PawnTaggingModel.shared.tagNewPawns()
     }
 
     var body: some Scene {
@@ -34,6 +35,8 @@ struct LibraryCommands: Commands {
             Button("Import PDF…") { library.chooseAndImportPDFs() }
                 .keyboardShortcut("i", modifiers: [.command, .shift])
             Button("Import from Scrollkeeper") { library.importFromScrollkeeper() }
+            Button("Tag New Pawns") { PawnTaggingModel.shared.tagNewPawnsReportingProblems() }
+                .disabled(PawnTaggingModel.shared.progress != nil)
             Divider()
             Button("Review Unnamed Pawns…") { actions?.reviewNames() }
                 .disabled(actions == nil || library.pawnsNeedingNames.isEmpty)

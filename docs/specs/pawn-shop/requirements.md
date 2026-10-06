@@ -29,11 +29,19 @@ is cut out and folded at the heads, giving a two-ply pawn.
 
 ## R2 The library
 - R2.1 The library is kept between launches and shared by every sheet.
-- R2.2 Search matches names and product titles, ignoring case and accents.
+- R2.2 Search matches names and product titles, ignoring case and accents, and the start of words in a pawn's
+  tags (R2.7), so "man" does not find "woman".
 - R2.3 Results can be filtered by size and by product.
 - R2.4 Pawns with the same name are shown next to each other with their product, so the art can be compared.
 - R2.5 A pawn can be removed from the library, or renamed.
 - R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
+- R2.7 Each pawn is tagged in the background with keywords for what its art shows (person, role, weapons,
+  armor, animals) by a vision model running locally in Ollama, without the printed name in view. Tagging
+  resumes at launch and after imports, skips quietly when Ollama is not running, and starts over when the
+  model is changed. A pawn's tags show in its tooltip and preview.
+- R2.8 Space shows the selected pawn's front and back large over the window, with its name, size, products
+  and tags. The arrow keys move the selection and the preview with it; Space, Escape or a click outside
+  closes it.
 
 ## R3 Custom pawns
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied

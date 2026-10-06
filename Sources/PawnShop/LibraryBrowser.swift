@@ -5,6 +5,8 @@ import SwiftUI
 /// The library: search, filters, and a grid of pawns to add to the sheet.
 struct LibraryBrowser: View {
     @Binding var sheet: PawnSheet
+    /// The pawn shown large over the window; Space shows and hides it, the arrow keys move it.
+    @Binding var preview: UUID?
     /// Opens the review of pawns needing a name.
     var reviewNames: () -> Void = {}
     @Environment(LibraryModel.self) private var library
@@ -12,8 +14,16 @@ struct LibraryBrowser: View {
     @State private var selection: Set<UUID> = []
     @State private var copies = 1
     @State private var renaming: Pawn?
+    /// The pawn the arrow keys move from: the one last clicked or arrowed to.
+    @State private var cursor: UUID?
+    @State private var columnCount = 1
+    @FocusState private var gridFocused: Bool
 
-    private let columns = [GridItem(.adaptive(minimum: 92, maximum: 130), spacing: 10, alignment: .top)]
+    private static let tileMinimumWidth: CGFloat = 92
+    private static let tileSpacing: CGFloat = 10
+    private static let gridPadding: CGFloat = 10
+    private let columns = [GridItem(.adaptive(minimum: tileMinimumWidth, maximum: 130), spacing: tileSpacing,
+                                    alignment: .top)]
 
     var body: some View {
         let results = library.pawns.isEmpty ? [] : library.search(query)
@@ -38,18 +48,69 @@ struct LibraryBrowser: View {
     }
 
     private func grid(_ results: [Pawn]) -> some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(results) { pawn in
-                    PawnTile(pawn: pawn, productTitle: library.shortSourceTitle(of: pawn),
-                             isSelected: selection.contains(pawn.id))
-                        .onTapGesture(count: 2) { sheet.add(pawn.id, copies: copies) }
-                        .onTapGesture { select(pawn.id) }
-                        .contextMenu { menu(for: pawn) }
-                        .help(library.sourceTitles(of: pawn).joined(separator: "\n"))
+        ScrollViewReader { scroller in
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(results) { pawn in
+                        PawnTile(pawn: pawn, productTitle: library.shortSourceTitle(of: pawn),
+                                 isSelected: selection.contains(pawn.id))
+                            .onTapGesture(count: 2) { sheet.add(pawn.id, copies: copies) }
+                            .onTapGesture { select(pawn.id) }
+                            .contextMenu { menu(for: pawn) }
+                            .help(help(for: pawn))
+                    }
                 }
+                .padding(Self.gridPadding)
             }
-            .padding(10)
+            .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
+                columnCount = GridNavigation.columns(fitting: width - 2 * Self.gridPadding,
+                                                     minimum: Self.tileMinimumWidth, spacing: Self.tileSpacing)
+            }
+            .focusable()
+            .focusEffectDisabled()
+            .focused($gridFocused)
+            .onKeyPress(.space) { togglePreview() }
+            .onKeyPress(.escape) { closePreview() }
+            .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in
+                guard let move = Self.gridMove(for: press.key) else { return .ignored }
+                return step(move, in: results, scroller: scroller)
+            }
+        }
+    }
+
+    private func togglePreview() -> KeyPress.Result {
+        guard preview == nil else { return closePreview() }
+        guard let cursor, selection.contains(cursor) else { return .ignored }
+        preview = cursor
+        return .handled
+    }
+
+    private func closePreview() -> KeyPress.Result {
+        guard preview != nil else { return .ignored }
+        preview = nil
+        return .handled
+    }
+
+    /// Selects the pawn `move` lands on, keeping it in view and in the preview when one is open.
+    private func step(_ move: GridMove, in results: [Pawn], scroller: ScrollViewProxy) -> KeyPress.Result {
+        guard !results.isEmpty else { return .ignored }
+        let current = results.firstIndex { $0.id == cursor } ?? 0
+        let target = results[GridNavigation.index(after: move, from: current, count: results.count,
+                                                  columns: columnCount)].id
+        selection = [target]
+        cursor = target
+        if preview != nil { preview = target }
+        scroller.scrollTo(target)
+        return .handled
+    }
+
+    private static func gridMove(for key: KeyEquivalent) -> GridMove? {
+        switch key {
+        case .leftArrow: .left
+        case .rightArrow: .right
+        case .upArrow: .up
+        case .downArrow: .down
+        default: nil
         }
     }
 
@@ -57,6 +118,7 @@ struct LibraryBrowser: View {
         HStack {
             Text("\(resultCount) pawn\(resultCount == 1 ? "" : "s")")
                 .foregroundStyle(.secondary)
+            TaggingStatus()
             Spacer()
             Stepper("Copies: \(copies)", value: $copies, in: 1...50)
                 .fixedSize()
@@ -65,6 +127,12 @@ struct LibraryBrowser: View {
                 .disabled(selection.isEmpty)
         }
         .padding(8)
+    }
+
+    /// The pawn's products and tags, shown on hover.
+    private func help(for pawn: Pawn) -> String {
+        let products = library.sourceTitles(of: pawn).joined(separator: "\n")
+        return pawn.tags.isEmpty ? products : products + "\n\n" + pawn.tags.joined(separator: ", ")
     }
 
     @ViewBuilder
@@ -82,6 +150,8 @@ struct LibraryBrowser: View {
 
     /// A click selects one pawn; Command-click adds or removes it from the selection.
     private func select(_ id: UUID) {
+        cursor = id
+        gridFocused = true
         if NSEvent.modifierFlags.contains(.command) {
             if selection.contains(id) { selection.remove(id) } else { selection.insert(id) }
         } else {
@@ -96,6 +166,23 @@ struct LibraryBrowser: View {
     }
 }
 
+/// A spinner while pawns are being tagged, or a warning when tagging stopped.
+struct TaggingStatus: View {
+    private let tagging = PawnTaggingModel.shared
+
+    var body: some View {
+        if let progress = tagging.progress {
+            ProgressView()
+                .controlSize(.small)
+                .help("Tagging pawns with \(tagging.tagger.model): \(progress.done) of \(progress.total)")
+        } else if let problem = tagging.problem {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundStyle(.secondary)
+                .help(problem + "\nLibrary › Tag New Pawns tries again.")
+        }
+    }
+}
+
 /// Search field and filter menus.
 struct LibraryFilterBar: View {
     @Binding var query: PawnQuery
@@ -103,7 +190,7 @@ struct LibraryFilterBar: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            TextField("Search pawns", text: $query.text)
+            TextField("Search names and tags", text: $query.text)
                 .textFieldStyle(.roundedBorder)
             filterMenu
                 .menuStyle(.borderlessButton)
@@ -152,56 +239,6 @@ struct LibraryFilterBar: View {
                 set: { isOn in
                     if isOn { query[keyPath: keyPath].insert(value) } else { query[keyPath: keyPath].remove(value) }
                 })
-    }
-}
-
-/// One pawn in the grid: its front, name, size and product.
-struct PawnTile: View {
-    let pawn: Pawn
-    let productTitle: String
-    let isSelected: Bool
-
-    var body: some View {
-        VStack(spacing: 3) {
-            PawnThumbnail(pawn: pawn)
-                .frame(height: 96)
-            Text(pawn.name)
-                .font(.caption.weight(.semibold))
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-            Text("\(pawn.size.displayName) · \(productTitle)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-        }
-        .padding(5)
-        .background(isSelected ? Color.accentColor.opacity(0.25) : .clear, in: RoundedRectangle(cornerRadius: 6))
-        .contentShape(Rectangle())
-    }
-}
-
-/// A pawn's face, rendered in the background.
-struct PawnThumbnail: View {
-    let pawn: Pawn
-    var side: PawnSide = .front
-    /// Pixel height to render; larger for big previews.
-    var pixelHeight = BackgroundRenderer.thumbnailHeight
-    @Environment(LibraryModel.self) private var library
-    @State private var image: CGImage?
-
-    var body: some View {
-        Group {
-            if let image {
-                Image(decorative: image, scale: 2).resizable().scaledToFit()
-            } else {
-                RoundedRectangle(cornerRadius: 4).fill(.quaternary)
-            }
-        }
-        .task(id: pawn) {
-            let renderer = library.backgroundRenderer
-            image = renderer?.cachedThumbnail(of: pawn, side: side, height: pixelHeight)
-            if image == nil { image = await renderer?.thumbnail(of: pawn, side: side, height: pixelHeight) }
-        }
     }
 }
 

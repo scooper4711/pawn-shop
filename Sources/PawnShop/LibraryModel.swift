@@ -53,6 +53,8 @@ final class LibraryModel {
 
     func search(_ query: PawnQuery) -> [Pawn] { library?.search(query) ?? [] }
 
+    func pawnsNeedingTags(by model: String) -> [Pawn] { library?.pawnsNeedingTags(by: model) ?? [] }
+
     func sourceTitle(of pawn: Pawn) -> String { library?.sourceTitle(of: pawn) ?? "" }
 
     func shortSourceTitle(of pawn: Pawn) -> String { library?.shortSourceTitle(of: pawn) ?? "" }
@@ -109,6 +111,7 @@ final class LibraryModel {
         }
         importProgress = nil
         importSummary = Self.summary(of: reports, failures: failures)
+        PawnTaggingModel.shared.tagNewPawns()
     }
 
     static func summary(of reports: [ImportReport], failures: [String]) -> String {
@@ -149,7 +152,18 @@ final class LibraryModel {
     func addCustomPawn(_ new: NewCustomPawn) -> Pawn? {
         var pawn: Pawn?
         perform { pawn = try $0.addCustomPawn(new) }
+        PawnTaggingModel.shared.tagNewPawns()
         return pawn
+    }
+
+    /// Records a pawn's tags; `saveTags()` saves them.
+    func setTags(_ tags: [String], by model: String, of id: UUID) {
+        library?.setTags(tags, by: model, of: id)
+        refresh()
+    }
+
+    func saveTags() {
+        perform { try $0.save() }
     }
 
     private func perform(_ change: (PawnLibrary) throws -> Void) {

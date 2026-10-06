@@ -11,10 +11,11 @@ struct SheetWindow: View {
     @State private var outputRequest: OutputKind?
     @State private var addingCustomPawn = false
     @State private var reviewingNames = false
+    @State private var previewedPawn: UUID?
 
     var body: some View {
         NavigationSplitView {
-            LibraryBrowser(sheet: $document.sheet) { reviewingNames = true }
+            LibraryBrowser(sheet: $document.sheet, preview: $previewedPawn) { reviewingNames = true }
                 .navigationSplitViewColumnWidth(min: 280, ideal: 360, max: 600)
         } detail: {
             SheetPreview(sheet: $document.sheet, selectedEntry: $selectedEntry)
@@ -33,6 +34,11 @@ struct SheetWindow: View {
                 }
         }
         .overlay(alignment: .bottom) { ImportStatusBanner() }
+        .overlay {
+            if let pawn = previewedPawn.flatMap(library.pawn(id:)) {
+                PawnPreview(pawn: pawn) { previewedPawn = nil }
+            }
+        }
         .focusedSceneValue(\.sheetActions, actions)
         .sheet(item: $outputRequest) { kind in
             OutputOptionsView(kind: kind, settings: document.sheet.settings) { settings in

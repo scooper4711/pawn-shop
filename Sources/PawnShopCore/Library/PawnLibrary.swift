@@ -138,6 +138,14 @@ public final class PawnLibrary {
         try update(pawn)
     }
 
+    /// Records the tags `model` chose for a pawn, without saving, since tagging a whole library would otherwise
+    /// write it out once per pawn; call `save()` after a batch.
+    public func setTags(_ tags: [String], by model: String, of id: UUID) {
+        guard let index = pawns.firstIndex(where: { $0.id == id }) else { return }
+        pawns[index].tags = tags
+        pawns[index].tagModel = model
+    }
+
     /// Removes pawns, and any custom art files only they used, and saves.
     public func remove(_ ids: Set<UUID>) throws {
         for pawn in pawns where ids.contains(pawn.id) {
@@ -161,7 +169,7 @@ public final class PawnLibrary {
         }
     }
 
-    func save() throws {
+    public func save() throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         do {

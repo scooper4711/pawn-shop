@@ -13,8 +13,15 @@ at the heads: the pawn is two sheets thick, and the base holds both.
   sized (small, medium, large, huge) and turned upright. Copies of the same art are stored once, also when
   another product reprints them; pawns that share a name but not their art (1e and 2e, variants) are kept
   apart. The library keeps its own copy of each PDF in `~/Library/Application Support/Pawn Shop`.
-- **Find:** search by name or product, and filter by size, game, product or custom pawns. Pawns with the same
-  name sit next to each other, so you can pick the art you like. Right-click to rename or remove a pawn.
+- **Find:** search by name, product or tag, and filter by size, game, product or custom pawns. Pawns with the
+  same name sit next to each other, so you can pick the art you like. Right-click to rename or remove a pawn.
+  Select a pawn and press Space to see it large, with its tags; the arrow keys move through the library,
+  and Space or a click outside closes it.
+- **Tags:** while the app runs, a vision model in [Ollama](https://ollama.com) on this Mac describes each
+  pawn's art in keywords such as "woman, warrior, shield, scimitar", ignoring the printed name. It needs
+  Ollama running and the model pulled (`ollama pull gemma3:12b`, about 8 s a pawn); without it, pawns stay
+  untagged and Library › Tag New Pawns tries again. Choose another model with
+  `defaults write com.github.scooper4711.PawnShop TaggingModel <model>`, which tags every pawn again.
 - **Build a sheet:** a sheet is a document (File › New, Save, Open Recent). Double-click a pawn, or set the
   copies and press Add to Sheet. The middle of the window shows the pages as they will print; click a strip
   and press Delete to remove a copy, or change copies in the inspector on the right. Strips are packed

@@ -25,7 +25,7 @@ enum WindowSnapshots {
         var sheet = PawnSheet()
         library.pawns.prefix(3).forEach { sheet.add($0.id, copies: 2) }
         let panels: [(String, AnyView)] = [
-            ("library", AnyView(LibraryBrowser(sheet: .constant(sheet)))),
+            ("library", AnyView(LibraryBrowser(sheet: .constant(sheet), preview: .constant(nil)))),
             ("inspector", AnyView(SheetInspector(sheet: .constant(sheet), selectedEntry: .constant(nil),
                                                  pageCount: 1))),
             ("review", AnyView(ReviewNamesView().frame(width: 520, height: 560))),

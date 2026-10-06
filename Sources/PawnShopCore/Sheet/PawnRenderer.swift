@@ -2,6 +2,7 @@ import CoreGraphics
 import CoreText
 import Foundation
 import ImageIO
+import PDFKit
 
 public enum PawnSide: Sendable {
     case front, back
@@ -22,6 +23,8 @@ public final class PawnRenderer {
     private let folders: LibraryFolders
     private var documents: [String: CGPDFDocument] = [:]
     private var images: [String: CGImage] = [:]
+    /// The same PDFs opened with PDFKit, which knows where their text is.
+    private var textDocuments: [String: PDFDocument] = [:]
 
     public init(folders: LibraryFolders) {
         self.folders = folders
@@ -80,6 +83,25 @@ public final class PawnRenderer {
 
     /// A bitmap of one face, `height` pixels tall; nil when the art can't be drawn.
     public func thumbnail(of pawn: Pawn, side: PawnSide = .front, height: Int) -> CGImage? {
+        bitmap(of: pawn, height: height) { context, rect in
+            self.drawFace(of: pawn, side: side, in: rect, context: context)
+        }
+    }
+
+    /// The front face with its printed words painted out, so a model describing it sees only the art.
+    public func artImage(of pawn: Pawn, height: Int) -> CGImage? {
+        var artOnly = pawn
+        if case .custom(var art) = pawn.art {
+            art.showsName = false
+            artOnly.art = .custom(art)
+        }
+        return bitmap(of: artOnly, height: height) { context, rect in
+            self.drawFace(of: artOnly, side: .front, in: rect, context: context)
+            self.paintOutText(of: artOnly, in: rect, context: context)
+        }
+    }
+
+    private func bitmap(of pawn: Pawn, height: Int, draw: (CGContext, CGRect) -> Void) -> CGImage? {
         let size = uprightSize(of: pawn)
         let width = max(1, Int((CGFloat(height) * size.width / size.height).rounded()))
         guard height > 0, let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
@@ -88,8 +110,24 @@ public final class PawnRenderer {
         else { return nil }
         context.setFillColor(gray: 1, alpha: 1)
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
-        drawFace(of: pawn, side: side, in: CGRect(x: 0, y: 0, width: width, height: height), context: context)
+        draw(context, CGRect(x: 0, y: 0, width: width, height: height))
         return context.makeImage()
+    }
+
+    /// Covers each line of text printed on a PDF pawn's front (its name, copyright and product badge) in white.
+    private func paintOutText(of pawn: Pawn, in rect: CGRect, context: CGContext) {
+        guard case .pdf(let sourceID, let front, _) = pawn.art,
+              let page = textDocument(sourceID)?.page(at: front.pageIndex),
+              let lines = page.selection(for: front.rect)?.selectionsByLine()
+        else { return }
+        context.saveGState()
+        context.clip(to: rect)
+        context.concatenate(front.transform(into: rect))
+        context.setFillColor(gray: 1, alpha: 1)
+        for line in lines {
+            context.fill(line.bounds(for: page).insetBy(dx: -1, dy: -1))
+        }
+        context.restoreGState()
     }
 
     /// Maps the upright strip (origin at its foot's left corner) onto its place on the page.
@@ -210,6 +248,13 @@ public final class PawnRenderer {
         if let document = documents[sourceID] { return document }
         let document = CGPDFDocument(folders.sourceFile(id: sourceID) as CFURL)
         documents[sourceID] = document
+        return document
+    }
+
+    private func textDocument(_ sourceID: String) -> PDFDocument? {
+        if let document = textDocuments[sourceID] { return document }
+        let document = PDFDocument(url: folders.sourceFile(id: sourceID))
+        textDocuments[sourceID] = document
         return document
     }
 
