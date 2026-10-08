@@ -12,10 +12,14 @@ An unofficial Mac app for printing the pawns from your Paizo pawn PDFs, for Path
 without duplex printing.
 
 Paizo's pawn PDFs put each pawn's back on the next page, mirrored, which rarely lines up when printed on
-both sides, and a single sheet makes a floppy pawn. Pawn Shop collects the pawns from those PDFs into a
-library and prints only the pawns you choose, each as one strip on one side of the paper: the front below,
-the back above it turned upside down, head to head. Cut the strip out and fold it at the heads: the pawn is
-two sheets thick, and a pawn base holds both.
+both sides, and a single sheet makes a floppy pawn. Needing six goblins means printing the goblins' whole page
+six times, along with every other pawn on it, and wasting a lot of paper. And sometimes there is no pawn for the
+creature you want at all, because it only appears as art in a Pathfinder or Starfinder scenario or a newer book.
+
+Pawn Shop collects the pawns from those PDFs into a library and prints only the pawns you choose, as many of
+each as you need, each as one strip on one side of the paper: the front below, the back above it turned upside
+down, head to head. Cut the strip out and fold it at the heads: the pawn is two sheets thick, and a pawn base
+holds both. For a creature without a pawn, make your own from any picture.
 
 Paizo's newer round tokens become pawns too, so a token box gives you folding pawns rather than flat
 discs.
