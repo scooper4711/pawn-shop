@@ -2,6 +2,26 @@ import CoreGraphics
 import Foundation
 import PDFKit
 
+/// How a pawn is printed in its PDF.
+public enum PrintedShape: Equatable, Sendable {
+    /// A standing pawn in its cut outline.
+    case pawn
+    /// A round token, its faces being the squares around its art's circle, with its art drawn alone.
+    case token(TokenPictures)
+}
+
+/// A token's art drawn alone, as PNG: transparent outside the art and its circle.
+public struct TokenPictures: Equatable, Sendable {
+    public var front: Data
+    /// Nil when the token has no back showing its art; the pawn's back is then the front mirrored.
+    public var back: Data?
+
+    public init(front: Data, back: Data? = nil) {
+        self.front = front
+        self.back = back
+    }
+}
+
 /// A distinct pawn found in a PDF: one piece of art with one name, however many copies were printed.
 public struct ExtractedPawn: Equatable, Sendable {
     /// Empty when no name is printed.
@@ -12,6 +32,7 @@ public struct ExtractedPawn: Equatable, Sendable {
     public var fingerprint: ArtFingerprint
     /// How many copies the PDF prints.
     public var copies: Int
+    public var shape: PrintedShape = .pawn
 }
 
 /// A cut outline with no name printed in it.
@@ -35,7 +56,7 @@ public enum PawnExtractionError: Error, Equatable, CustomStringConvertible {
     }
 }
 
-/// Finds the pawns in a Paizo pawn PDF, with their names, sizes and backs.
+/// Finds the pawns and round tokens in a Paizo pawn or token PDF, with their names, sizes and backs.
 public enum PawnExtractor {
     public static func extract(from url: URL) throws -> ExtractionResult {
         guard let document = PDFDocument(url: url), let first = document.page(at: 0)?.pageRef,
@@ -46,14 +67,15 @@ public enum PawnExtractor {
 
     static func extract(from document: CGPDFDocument, labels: LabelReader) -> ExtractionResult {
         var result = ExtractionResult()
-        for found in outlinedPawns(in: document) {
+        let art = foundArt(in: document)
+        for found in art.pawns {
             guard let size = PawnSize.classify(found.front.uprightSize) else { continue }
             let name = PawnLabel.name(from: labels.runs(onPage: found.front.pageIndex, in: found.front.rect))
-            if name.isEmpty {
-                result.unnamed.append(UnnamedOutline(pageIndex: found.front.pageIndex, rect: found.front.rect))
-            }
             add(ExtractedPawn(name: name, size: size, front: found.front, back: found.back,
-                              fingerprint: found.fingerprint, copies: 1), to: &result.pawns)
+                              fingerprint: found.fingerprint, copies: 1), to: &result)
+        }
+        for token in art.tokens {
+            if let pawn = token.extracted() { add(pawn, to: &result) }
         }
         return result
     }
@@ -65,40 +87,57 @@ public enum PawnExtractor {
         let fingerprint: ArtFingerprint
     }
 
-    /// Every outlined pawn, with its back from the mirrored page that follows, or else its front mirrored.
-    static func outlinedPawns(in document: CGPDFDocument) -> [FoundPawn] {
+    /// The pawns and tokens of a document, before their labels are read.
+    struct FoundArt {
+        var pawns: [FoundPawn] = []
+        var tokens: [PairedToken] = []
+    }
+
+    /// Every outlined pawn and round token, with its back from the mirrored page that follows, or else its front
+    /// mirrored.
+    static func foundArt(in document: CGPDFDocument) -> FoundArt {
         let pages = (0..<document.numberOfPages).map { index in
             var content = document.page(at: index + 1).map(PageScanner.scan) ?? PageContent()
             content.outlines = content.outlines.filter { $0.size != nil }
             return content
         }
-        var found: [FoundPawn] = []
+        let tokens = pages.map(TokenFinder.tokens(on:))
+        var found = FoundArt()
         var pageIndex = 0
         while pageIndex < pages.count {
-            let fronts = pages[pageIndex].outlines
-            let following = pageIndex + 1 < pages.count ? pages[pageIndex + 1] : PageContent()
-            let backs = PagePairing.backs(for: pages[pageIndex], among: following)
-            for (front, back) in zip(fronts, backs ?? Array(repeating: nil, count: fronts.count)) {
-                let frontFace = PawnFace(pageIndex: pageIndex, rect: front.rect, rotation: front.uprightRotation)
-                let backFace = back.map {
-                    PawnFace(pageIndex: pageIndex + 1, rect: $0.rect, rotation: $0.uprightRotation)
-                }
-                found.append(FoundPawn(front: frontFace, back: backFace ?? frontFace.mirroredCopy(),
-                                       fingerprint: pages[pageIndex].art(inside: front.rect)))
+            let next = pageIndex + 1
+            let pawnBacks = PagePairing.backs(for: pages[pageIndex], among: next < pages.count ? pages[next] : .init())
+            let tokenBacks = TokenPairing.backs(for: tokens[pageIndex], among: next < pages.count ? tokens[next] : [])
+            found.pawns += outlinedPawns(on: pages[pageIndex], at: pageIndex, backs: pawnBacks)
+            found.tokens += zip(tokens[pageIndex], tokenBacks ?? tokens[pageIndex].map { _ in nil }).map {
+                PairedToken(front: $0, back: $1, pageIndex: pageIndex)
             }
-            pageIndex += backs == nil ? 1 : 2
+            pageIndex += pawnBacks == nil && tokenBacks == nil ? 1 : 2
         }
         return found
     }
 
-    /// Counts a copy when the same name, size and art is already listed.
-    private static func add(_ pawn: ExtractedPawn, to pawns: inout [ExtractedPawn]) {
-        if let index = pawns.firstIndex(where: {
+    /// The outlined pawns on a page, with their backs from the next page when `backs` has them.
+    private static func outlinedPawns(on page: PageContent, at pageIndex: Int, backs: [Outline?]?) -> [FoundPawn] {
+        zip(page.outlines, backs ?? page.outlines.map { _ in nil }).map { front, back in
+            let frontFace = PawnFace(pageIndex: pageIndex, rect: front.rect, rotation: front.uprightRotation)
+            let backFace = back.map { PawnFace(pageIndex: pageIndex + 1, rect: $0.rect, rotation: $0.uprightRotation) }
+            return FoundPawn(front: frontFace, back: backFace ?? frontFace.mirroredCopy(),
+                             fingerprint: page.art(inside: front.rect))
+        }
+    }
+
+    /// Counts a copy when the same name, size and art is already listed; notes a pawn with no name.
+    private static func add(_ pawn: ExtractedPawn, to result: inout ExtractionResult) {
+        if pawn.name.isEmpty {
+            result.unnamed.append(UnnamedOutline(pageIndex: pawn.front.pageIndex, rect: pawn.front.rect))
+        }
+        if let index = result.pawns.firstIndex(where: {
             $0.name == pawn.name && $0.size == pawn.size && $0.fingerprint.matches(pawn.fingerprint)
         }) {
-            pawns[index].copies += 1
+            result.pawns[index].copies += 1
         } else {
-            pawns.append(pawn)
+            result.pawns.append(pawn)
         }
     }
 }

@@ -30,6 +30,17 @@ public enum PawnSize: String, Codable, CaseIterable, Sendable, Comparable {
         }
     }
 
+    /// The size of a creature on a round token `diameter` points across: up to 1" bases are medium (tokens don't
+    /// tell small from medium), 2" large, 3" huge, larger gargantuan. Halfway between bases splits them.
+    public static func token(diameter: CGFloat) -> PawnSize {
+        switch diameter / 72 {
+        case ..<1.5: .medium
+        case ..<2.5: .large
+        case ..<3.5: .huge
+        default: .gargantuan
+        }
+    }
+
     public static func < (lhs: PawnSize, rhs: PawnSize) -> Bool {
         lhs.order < rhs.order
     }
