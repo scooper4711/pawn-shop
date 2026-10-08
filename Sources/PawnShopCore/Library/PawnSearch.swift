@@ -46,7 +46,10 @@ public extension PawnLibrary {
         let pending = pawns.filter {
             ($0.tagModel != model && !$0.tagsCorrected) || ($0.needsName && $0.suggestedName.isEmpty)
         }
-        func rank(_ pawn: Pawn) -> Int { visible.contains(pawn.id) ? 0 : pawn.needsName ? 1 : 2 }
+        func rank(_ pawn: Pawn) -> Int {
+            if visible.contains(pawn.id) { return 0 }
+            return pawn.needsName ? 1 : 2
+        }
         return pending.enumerated()
             .sorted { (rank($0.element), $0.offset) < (rank($1.element), $1.offset) }
             .map(\.element)

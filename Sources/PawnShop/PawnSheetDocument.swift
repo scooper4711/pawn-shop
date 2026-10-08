@@ -23,7 +23,7 @@ struct PawnSheetDocument: FileDocument {
         sheet = try JSONDecoder().decode(PawnSheet.self, from: data)
     }
 
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+    func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return FileWrapper(regularFileWithContents: try encoder.encode(sheet))

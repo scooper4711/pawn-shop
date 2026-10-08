@@ -16,7 +16,7 @@ final class StubOllama: URLProtocol, @unchecked Sendable {
         return URLSession(configuration: configuration)
     }
 
-    override static func canInit(with request: URLRequest) -> Bool { true }
+    override static func canInit(with _: URLRequest) -> Bool { true }
     override static func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
@@ -30,7 +30,9 @@ final class StubOllama: URLProtocol, @unchecked Sendable {
         client?.urlProtocolDidFinishLoading(self)
     }
 
-    override func stopLoading() {}
+    override func stopLoading() {
+        // Replies are delivered at once in startLoading, so there is nothing to stop.
+    }
 }
 
 /// Ollama's reply carrying `tags` as the model's answer.

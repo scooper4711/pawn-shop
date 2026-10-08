@@ -29,7 +29,7 @@ struct DrawnPawn {
 }
 
 func pawnPDF(pages: [[DrawnPawn]]) -> Data {
-    makePDF(pages: pages.map { pawns in { context in pawns.forEach { $0.draw(context) } } })
+    makePDF(pages: pages.map { pawns in { context in for pawn in pawns { pawn.draw(context) } } })
 }
 
 @Suite struct PawnExtractorTests {

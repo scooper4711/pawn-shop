@@ -63,7 +63,7 @@ final class PawnTaggingModel {
         start { [library] in library.errorMessage = $0 }
     }
 
-    private func start(reportingProblem report: @escaping (String) -> Void = { _ in }) {
+    private func start(reportingProblem report: @escaping (String) -> Void = { _ in /* stay quiet */ }) {
         guard !isRunning else { return }
         isRunning = true
         Task {

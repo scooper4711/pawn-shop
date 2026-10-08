@@ -8,7 +8,7 @@ struct LibraryBrowser: View {
     /// The pawn shown large over the window; Space shows and hides it, the arrow keys move it.
     @Binding var preview: UUID?
     /// Opens the review of pawns needing a name.
-    var reviewNames: () -> Void = {}
+    var reviewNames: () -> Void = { /* no review unless the window provides one */ }
     @Environment(LibraryModel.self) private var library
     @State private var query = PawnQuery()
     @State private var selection: Set<UUID> = []
