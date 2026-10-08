@@ -59,6 +59,23 @@ import Testing
         #expect(!original.matches(different))
     }
 
+    @Test func matchesABackThatEmbedsTheArtMirrored() {
+        let front = ArtFingerprint(imageDigests: ["a"], thumbnail: thumbnail)
+        let back = ArtFingerprint(imageDigests: ["b"],
+                                  thumbnail: EmbeddedImage.thumbnail(of: horizontallyFlipped(artImage())))
+        let different = ArtFingerprint(imageDigests: ["c"],
+                                       thumbnail: EmbeddedImage.thumbnail(of: artImage(variant: 2)))
+        #expect(!front.matches(back))
+        #expect(front.matchesBack(back) && front.matchesBack(front))
+        #expect(!front.matchesBack(different))
+    }
+
+    @Test func flipsOnlyWholeThumbnails() {
+        let odd = ArtFingerprint(imageDigests: ["a"], thumbnail: [1, 2, 3])
+        #expect(odd.horizontallyFlipped == odd)
+        #expect(ArtFingerprint(imageDigests: ["a"]).horizontallyFlipped.thumbnail.isEmpty)
+    }
+
     @Test func measuresThumbnailDistanceByCorrelation() {
         let same = ArtFingerprint(imageDigests: ["a"], thumbnail: thumbnail)
         let inverted = ArtFingerprint(imageDigests: ["b"], thumbnail: thumbnail.map { 255 - $0 })

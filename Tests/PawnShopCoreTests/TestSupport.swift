@@ -104,6 +104,17 @@ func artImage(variant: Int = 0, width: Int = 60, height: Int = 90) -> CGImage {
     return context.makeImage()!
 }
 
+/// `image` mirrored left to right, as a duplex back page may embed it.
+func horizontallyFlipped(_ image: CGImage) -> CGImage {
+    let context = CGContext(data: nil, width: image.width, height: image.height, bitsPerComponent: 8,
+                            bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+    context.translateBy(x: CGFloat(image.width), y: 0)
+    context.scaleBy(x: -1, y: 1)
+    context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+    return context.makeImage()!
+}
+
 /// `image` re-encoded as JPEG, so a PDF embeds it with DCT compression.
 func jpegImage(_ image: CGImage, quality: Double = 0.9) -> CGImage {
     let data = NSMutableData()

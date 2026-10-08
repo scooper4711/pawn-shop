@@ -26,3 +26,22 @@ struct RealExtractionTests {
         #expect(thugs.map(\.copies) == [2])
     }
 }
+
+/// The Monster Core 2 Pawn Box prints its first pages without backs, in a grid that lines up with the next page.
+@Suite(.enabled(if: RealPDFs.named("Monster Core 2 Pawn Box") != nil))
+struct RealBackPairingTests {
+    let pawns = (try? PawnExtractor.extract(from: RealPDFs.named("Monster Core 2 Pawn Box")!).pawns) ?? []
+
+    @Test func mirrorsFrontsThatHaveNoBackPage() throws {
+        let fly = try #require(pawns.first { $0.name == "Fly, Giant" })
+        #expect(fly.back == fly.front.mirroredCopy())
+    }
+
+    @Test func takesBacksFromThePageThatRepeatsTheArt() throws {
+        let hag = try #require(pawns.first { $0.name == "Hag, Moon" })
+        let spellblade = try #require(pawns.first { $0.name == "Munavri Spellblade" })
+        #expect(hag.back.pageIndex == hag.front.pageIndex + 1 && !hag.back.mirrored)
+        #expect(spellblade.back.pageIndex == spellblade.front.pageIndex + 1)
+        #expect(hag.front.pageIndex != spellblade.front.pageIndex - 1)
+    }
+}

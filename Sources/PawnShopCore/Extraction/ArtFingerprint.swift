@@ -52,6 +52,20 @@ public struct ArtFingerprint: Codable, Hashable, Sendable {
         return imageDigests == other.imageDigests || thumbnailDistance(from: other) <= Self.matchingDistance
     }
 
+    /// True when `back` shows this art as a duplex back page prints it: the same images, or the same picture
+    /// as is or mirrored, since a back page draws the art flipped or embeds a flipped copy.
+    func matchesBack(_ back: ArtFingerprint) -> Bool {
+        matches(back) || matches(back.horizontallyFlipped)
+    }
+
+    /// The same art mirrored left to right: its thumbnail flipped.
+    var horizontallyFlipped: ArtFingerprint {
+        let columns = EmbeddedImage.thumbnailColumns
+        guard !thumbnail.isEmpty, thumbnail.count.isMultiple(of: columns) else { return self }
+        let rows = stride(from: 0, to: thumbnail.count, by: columns).map { thumbnail[$0..<$0 + columns].reversed() }
+        return ArtFingerprint(imageDigests: imageDigests, thumbnail: rows.flatMap { $0 })
+    }
+
     /// How unlike the thumbnails are, from 0 (identical patterns) to 200 (inverted): 100 × (1 − correlation).
     /// Correlation ignores overall brightness and contrast, so a shared plain background doesn't make
     /// different figures look alike. Infinite when the thumbnails can't be compared.

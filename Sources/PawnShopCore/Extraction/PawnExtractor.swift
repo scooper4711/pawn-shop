@@ -76,16 +76,15 @@ public enum PawnExtractor {
         var pageIndex = 0
         while pageIndex < pages.count {
             let fronts = pages[pageIndex].outlines
-            let following = pageIndex + 1 < pages.count ? pages[pageIndex + 1].outlines : []
-            let backs = PagePairing.backs(for: fronts, among: following)
+            let following = pageIndex + 1 < pages.count ? pages[pageIndex + 1] : PageContent()
+            let backs = PagePairing.backs(for: pages[pageIndex], among: following)
             for (front, back) in zip(fronts, backs ?? Array(repeating: nil, count: fronts.count)) {
                 let frontFace = PawnFace(pageIndex: pageIndex, rect: front.rect, rotation: front.uprightRotation)
                 let backFace = back.map {
                     PawnFace(pageIndex: pageIndex + 1, rect: $0.rect, rotation: $0.uprightRotation)
                 }
                 found.append(FoundPawn(front: frontFace, back: backFace ?? frontFace.mirroredCopy(),
-                                       fingerprint: ArtFingerprint(images: pages[pageIndex].images,
-                                                                   inside: front.rect)))
+                                       fingerprint: pages[pageIndex].art(inside: front.rect)))
             }
             pageIndex += backs == nil ? 1 : 2
         }
@@ -108,13 +107,23 @@ public enum PawnExtractor {
 enum PagePairing {
     static let tolerance: CGFloat = 3
 
-    /// The back outline of each front, or nil when `candidates` is not the fronts' back page.
-    static func backs(for fronts: [Outline], among candidates: [Outline]) -> [Outline?]? {
-        guard !fronts.isEmpty, let axis = mirrorAxis(fronts, candidates) else { return nil }
-        let backs = fronts.map { front in
-            candidates.first { isMirror($0, of: front, axis: axis) }
+    /// The back outline of each front, or nil when `candidates` is not the fronts' back page: at least half the
+    /// fronts need a back where their mirror image falls that shows the same art. Pawn grids are symmetric, so
+    /// a following page of other fronts lines up too; only the art tells them apart.
+    static func backs(for fronts: PageContent, among candidates: PageContent) -> [Outline?]? {
+        guard !fronts.outlines.isEmpty, let axis = mirrorAxis(fronts.outlines, candidates.outlines)
+        else { return nil }
+        let backs = fronts.outlines.map { front in candidates.outlines.first { isMirror($0, of: front, axis: axis) } }
+        let agreeing = zip(fronts.outlines, backs).count { front, back in
+            back.map { isBackArt(candidates.art(inside: $0.rect), of: fronts.art(inside: front.rect)) } ?? false
         }
-        return backs.compactMap { $0 }.count * 2 >= fronts.count ? backs : nil
+        return agreeing * 2 >= fronts.outlines.count ? backs : nil
+    }
+
+    /// True when the back shows the front's art, or either has no raster art to compare.
+    static func isBackArt(_ backArt: ArtFingerprint, of frontArt: ArtFingerprint) -> Bool {
+        guard !frontArt.imageDigests.isEmpty, !backArt.imageDigests.isEmpty else { return true }
+        return frontArt.matchesBack(backArt)
     }
 
     /// The most common sum of mirrored centers (twice the axis), over same-size outlines in the same row.
@@ -133,5 +142,12 @@ enum PagePairing {
     static func isMirror(_ back: Outline, of front: Outline, axis: CGFloat) -> Bool {
         back.size == front.size && abs(back.rect.minY - front.rect.minY) < tolerance
             && abs(axis - front.rect.midX - back.rect.midX) < tolerance
+    }
+}
+
+extension PageContent {
+    /// The fingerprint of the art drawn inside `rect`.
+    func art(inside rect: CGRect) -> ArtFingerprint {
+        ArtFingerprint(images: images, inside: rect)
     }
 }

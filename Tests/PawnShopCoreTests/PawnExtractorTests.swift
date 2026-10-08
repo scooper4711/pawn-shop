@@ -90,8 +90,31 @@ func pawnPDF(pages: [[DrawnPawn]]) -> Data {
         let front = Outline(rect: CGRect(x: 20, y: 600, width: 81, height: 138), headEdge: .top)
         let mirrored = Outline(rect: CGRect(x: 511, y: 600, width: 81, height: 138), headEdge: .top)
         let elsewhere = Outline(rect: CGRect(x: 300, y: 100, width: 81, height: 138), headEdge: .top)
-        #expect(PagePairing.backs(for: [front], among: [mirrored]) == [mirrored])
-        #expect(PagePairing.backs(for: [front], among: [elsewhere]) == nil)
-        #expect(PagePairing.backs(for: [], among: [mirrored]) == nil)
+        let page = { (outlines: [Outline]) in PageContent(outlines: outlines) }
+        #expect(PagePairing.backs(for: page([front]), among: page([mirrored])) == [mirrored])
+        #expect(PagePairing.backs(for: page([front]), among: page([elsewhere])) == nil)
+        #expect(PagePairing.backs(for: page([]), among: page([mirrored])) == nil)
+    }
+
+    @Test func doesNotTakeTheNextPageOfFrontsForBacks() throws {
+        let nextFronts = fronts.map { pawn in
+            var other = pawn.mirrored(pageWidth: letterPage.width)
+            other.art = artImage(variant: 3)
+            other.name = "KOBOLD"
+            return other
+        }
+        let result = try extract([fronts, nextFronts])
+        #expect(result.pawns.allSatisfy { $0.back == $0.front.mirroredCopy() })
+        #expect(result.pawns.contains { $0.name == "Kobold" && $0.front.pageIndex == 1 })
+    }
+
+    @Test func takesBacksThatEmbedTheArtMirrored() throws {
+        let backs = fronts.map { pawn in
+            var back = pawn.mirrored(pageWidth: letterPage.width)
+            back.art = pawn.art.map(horizontallyFlipped)
+            return back
+        }
+        let result = try extract([fronts, backs])
+        #expect(result.pawns.allSatisfy { $0.back.pageIndex == 1 })
     }
 }
