@@ -24,6 +24,8 @@
     <string>public.app-category.entertainment</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Not published, endorsed, or specifically approved by Paizo.</string>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

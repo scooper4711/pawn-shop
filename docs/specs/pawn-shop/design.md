@@ -1,7 +1,7 @@
 # Pawn Shop: design
 
 A SwiftPM macOS app in the style of Flip Map Printer: `PawnShopCore` holds all logic and is unit tested;
-`PawnShop` is a thin SwiftUI/AppKit layer; `scripts-build/bundle.sh` builds `Pawn Shop.app`.
+`PawnShop` is a thin SwiftUI/AppKit layer; `scripts/build-app.sh` builds `Pawn Shop.app`.
 
 ## Paizo pawn PDFs
 Measured across 61 Pathfinder and Starfinder pawn PDFs:
@@ -157,7 +157,16 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   come out blank in window drawings, hence the separate panels).
 
 ## Icon
-`scripts-build/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
+`scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
 `Resources/AppIcon.icns`: a cream pawn with Paizo's rounded top and red cut line, standing in a black base on
 green, with a wizard on it (pointed hat, white beard, blue robe, staff with a glowing orb). It uses few, bold
 shapes so the pawn and the hat still read at 32 px.
+
+## Releases
+- `make` wraps the scripts in `scripts/`: `build-app.sh` (release build, ad-hoc signed, `VERSION` written to
+  the bundle, `UNIVERSAL=1` for Apple silicon and Intel, `--install` to move it to /Applications),
+  `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`) and `coverage.sh` (fails below 80% line or region coverage
+  of `PawnShopCore`, and writes `coverage/sonar-coverage.xml`).
+- GitHub Actions: `ci.yml` lints strictly, runs the coverage gate (tests reading Paizo's PDFs are skipped, as
+  the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds a
+  universal disk image for each pushed `v*` tag and attaches it to the tag's GitHub release.
