@@ -27,6 +27,10 @@ It is free, and it works only with PDFs you bought: the app contains no Paizo ar
 *Printed strips: fold each at the heads and stand it in a pawn base. These are custom pawns made from
 public-domain illustrations (see [Sample art](#sample-art)); Paizo's pawns print the same way.*
 
+![The Pawn Shop library showing seven custom pawns with their names, sizes and sources, and an Add to Sheet button](docs/images/library.png)
+
+*The library: search the pawns, choose how many copies you want and add them to a sheet.*
+
 ## Features
 
 - Imports every pawn and token PDF that [Scrollkeeper](https://github.com/scooper4711/scrollkeeper) has
