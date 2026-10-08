@@ -7,26 +7,44 @@ struct ImagePlacement: Equatable {
     let rect: CGRect
     /// What the image shows.
     let identity: ImageIdentity
+    /// The circle the image is clipped to, as round tokens are; nil when it isn't clipped to one.
+    var clip: Circle?
+    /// Maps the image's unit square onto the page.
+    var transform = CGAffineTransform.identity
+    /// The image XObject, valid while its document is open.
+    var stream: CGPDFStreamRef?
 }
 
-/// The pawn outlines and images on a page.
+/// The pawn outlines, images and text on a page.
 struct PageContent {
     var outlines: [Outline] = []
     var images: [ImagePlacement] = []
+    var glyphs: [TextGlyph] = []
 }
 
-/// Walks a page's content stream, tracking the transformation matrix, and records the stroked pawn outlines
-/// and the images drawn.
+/// Walks a page's content stream, tracking the transformation matrix and circular clips, and records the
+/// stroked pawn outlines, the images drawn and the text shown.
 final class PageScanner {
     private static let maximumFormDepth = 8
 
-    private var transform = CGAffineTransform.identity
-    private var savedTransforms: [CGAffineTransform] = []
+    /// What `q` saves and `Q` restores.
+    private struct GraphicsState {
+        var transform = CGAffineTransform.identity
+        var clip: Circle?
+    }
+
+    private var state = GraphicsState()
+    private var savedStates: [GraphicsState] = []
+    /// True between `W` and the painting operator that makes the current path the clip.
+    private var clipPending = false
+    var text = TextState()
+    /// Decoders of the fonts used so far, by font dictionary.
+    var decoders: [Int: FontDecoder] = [:]
     private var formDepth = 0
     private var subpaths: [Subpath] = []
-    private var content = PageContent()
+    var content = PageContent()
     private var identities: [Int: ImageIdentity] = [:]
-    private let operators: CGPDFOperatorTableRef
+    let operators: CGPDFOperatorTableRef
 
     /// The pawn outlines stroked and the images drawn on `page`, in page space and drawing order.
     static func scan(_ page: CGPDFPage) -> PageContent {
@@ -45,6 +63,7 @@ final class PageScanner {
         registerStateOperators()
         registerPathOperators()
         registerPaintOperators()
+        registerTextOperators()
     }
 
     deinit { CGPDFOperatorTableRelease(operators) }
@@ -84,9 +103,12 @@ final class PageScanner {
         for name in ["f", "F", "f*", "n"] {
             CGPDFOperatorTableSetCallback(operators, name) { _, info in PageScanner.from(info).endPath() }
         }
+        for name in ["W", "W*"] {
+            CGPDFOperatorTableSetCallback(operators, name) { _, info in PageScanner.from(info).clipPending = true }
+        }
     }
 
-    private static func from(_ info: UnsafeMutableRawPointer?) -> PageScanner {
+    static func from(_ info: UnsafeMutableRawPointer?) -> PageScanner {
         Unmanaged<PageScanner>.fromOpaque(info!).takeUnretainedValue()
     }
 
@@ -98,14 +120,16 @@ final class PageScanner {
 
     // MARK: Graphics state
 
-    private func saveState() { savedTransforms.append(transform) }
+    private func saveState() { savedStates.append(state) }
 
-    private func restoreState() { transform = savedTransforms.popLast() ?? transform }
+    private func restoreState() { state = savedStates.popLast() ?? state }
 
     private func concatenateMatrix(_ scanner: CGPDFScannerRef) {
         guard let values = Self.popNumbers(scanner, count: 6) else { return }
-        transform = Self.matrix(values).concatenating(transform)
+        state.transform = Self.matrix(values).concatenating(state.transform)
     }
+
+    var transform: CGAffineTransform { state.transform }
 
     // MARK: Paths
 
@@ -144,10 +168,18 @@ final class PageScanner {
 
     private func stroke() {
         content.outlines += subpaths.compactMap { $0.outline() }
-        subpaths.removeAll()
+        endPath()
     }
 
-    private func endPath() { subpaths.removeAll() }
+    /// Ends the path, making it the clip when `W` asked: a single circle becomes the clip images are drawn in.
+    /// Another clip inside a circle keeps the circle.
+    private func endPath() {
+        if clipPending, subpaths.count == 1, let circle = subpaths[0].circle() {
+            state.clip = circle
+        }
+        clipPending = false
+        subpaths.removeAll()
+    }
 
     private func popPoints(_ scanner: CGPDFScannerRef, count: Int) -> [CGPoint]? {
         guard let values = Self.popNumbers(scanner, count: count * 2) else { return nil }
@@ -157,7 +189,7 @@ final class PageScanner {
     }
 
     /// Operands in the order written; the scanner pops them last first.
-    private static func popNumbers(_ scanner: CGPDFScannerRef, count: Int) -> [CGFloat]? {
+    static func popNumbers(_ scanner: CGPDFScannerRef, count: Int) -> [CGFloat]? {
         var values = [CGPDFReal](repeating: 0, count: count)
         for index in stride(from: count - 1, through: 0, by: -1) {
             guard CGPDFScannerPopNumber(scanner, &values[index]) else { return nil }
@@ -190,7 +222,8 @@ final class PageScanner {
         let identity = identities[key] ?? EmbeddedImage.identity(of: stream)
         identities[key] = identity
         let rect = CGRect(x: 0, y: 0, width: 1, height: 1).applying(transform)
-        content.images.append(ImagePlacement(rect: rect, identity: identity))
+        content.images.append(ImagePlacement(rect: rect, identity: identity, clip: state.clip, transform: transform,
+                                             stream: stream))
     }
 
     private func scanForm(_ stream: CGPDFStreamRef, dictionary: CGPDFDictionaryRef, parent: CGPDFContentStreamRef) {
@@ -198,15 +231,15 @@ final class PageScanner {
         var resources: CGPDFDictionaryRef?
         _ = CGPDFDictionaryGetDictionary(dictionary, "Resources", &resources)
 
-        let saved = (transform, savedTransforms, subpaths)
-        transform = Self.formMatrix(dictionary).concatenating(transform)
+        let saved = (state, savedStates, subpaths)
+        state.transform = Self.formMatrix(dictionary).concatenating(transform)
         subpaths = []
         formDepth += 1
         let formStream = CGPDFContentStreamCreateWithStream(stream, resources ?? dictionary, parent)
         scan(formStream)
         CGPDFContentStreamRelease(formStream)
         formDepth -= 1
-        (transform, savedTransforms, subpaths) = saved
+        (state, savedStates, subpaths) = saved
     }
 
     private static func formMatrix(_ dictionary: CGPDFDictionaryRef) -> CGAffineTransform {
@@ -218,7 +251,7 @@ final class PageScanner {
         return matrix(values)
     }
 
-    private static func matrix(_ values: [CGFloat]) -> CGAffineTransform {
+    static func matrix(_ values: [CGFloat]) -> CGAffineTransform {
         CGAffineTransform(a: values[0], b: values[1], c: values[2], d: values[3], tx: values[4], ty: values[5])
     }
 

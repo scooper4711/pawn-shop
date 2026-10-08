@@ -21,11 +21,12 @@ public struct PawnSource: Codable, Identifiable, Hashable, Sendable {
     public var game: Game { title.localizedCaseInsensitiveContains("Starfinder") ? .starfinder : .pathfinder }
 
     /// The title without the words every product shares: "Pathfinder Pawns: Bestiary 2 Box" becomes
-    /// "Bestiary 2", "Starfinder Alien Archive Pawn Box" becomes "Alien Archive".
+    /// "Bestiary 2", "Starfinder Alien Archive Pawn Box" becomes "Alien Archive", "Starfinder Alien Core Token
+    /// Box" becomes "Alien Core".
     public var shortTitle: String {
         var short = title
         for pattern in [#"^(Pathfinder|Starfinder)\s+"#, #"^Pawns:\s*"#, #"^(Pathfinder|Starfinder)\s+"#,
-                        #"\s+(Pawn\s+)?(Collection|Box)$"#, #"\s+Pawn$"#] {
+                        #"\s+((Pawn|Token)\s+)?(Collection|Box)$"#, #"\s+(Pawn|Tokens)$"#] {
             short = short.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
         }
         return short.isEmpty ? title : short
@@ -47,6 +48,36 @@ public enum PawnArt: Codable, Hashable, Sendable {
     case pdf(sourceID: String, front: PawnFace, back: PawnFace)
     /// An image the user added; the back is the front mirrored.
     case custom(CustomArt)
+    /// A round token on the pages of an imported PDF, drawn in a pawn's outline.
+    case token(TokenArt)
+
+    /// The imported PDF the faces come from; nil for custom art.
+    public var sourceID: String? {
+        switch self {
+        case .pdf(let sourceID, _, _): sourceID
+        case .token(let art): art.sourceID
+        case .custom: nil
+        }
+    }
+}
+
+/// A round token printed in an imported PDF, drawn in a pawn's outline: as large as it fits above the name, on
+/// white. Its art is kept drawn alone, so nothing printed around it (a dark page, its cut line) shows.
+public struct TokenArt: Codable, Hashable, Sendable {
+    public var sourceID: String
+    /// PNG files in the library's token folder.
+    public var frontPicture: String
+    /// Nil when the back is the front mirrored.
+    public var backPicture: String?
+
+    public init(sourceID: String, frontPicture: String, backPicture: String? = nil) {
+        self.sourceID = sourceID
+        self.frontPicture = frontPicture
+        self.backPicture = backPicture
+    }
+
+    /// Every picture file the token uses.
+    public var pictures: [String] { [frontPicture] + (backPicture.map { [$0] } ?? []) }
 }
 
 /// How a custom image is sized to the pawn.

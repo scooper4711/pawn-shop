@@ -19,6 +19,16 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
 - A page holds several copies of a pawn that differ only in a colored badge. Newer PDFs reuse one image
   object for the copies; older ones embed each copy again with different compression. One name can also
   have different art.
+- Token PDFs print round tokens instead. Each token's art is images clipped to a circle (a `W n` path of
+  curves, sometimes cut flat on one side), reaching a 1/8" bleed past the cut. Measured on two:
+  - Alien Core Token Box: art pages alternate with label pages, which mirror the art pages' positions and
+    print each token's number, name and copyright on a dark disc. The red cut circles are one raster overlay
+    across the page; colored bands at the foot tell copies apart. Clips are 90, 162 and 232 pt (1", 2", 3"
+    cuts); art reaching past the circle is embedded as separately cropped images per copy.
+  - Murder in Metal City Tokens: 62 pt clips on a full-page dark background image, the art transparent
+    around the figure (a soft mask), the cut line a filled vector ring, and the name set along the rim one
+    letter per text object, twice (outline and fill), with copy numbers ("Smog Scamp 2"). The second page is
+    the duplex back. The font maps a hyphen through its ToUnicode CMap only.
 - Not yet handled: pawns printed without outlines (the second half of Monster Core, Dawn of Flame), pages
   that are only a raster image (the second half of NPC Core), and terrain sets with rectangular outlines.
 
@@ -27,8 +37,22 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   form XObjects (with their `Matrix`), and building paths from `m l c v y re h`.
   - On `S`/`s`/`B`/`b` it records each subpath with two curves and otherwise straight edges as an `Outline`:
     its bounding rect in page space and the edge holding the curves (`headEdge`).
-  - On `Do` of an image it records an `ImagePlacement`: the rect and the image's `ImageIdentity` (SHA-256
-    of its data and a 16×24 grayscale thumbnail of its decoded pixels), computed once per image object.
+  - On `Do` of an image it records an `ImagePlacement`: the rect, transform and stream, the circle it is
+    clipped to (a `W` path of one subpath with at least three curves whose points all lie on a fitted circle,
+    kept through `q`/`Q`), and the image's `ImageIdentity` (SHA-256 of its data and a 16×24 grayscale
+    thumbnail of its decoded pixels), computed once per image object.
+  - It records each piece of text shown (`Tj`, `TJ`, `'`, `"`) where its text matrix (`BT`, `Tm`, `Td`,
+    `TD`) puts it, decoded through the font's ToUnicode CMap (`FontDecoder`: `bfchar` and `bfrange`).
+- `TokenFinder` turns a page's clip circles 36–306 pt across, outside pawn outlines and with art images, into
+  `FoundToken`s with their images, fingerprint and the text inside. `TokenPairing` pairs token pages like
+  outline pages (most common mirror axis over same-row, same-size circles): a mirrored token is the back when
+  it shows the same art, or when it carries words and the front has none (a label side). Names come from the
+  token's text in lines (letters shown one by one join into a line), dropping lines without letters (token
+  numbers), the copyright and repeated lines. The size is the clip less the bleed: under 1.5" medium, 2.5"
+  large, 3.5" huge, else gargantuan. `TokenPicture` draws the token's own images alone, with their soft masks,
+  clipped to the circle, into a PNG at the sharpest image's resolution (at most 600 dpi): the background, cut
+  line, bands and printed names are left out. Same-name copies whose crops differ too much to match stay
+  separate pawns (four in the Alien Core box).
 - `PawnSize.classify(_:)` matches an outline's upright size to the table within ±4 pt.
 - `PawnExtractor`:
   - pairs page *n* with *n+1* when at least half of *n*'s outlines have a same-size outline at the mirrored
@@ -47,12 +71,14 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
 - Stored under `~/Library/Application Support/Pawn Shop/`:
   - `Sources/<sha256>.pdf`: a copy of each imported PDF;
   - `Custom/<file>`: custom pawn art;
+  - `Tokens/<file>`: tokens' art drawn alone (PNG), written when an import is committed;
   - `library.json`: sources and pawns (`StoredLibrary`, with a version number). Thumbnails are stored as
     base64 data; the whole collection (about 8,000 pawns from 61 PDFs) is under 10 MB.
 - `PawnSource`: id (SHA-256 of the file), title (from the file name, without product codes and " PDF"),
   import date, original path and byte count (to recognize a file again without hashing it), and the game,
   read from the title.
-- `Pawn`: id, name, size, fingerprint, `needsName`, `art` (`.pdf(sourceID, front, back)` or `.custom(CustomArt)`) and
+- `Pawn`: id, name, size, fingerprint, `needsName`, `art` (`.pdf(sourceID, front, back)`, `.custom(CustomArt)`
+  or `.token(TokenArt)`: source id and front and optional back picture files) and
   `appearances` (each product printing the art, with its copies; the first supplies the faces).
   `CustomArt`: image file name, scaling (`.fill` covers the face; `.fit` shows the whole picture in the area
   above the name band), focus point (where the image sits within its room to move: the overflow when filling,
@@ -61,7 +87,7 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   - `prepareImport(of:)` hashes and extracts a PDF without touching the library, so it can run off the main
     thread; `commit(_:)` copies the file, adds the source, and merges each pawn into an existing one with the
     same name, size and matching art (adding an appearance) or adds it; then saves. A known file is a no-op.
-  - `add`, `update`, `rename` (which clears `needsName`) and `remove` (deleting custom art files) save
+  - `add`, `update`, `rename` (which clears `needsName`) and `remove` (deleting custom art and token pictures) save
     immediately.
   - Nameless pawns (`PawnMerging.swift`): an extracted pawn with no name merges into a pawn with the same art
     when its product is in `NamelessProducts` (Heroes & Villains) and `ArtFingerprint.isSameArt(as:)` holds:
@@ -71,7 +97,7 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
     its name. `pawnsNeedingNames` lists them in library order.
   - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name or a product title;
     filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
-- `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn".
+- `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn" or "token".
 - Importing all 61 PDFs takes about 25 seconds (release build); about 420 pawns merge across products, such as
   Monster Core reusing Bestiary art.
 
@@ -90,7 +116,9 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   288×360 so their 10" strip fits on Letter.
 - `PawnRenderer` (keeps opened PDFs and images) draws a face: the source PDF page clipped to the face rect
   and turned upright (vector text and full-resolution art kept), or a custom image covering the outline around
-  its focus point, mirrored for the back, with the name in a band at the foot. `NameLayout` fits the name: one line at full size
+  its focus point, mirrored for the back, with the name in a band at the foot, or a token's picture cut round
+  as large as fits above the name band, on white (the front mirrored for the back when it has no back
+  picture). `NameLayout` fits the name: one line at full size
   (60% of a 13% band) if it fits 92% of the width, else two lines at that size (the band grows), and only then
   smaller type, down to 3 pt. It draws strips with a hairline
   gray cut outline and a dashed fold line, a gray placeholder for a missing pawn, and face thumbnails.

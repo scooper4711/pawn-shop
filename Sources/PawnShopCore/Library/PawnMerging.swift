@@ -29,10 +29,10 @@ extension ArtFingerprint {
 extension PawnLibrary {
     /// Adds an extracted pawn: as another product printing art the library has, by giving its name to
     /// nameless art, or as a new pawn.
-    func merge(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) {
+    func merge(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) throws {
         let appearance = Appearance(sourceID: source.id, copies: found.copies)
         if found.name.isEmpty {
-            mergeNameless(found, from: source, into: &report)
+            try mergeNameless(found, from: source, into: &report)
         } else if let index = pawns.firstIndex(where: {
             $0.name == found.name && $0.size == found.size && $0.fingerprint.matches(found.fingerprint)
         }) {
@@ -44,11 +44,12 @@ extension PawnLibrary {
             pawns[index].appearances.append(appearance)
             report.alreadyKnown += 1
         } else {
-            add(found, from: source, into: &report)
+            try add(found, from: source, into: &report)
         }
     }
 
-    private func mergeNameless(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) {
+    private func mergeNameless(_ found: ExtractedPawn, from source: PawnSource,
+                               into report: inout ImportReport) throws {
         let appearance = Appearance(sourceID: source.id, copies: found.copies)
         if NamelessProducts.contains(source), let index = pawns.firstIndex(where: {
             !$0.needsName && !$0.isCustom && $0.size == found.size && $0.fingerprint.isSameArt(as: found.fingerprint)
@@ -63,7 +64,7 @@ extension PawnLibrary {
         } else {
             var nameless = found
             nameless.name = NamelessProducts.standInName(for: source)
-            add(nameless, from: source, into: &report)
+            try add(nameless, from: source, into: &report)
         }
     }
 
@@ -78,13 +79,33 @@ extension PawnLibrary {
     }
 
     /// Adds a new pawn; one carrying a stand-in name is marked as needing a name.
-    private func add(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) {
+    private func add(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) throws {
         let needsName = found.name == NamelessProducts.standInName(for: source)
         let appearance = Appearance(sourceID: source.id, copies: found.copies)
-        pawns.append(Pawn(name: found.name, size: found.size,
-                          art: .pdf(sourceID: source.id, front: found.front, back: found.back),
+        pawns.append(Pawn(name: found.name, size: found.size, art: try art(of: found, from: source),
                           fingerprint: found.fingerprint, appearances: [appearance], needsName: needsName))
         report.added += 1
         if needsName { report.needingNames += 1 }
+    }
+
+    /// The art of a new pawn; a token's pictures are written to the token folder.
+    private func art(of found: ExtractedPawn, from source: PawnSource) throws -> PawnArt {
+        switch found.shape {
+        case .pawn:
+            return .pdf(sourceID: source.id, front: found.front, back: found.back)
+        case .token(let pictures):
+            return .token(TokenArt(sourceID: source.id, frontPicture: try writeTokenPicture(pictures.front),
+                                   backPicture: try pictures.back.map(writeTokenPicture)))
+        }
+    }
+
+    private func writeTokenPicture(_ png: Data) throws -> String {
+        let file = "\(UUID().uuidString).png"
+        do {
+            try png.write(to: folders.tokens.appendingPathComponent(file))
+        } catch {
+            throw PawnLibraryError.saveFailed("writing token picture \(file): \(error.localizedDescription)")
+        }
+        return file
     }
 }

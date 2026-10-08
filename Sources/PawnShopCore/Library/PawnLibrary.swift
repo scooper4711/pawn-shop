@@ -56,6 +56,7 @@ public final class PawnLibrary {
         self.folder = folder
         try FileManager.default.createDirectory(at: sourcesFolder, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: customFolder, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: folders.tokens, withIntermediateDirectories: true)
         let index = folder.appendingPathComponent(Self.indexFile)
         guard FileManager.default.fileExists(atPath: index.path) else { return }
         let stored = try JSONDecoder().decode(StoredLibrary.self, from: Data(contentsOf: index))
@@ -104,7 +105,7 @@ public final class PawnLibrary {
                                   originalPath: prepared.file.path, byteCount: prepared.byteCount))
         let source = sources[sources.count - 1]
         for found in prepared.extraction.pawns {
-            merge(found, from: source, into: &report)
+            try merge(found, from: source, into: &report)
         }
         try save()
         return report
@@ -161,11 +162,18 @@ public final class PawnLibrary {
         pawns[index].suggestedName = name
     }
 
-    /// Removes pawns, and any custom art files only they used, and saves.
+    /// Removes pawns, and any custom art and token pictures only they used, and saves.
     public func remove(_ ids: Set<UUID>) throws {
         for pawn in pawns where ids.contains(pawn.id) {
-            if case .custom(let art) = pawn.art {
+            switch pawn.art {
+            case .custom(let art):
                 try? FileManager.default.removeItem(at: customFolder.appendingPathComponent(art.imageFile))
+            case .token(let art):
+                for file in art.pictures {
+                    try? FileManager.default.removeItem(at: folders.tokens.appendingPathComponent(file))
+                }
+            case .pdf:
+                break
             }
         }
         pawns.removeAll { ids.contains($0.id) }
@@ -218,6 +226,8 @@ public struct LibraryFolders: Hashable, Sendable {
     public var sources: URL { root.appendingPathComponent("Sources", isDirectory: true) }
     /// Images for custom pawns.
     public var custom: URL { root.appendingPathComponent("Custom", isDirectory: true) }
+    /// Tokens' art drawn alone (see `TokenArt`).
+    public var tokens: URL { root.appendingPathComponent("Tokens", isDirectory: true) }
 
     public func sourceFile(id: String) -> URL { sources.appendingPathComponent("\(id).pdf") }
 }

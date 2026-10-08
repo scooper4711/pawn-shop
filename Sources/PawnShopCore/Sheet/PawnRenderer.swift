@@ -8,8 +8,8 @@ public enum PawnSide: Sendable {
     case front, back
 }
 
-/// Draws pawns from the library: single faces for thumbnails, and folded strips for printing.
-/// It keeps the source PDFs and custom images it has opened. It needs only the library's folders, so a
+/// Draws pawns from the library: single faces for thumbnails, and folded strips for printing. It keeps the
+/// source PDFs, custom images and token pictures it has opened. It needs only the library's folders, so a
 /// renderer can be made for a background thread; each renderer must stay on one thread.
 public final class PawnRenderer {
     static let cutLineWidth: CGFloat = 0.3
@@ -20,7 +20,7 @@ public final class PawnRenderer {
     /// The share of the pawn's width a name may use.
     static let nameWidthFraction: CGFloat = 0.92
 
-    private let folders: LibraryFolders
+    let folders: LibraryFolders
     private var documents: [String: CGPDFDocument] = [:]
     private var images: [String: CGImage] = [:]
     /// The same PDFs opened with PDFKit, which knows where their text is.
@@ -38,7 +38,7 @@ public final class PawnRenderer {
     public func uprightSize(of pawn: Pawn) -> CGSize {
         switch pawn.art {
         case .pdf(_, let front, _): front.uprightSize
-        case .custom: pawn.size.outlineSize
+        case .custom, .token: pawn.size.outlineSize
         }
     }
 
@@ -56,6 +56,8 @@ public final class PawnRenderer {
                             context: context)
             // The name reads the right way round on both faces.
             if art.showsName { drawNameBand(pawn.name, in: rect, context: context) }
+        case .token:
+            drawToken(of: pawn, side: side, in: rect, context: context)
         }
         context.restoreGState()
     }
@@ -91,6 +93,11 @@ public final class PawnRenderer {
     /// The front face with its printed words painted out, so a model describing it sees only the art, `height`
     /// pixels tall upright. Art printed on its side, as the words along it show, is turned to read level.
     public func artImage(of pawn: Pawn, height: Int) -> CGImage? {
+        if case .token(let art) = pawn.art {
+            return bitmap(of: pawn, height: height) { context, rect in
+                self.drawTokenPicture(art, side: .front, in: Self.tokenCircle(in: rect), context: context)
+            }
+        }
         var artOnly = pawn
         if case .custom(var art) = pawn.art {
             art.showsName = false
@@ -167,7 +174,7 @@ public final class PawnRenderer {
             context.translateBy(x: rect.midX * 2, y: 0)
             context.scaleBy(x: -1, y: 1)
         }
-        if let image = image(art.imageFile) {
+        if let image = image(folders.custom.appendingPathComponent(art.imageFile)) {
             context.interpolationQuality = .high
             context.draw(image, in: Self.artRect(for: CGSize(width: image.width, height: image.height),
                                                  in: rect, focus: art.focus, scaling: art.scaling))
@@ -178,6 +185,11 @@ public final class PawnRenderer {
     /// Where custom art may go: the whole face, or above the name when fitting the whole picture.
     public static func artArea(for art: CustomArt, named name: String, in rect: CGRect) -> CGRect {
         guard art.scaling == .fit, art.showsName else { return rect }
+        return areaAboveName(name, in: rect)
+    }
+
+    /// The face above the band holding the name.
+    public static func areaAboveName(_ name: String, in rect: CGRect) -> CGRect {
         let band = nameBandHeight(for: name, in: rect)
         return CGRect(x: rect.minX, y: rect.minY + band, width: rect.width, height: rect.height - band)
     }
@@ -197,7 +209,7 @@ public final class PawnRenderer {
 
     /// The name across the foot on a white band: one line if it fits, else two at the same size (the band
     /// grows to hold them), and only then smaller type.
-    private func drawNameBand(_ name: String, in rect: CGRect, context: CGContext) {
+    func drawNameBand(_ name: String, in rect: CGRect, context: CGContext) {
         let layout = Self.nameLayout(for: name, in: rect)
         let leading = layout.fontSize * 1.15
         let block = leading * CGFloat(layout.lines.count)
@@ -224,7 +236,7 @@ public final class PawnRenderer {
                        fontSize: rect.height * nameBandFraction * 0.6)
     }
 
-    private func drawPlaceholder(in rect: CGRect, context: CGContext) {
+    func drawPlaceholder(in rect: CGRect, context: CGContext) {
         context.setFillColor(gray: 0.9, alpha: 1)
         context.fill(rect)
         let size = NameLayout.fit("Missing pawn", width: rect.width * Self.nameWidthFraction,
@@ -270,12 +282,11 @@ public final class PawnRenderer {
         return document
     }
 
-    private func image(_ file: String) -> CGImage? {
-        if let image = images[file] { return image }
-        let url = folders.custom.appendingPathComponent(file)
+    func image(_ url: URL) -> CGImage? {
+        if let image = images[url.path] { return image }
         let image = CGImageSourceCreateWithURL(url as CFURL, nil)
             .flatMap { CGImageSourceCreateImageAtIndex($0, 0, nil) }
-        images[file] = image
+        images[url.path] = image
         return image
     }
 }
