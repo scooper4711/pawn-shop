@@ -19,7 +19,8 @@ creature you want at all, because it only appears as art in a Pathfinder or Star
 Pawn Shop collects the pawns from those PDFs into a library and prints only the pawns you choose, as many of
 each as you need, each as one strip on one side of the paper: the front below, the back above it turned upside
 down, head to head. Cut the strip out and fold it at the heads: the pawn is two sheets thick, and a pawn base
-holds both. For a creature without a pawn, make your own from any picture.
+holds both. For a creature without a pawn, make your own from any picture, such as the art from a scenario
+PDF, which [Pluck](https://github.com/scooper4711/pluck) gets out for you.
 
 Paizo's newer round tokens become pawns too, so a token box gives you folding pawns rather than flat
 discs.
@@ -95,7 +96,9 @@ After that it opens normally.
 - **Print:** File › Page Setup… (⇧⌘P) picks the paper, then File › Print… (⌘P) or Export PDF… (⌘E). Print at
   100% scale (Actual Size), so the pawns fit their bases.
 - **Your own art:** Library › Add Custom Pawn… (⌥⌘N): choose, drop or paste an image, name it, pick a size,
-  and drag the preview to place the art. The back is the front mirrored.
+  and drag the preview to place the art. The back is the front mirrored. To use a creature's art from a
+  scenario or book PDF, open the PDF in [Pluck](https://github.com/scooper4711/pluck) and drag or copy the
+  picture from there.
 
 ### Tagging
 
