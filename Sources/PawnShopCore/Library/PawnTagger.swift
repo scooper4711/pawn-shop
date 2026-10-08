@@ -93,7 +93,7 @@ public struct OllamaTagger: Sendable {
     public func tagsAndName(for image: CGImage) async throws -> PawnDescription {
         let reply = try await answer(.tagsAndName, about: image)
         let name = SuggestedName.normalized(try Self.name(fromReply: reply))
-        guard !name.isEmpty else { throw PawnTaggingError.unreadableReply(String(decoding: reply, as: UTF8.self)) }
+        guard !name.isEmpty else { throw PawnTaggingError.unreadableReply(Self.text(of: reply)) }
         return PawnDescription(tags: PawnTags.normalized(try Self.tags(fromReply: reply), name: name),
                                suggestedName: name)
     }
@@ -123,7 +123,7 @@ public struct OllamaTagger: Sendable {
     /// The tags in Ollama's reply: `{"response": "{\"tags\": [...]}"}`, or `{"error": "..."}`.
     static func tags(fromReply data: Data) throws -> [String] {
         guard let tags = try answer(fromReply: data)["tags"] as? [String] else {
-            throw PawnTaggingError.unreadableReply(String(decoding: data, as: UTF8.self))
+            throw PawnTaggingError.unreadableReply(Self.text(of: data))
         }
         return tags
     }
@@ -131,14 +131,19 @@ public struct OllamaTagger: Sendable {
     /// The name in Ollama's reply: `{"response": "{\"tags\": [...], \"name\": \"...\"}"}`.
     static func name(fromReply data: Data) throws -> String {
         guard let name = try answer(fromReply: data)["name"] as? String else {
-            throw PawnTaggingError.unreadableReply(String(decoding: data, as: UTF8.self))
+            throw PawnTaggingError.unreadableReply(Self.text(of: data))
         }
         return name
     }
 
+    /// A reply as text for an error message; a reply that isn't UTF-8 is described by its size.
+    static func text(of reply: Data) -> String {
+        String(bytes: reply, encoding: .utf8) ?? "\(reply.count) bytes that are not text"
+    }
+
     /// The model's answer inside Ollama's reply, or the error Ollama answered with.
     private static func answer(fromReply data: Data) throws -> [String: Any] {
-        let text = String(decoding: data, as: UTF8.self)
+        let text = Self.text(of: data)
         guard let reply = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw PawnTaggingError.unreadableReply(text)
         }

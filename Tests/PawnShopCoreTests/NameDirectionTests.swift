@@ -26,8 +26,9 @@ import Testing
         // The red side is the one red at its edge where the opposite edge is blue.
         let opposite = ["top": "bottom", "right": "left", "bottom": "top", "left": "right"]
         return sides.keys.sorted().first { side in
-            let (x, y) = sides[side]!, (oppositeX, oppositeY) = sides[opposite[side]!]!
-            return canvas.color(atX: x, y: y) == "red" && canvas.color(atX: oppositeX, y: oppositeY) == "blue"
+            let (column, row) = sides[side]!, (oppositeColumn, oppositeRow) = sides[opposite[side]!]!
+            return canvas.color(atX: column, y: row) == "red"
+                && canvas.color(atX: oppositeColumn, y: oppositeRow) == "blue"
         } ?? "nowhere"
     }
 
