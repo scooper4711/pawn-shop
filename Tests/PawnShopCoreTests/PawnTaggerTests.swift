@@ -35,8 +35,13 @@ final class StubOllama: URLProtocol, @unchecked Sendable {
 
 /// Ollama's reply carrying `tags` as the model's answer.
 func ollamaReply(tags: [String]) throws -> Data {
-    let answer = String(bytes: try JSONSerialization.data(withJSONObject: ["tags": tags]), encoding: .utf8) ?? ""
-    return try JSONSerialization.data(withJSONObject: ["model": "test", "response": answer, "done": true])
+    try ollamaReply(answer: ["tags": tags])
+}
+
+/// Ollama's reply carrying `answer` as the model's JSON answer.
+func ollamaReply(answer: [String: Any]) throws -> Data {
+    let text = String(bytes: try JSONSerialization.data(withJSONObject: answer), encoding: .utf8) ?? ""
+    return try JSONSerialization.data(withJSONObject: ["model": "test", "response": text, "done": true])
 }
 
 @Suite struct PawnTaggerTests {
@@ -48,7 +53,7 @@ func ollamaReply(tags: [String]) throws -> Data {
 
     @Test func asksForTagsOfTheArt() throws {
         let tagger = OllamaTagger(model: "gemma3:4b", endpoint: URL(string: "http://ollama.test:1234")!)
-        let request = try tagger.request(for: Data("png".utf8))
+        let request = try tagger.request(for: Data("png".utf8), asking: .tags)
         #expect(request.url?.absoluteString == "http://ollama.test:1234/api/generate")
         #expect(request.httpMethod == "POST")
         let body = try #require(try JSONSerialization.jsonObject(with: request.httpBody ?? Data()) as? [String: Any])
@@ -56,6 +61,47 @@ func ollamaReply(tags: [String]) throws -> Data {
         #expect(body["images"] as? [String] == [Data("png".utf8).base64EncodedString()])
         #expect(body["stream"] as? Bool == false)
         #expect((body["format"] as? [String: Any])?["required"] as? [String] == ["tags"])
+        #expect(body["prompt"] as? String == OllamaTagger.prompt)
+    }
+
+    @Test func asksForANameOnlyWhenAskedForTagsAndName() throws {
+        let request = try OllamaTagger().request(for: Data("png".utf8), asking: .tagsAndName)
+        let body = try #require(try JSONSerialization.jsonObject(with: request.httpBody ?? Data()) as? [String: Any])
+        let format = try #require(body["format"] as? [String: Any])
+        #expect(format["required"] as? [String] == ["tags", "name"])
+        #expect((format["properties"] as? [String: Any])?["name"] != nil)
+        let prompt = try #require(body["prompt"] as? String)
+        #expect(prompt.hasPrefix(OllamaTagger.prompt) && prompt.contains("at most three words"))
+        #expect(!OllamaTagger.prompt.contains("three words"))
+    }
+
+    @Test func tidiesTheSuggestedName() {
+        #expect(SuggestedName.normalized("  goblin ARCHER. ") == "Goblin Archer")
+        #expect(SuggestedName.normalized("captain of the guard") == "Captain of the")
+        #expect(SuggestedName.normalized("the frost giant jarl") == "The Frost Giant")
+        #expect(SuggestedName.normalized("half-orc") == "Half-orc")
+        #expect(SuggestedName.normalized(" ... ").isEmpty)
+    }
+
+    @Test func tagsAndNamesAnImageThroughOllama() async throws {
+        let reply = try ollamaReply(answer: ["tags": ["Goblin", "bow", "fantasy"], "name": "goblin archer"])
+        let tagger = OllamaTagger(endpoint: URL(string: "http://naming.test")!,
+                                  session: StubOllama.session(host: "naming.test", reply: reply))
+        let description = try await tagger.tagsAndName(for: artImage())
+        #expect(description == PawnDescription(tags: ["goblin", "bow"], suggestedName: "Goblin Archer"))
+    }
+
+    @Test(arguments: zip([1, 2, 3], [#"{"tags": ["bow"]}"#, #"{"tags": ["bow"], "name": " . "}"#, #"{"name": "Goblin"}"#]))
+    func reportsRepliesWithoutAName(index: Int, answer: String) async throws {
+        let host = "unnamed\(index).test"
+        let reply = try JSONSerialization.data(withJSONObject: ["response": answer])
+        let tagger = OllamaTagger(endpoint: URL(string: "http://\(host)")!,
+                                  session: StubOllama.session(host: host, reply: reply))
+        await #expect {
+            try await tagger.tagsAndName(for: artImage())
+        } throws: { error in
+            (error as? PawnTaggingError).map { if case .unreadableReply = $0 { true } else { false } } ?? false
+        }
     }
 
     @Test func readsTheTagsFromTheReply() throws {
@@ -133,6 +179,28 @@ func ollamaReply(tags: [String]) throws -> Data {
         #expect(library.search(PawnQuery(text: "ogr")).map(\.name) == ["Ogre"])
     }
 
+    @Test func asksAboutPawnsNeedingANameFirstUntilOneIsSuggested() throws {
+        let library = try library()
+        let named = Pawn(name: "Hero", size: .medium, art: .custom(CustomArt(imageFile: "hero.png")))
+        let nameless = Pawn(name: "Unknown Heroes", size: .medium, art: .custom(CustomArt(imageFile: "x.png")),
+                            needsName: true)
+        try library.add(named)
+        try library.add(nameless)
+        #expect(library.pawnsNeedingTags(by: "model").map(\.id) == [nameless.id, named.id])
+        library.setTags(["bow"], by: "model", of: named.id)
+        library.setTags(["bow"], by: "model", of: nameless.id)
+        #expect(library.pawnsNeedingTags(by: "model").map(\.id) == [nameless.id])
+        library.setSuggestedName("Elf Archer", of: nameless.id)
+        library.setSuggestedName("Ignored", of: UUID())
+        try library.save()
+        let reopened = try self.library()
+        #expect(reopened.pawn(id: nameless.id)?.suggestedName == "Elf Archer")
+        #expect(reopened.pawnsNeedingTags(by: "model").isEmpty)
+        try reopened.rename(nameless.id, to: "Elf Archer")
+        #expect(reopened.pawn(id: nameless.id)?.suggestedName == "")
+        #expect(reopened.pawn(id: nameless.id)?.needsName == false)
+    }
+
     @Test func readsPawnsSavedBeforeTags() throws {
         var pawn = Pawn(name: "Old", size: .small, art: .custom(CustomArt(imageFile: "old.png")))
         pawn.tags = ["axe"]
@@ -140,8 +208,9 @@ func ollamaReply(tags: [String]) throws -> Data {
         #expect(json["tags"] as? [String] == ["axe"])
         json["tags"] = nil
         json["tagModel"] = nil
+        json["suggestedName"] = nil
         let old = try JSONDecoder().decode(Pawn.self, from: JSONSerialization.data(withJSONObject: json))
-        #expect(old.tags.isEmpty && old.tagModel.isEmpty)
+        #expect(old.tags.isEmpty && old.tagModel.isEmpty && old.suggestedName.isEmpty)
     }
 }
 

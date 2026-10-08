@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import Observation
 import PawnShopCore
@@ -24,6 +25,8 @@ final class PawnTaggingModel {
 
     @ObservationIgnored private let library: LibraryModel
     @ObservationIgnored private var isRunning = false
+    /// Pawns this run has asked about, so one the model can't name isn't asked about again until the next run.
+    @ObservationIgnored private var asked: Set<UUID> = []
 
     init(library: LibraryModel) {
         self.library = library
@@ -60,35 +63,55 @@ final class PawnTaggingModel {
 
     private func run(_ tagger: OllamaTagger) async {
         problem = nil
+        asked = []
         // Pawns added while a run is going are picked up by the next pass.
-        var pending = library.pawnsNeedingTags(by: tagger.model)
+        var pending = pawnsToAsk(tagger)
         while !pending.isEmpty, problem == nil {
             await tag(pending, with: tagger)
-            pending = library.pawnsNeedingTags(by: tagger.model)
+            pending = pawnsToAsk(tagger)
         }
         progress = nil
+    }
+
+    private func pawnsToAsk(_ tagger: OllamaTagger) -> [Pawn] {
+        library.pawnsNeedingTags(by: tagger.model).filter { !asked.contains($0.id) }
     }
 
     private func tag(_ pawns: [Pawn], with tagger: OllamaTagger) async {
         defer { library.saveTags() }
         for (index, pawn) in pawns.enumerated() {
             progress = TaggingProgress(done: index, total: pawns.count)
+            asked.insert(pawn.id)
             do {
-                library.setTags(try await tags(of: pawn, with: tagger), by: tagger.model, of: pawn.id)
+                try await describe(pawn, with: tagger)
             } catch let error as PawnTaggingError where error.stopsTagging {
                 problem = "\(error)"
                 return
-            } catch {
+            } catch where pawn.tagModel != tagger.model {
                 // One pawn the model can't describe is left without tags rather than holding up the rest.
                 library.setTags([], by: tagger.model, of: pawn.id)
+            } catch {
+                // A pawn already tagged that the model couldn't name keeps its tags, and is asked again next run.
             }
             if index % Self.saveInterval == Self.saveInterval - 1 { library.saveTags() }
         }
     }
 
-    private func tags(of pawn: Pawn, with tagger: OllamaTagger) async throws -> [String] {
+    /// Tags the pawn, and suggests a name for it too when it was printed without one.
+    private func describe(_ pawn: Pawn, with tagger: OllamaTagger) async throws {
+        let image = try await artImage(of: pawn)
+        guard pawn.needsName else {
+            library.setTags(try await tagger.tags(for: image, name: pawn.name), by: tagger.model, of: pawn.id)
+            return
+        }
+        let description = try await tagger.tagsAndName(for: image)
+        library.setTags(description.tags, by: tagger.model, of: pawn.id)
+        library.setSuggestedName(description.suggestedName, of: pawn.id)
+    }
+
+    private func artImage(of pawn: Pawn) async throws -> CGImage {
         guard let image = await library.backgroundRenderer?.artImage(of: pawn, height: Self.imageHeight)
         else { throw PawnTaggingError.unencodableImage }
-        return try await tagger.tags(for: image, name: pawn.name)
+        return image
     }
 }

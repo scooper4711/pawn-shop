@@ -135,6 +135,7 @@ public final class PawnLibrary {
         guard !trimmed.isEmpty, var pawn = pawn(id: id) else { return }
         pawn.name = trimmed
         pawn.needsName = false
+        pawn.suggestedName = ""
         try update(pawn)
     }
 
@@ -144,6 +145,12 @@ public final class PawnLibrary {
         guard let index = pawns.firstIndex(where: { $0.id == id }) else { return }
         pawns[index].tags = tags
         pawns[index].tagModel = model
+    }
+
+    /// Records the name the model suggests for a pawn needing one, without saving, like `setTags`.
+    public func setSuggestedName(_ name: String, of id: UUID) {
+        guard let index = pawns.firstIndex(where: { $0.id == id }) else { return }
+        pawns[index].suggestedName = name
     }
 
     /// Removes pawns, and any custom art files only they used, and saves.

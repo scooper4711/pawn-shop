@@ -116,6 +116,8 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     public var tags: [String] = []
     /// The model that chose `tags`; empty until the pawn is tagged.
     public var tagModel = ""
+    /// A name the model suggests while the pawn needs one (`needsName`); empty until it has looked.
+    public var suggestedName = ""
 
     public init(id: UUID = UUID(), name: String, size: PawnSize, art: PawnArt,
                 fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = [],
@@ -130,10 +132,11 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, size, art, fingerprint, appearances, needsName, tags, tagModel
+        case id, name, size, art, fingerprint, appearances, needsName, tags, tagModel, suggestedName
     }
 
-    /// Libraries saved before `needsName` existed read as having every name, and before tags as untagged.
+    /// Libraries saved before `needsName` existed read as having every name, and before tags as untagged and
+    /// without suggested names.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -145,6 +148,7 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
         needsName = try container.decodeIfPresent(Bool.self, forKey: .needsName) ?? false
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         tagModel = try container.decodeIfPresent(String.self, forKey: .tagModel) ?? ""
+        suggestedName = try container.decodeIfPresent(String.self, forKey: .suggestedName) ?? ""
     }
 
     public var isCustom: Bool {

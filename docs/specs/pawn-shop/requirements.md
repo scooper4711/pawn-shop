@@ -24,8 +24,9 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.10 Pawns with no name printed are imported as "Unknown <product title>" and marked as needing a name.
 - R1.11 Heroes & Villains is the one product known to print no names. Its pawns take the name of the same art
   in another product, whichever is imported first; the rest need naming.
-- R1.12 Library ▸ Review Unnamed Pawns… steps through the pawns needing a name, showing each large with a name
-  field. Each name is saved as it is entered, so the review can be closed and resumed at any time.
+- R1.12 Library ▸ Review Unnamed Pawns… steps through the pawns needing a name, showing each large with its
+  tags (R2.7) and a name field filled in with the name the tagging model suggests, so Return accepts it. Each
+  name is saved as it is entered, so the review can be closed and resumed at any time.
 
 ## R2 The library
 - R2.1 The library is kept between launches and shared by every sheet.
@@ -38,7 +39,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R2.7 Each pawn is tagged in the background with keywords for what its art shows (person, role, weapons,
   armor, animals) by a vision model running locally in Ollama, without the printed name in view. Tagging
   resumes at launch and after imports, skips quietly when Ollama is not running, and starts over when the
-  model is changed. A pawn's tags show in its tooltip and preview.
+  model is changed. A pawn's tags show in its tooltip and preview. Pawns needing a name are tagged first, and
+  for those alone the model also suggests a name of at most three words (R1.12).
 - R2.8 Space shows the selected pawn's front and back large over the window, with its name, size, products
   and tags. The arrow keys move the selection and the preview with it; Space, Escape or a click outside
   closes it.

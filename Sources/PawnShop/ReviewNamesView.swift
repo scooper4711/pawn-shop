@@ -29,7 +29,7 @@ struct ReviewNamesView: View {
             }
         }
         .padding()
-        .frame(width: 520, height: 520)
+        .frame(width: 520, height: 560)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
         }
@@ -47,6 +47,11 @@ struct ReviewNamesView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+            if !pawn.tags.isEmpty {
+                Text(pawn.tags.joined(separator: ", "))
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+            }
             TextField("Name", text: $name)
                 .textFieldStyle(.roundedBorder)
                 .focused($nameFocused)
@@ -59,7 +64,14 @@ struct ReviewNamesView: View {
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
-        .onAppear { nameFocused = true }
+        .onAppear {
+            name = pawn.suggestedName
+            nameFocused = true
+        }
+        // A suggestion arriving while the pawn is on screen fills the field, unless something is typed already.
+        .onChange(of: pawn.suggestedName) { _, suggestion in
+            if name.isEmpty { name = suggestion }
+        }
         .id(pawn.id)
     }
 

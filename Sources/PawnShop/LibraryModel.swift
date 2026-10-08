@@ -162,6 +162,12 @@ final class LibraryModel {
         refresh()
     }
 
+    /// Records the name the model suggests for a pawn needing one; `saveTags()` saves it.
+    func setSuggestedName(_ name: String, of id: UUID) {
+        library?.setSuggestedName(name, of: id)
+        refresh()
+    }
+
     func saveTags() {
         perform { try $0.save() }
     }

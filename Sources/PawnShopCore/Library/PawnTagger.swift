@@ -56,24 +56,56 @@ public struct OllamaTagger: Sendable {
         self.session = session
     }
 
+    static let namePrompt = prompt + """
+         Also suggest a name for the pawn of at most three words, like the names printed on pawns: the kind of \
+        creature or person and their role, such as Goblin Archer, Elf Wizard, Fire Giant or Dwarf Priest.
+        """
+
+    /// What to ask the model for.
+    enum Question {
+        case tags
+        case tagsAndName
+
+        var prompt: String { self == .tags ? OllamaTagger.prompt : OllamaTagger.namePrompt }
+
+        /// The JSON schema the answer must follow.
+        var format: [String: Any] {
+            let tags: [String: Any] = ["type": "array", "items": ["type": "string"]]
+            return self == .tags
+                ? ["type": "object", "required": ["tags"], "properties": ["tags": tags]]
+                : ["type": "object", "required": ["tags", "name"],
+                   "properties": ["tags": tags, "name": ["type": "string"]]]
+        }
+    }
+
     /// Keywords for what `image` shows, without `name` or words that describe every pawn.
     public func tags(for image: CGImage, name: String) async throws -> [String] {
-        let request = try request(for: Self.pngData(of: image))
-        let data: Data
+        let reply = try await answer(.tags, about: image)
+        return PawnTags.normalized(try Self.tags(fromReply: reply), name: name)
+    }
+
+    /// Keywords for what `image` shows and a name for it, for art printed without a name.
+    public func tagsAndName(for image: CGImage) async throws -> PawnDescription {
+        let reply = try await answer(.tagsAndName, about: image)
+        let name = SuggestedName.normalized(try Self.name(fromReply: reply))
+        guard !name.isEmpty else { throw PawnTaggingError.unreadableReply(String(decoding: reply, as: UTF8.self)) }
+        return PawnDescription(tags: PawnTags.normalized(try Self.tags(fromReply: reply), name: name),
+                               suggestedName: name)
+    }
+
+    private func answer(_ question: Question, about image: CGImage) async throws -> Data {
+        let request = try request(for: Self.pngData(of: image), asking: question)
         do {
-            (data, _) = try await session.data(for: request)
+            return try await session.data(for: request).0
         } catch {
             throw PawnTaggingError.unreachable(error.localizedDescription)
         }
-        return PawnTags.normalized(try Self.tags(fromReply: data), name: name)
     }
 
-    func request(for png: Data) throws -> URLRequest {
+    func request(for png: Data, asking question: Question) throws -> URLRequest {
         let body: [String: Any] = [
-            "model": model, "prompt": Self.prompt, "images": [png.base64EncodedString()], "stream": false,
-            "format": ["type": "object", "required": ["tags"],
-                       "properties": ["tags": ["type": "array", "items": ["type": "string"]]]],
-            "options": ["temperature": 0]
+            "model": model, "prompt": question.prompt, "images": [png.base64EncodedString()], "stream": false,
+            "format": question.format, "options": ["temperature": 0]
         ]
         var request = URLRequest(url: endpoint.appendingPathComponent("api/generate"))
         request.httpMethod = "POST"
@@ -85,16 +117,31 @@ public struct OllamaTagger: Sendable {
 
     /// The tags in Ollama's reply: `{"response": "{\"tags\": [...]}"}`, or `{"error": "..."}`.
     static func tags(fromReply data: Data) throws -> [String] {
-        let text = String(bytes: data, encoding: .utf8) ?? "\(data.count) bytes"
+        guard let tags = try answer(fromReply: data)["tags"] as? [String] else {
+            throw PawnTaggingError.unreadableReply(String(decoding: data, as: UTF8.self))
+        }
+        return tags
+    }
+
+    /// The name in Ollama's reply: `{"response": "{\"tags\": [...], \"name\": \"...\"}"}`.
+    static func name(fromReply data: Data) throws -> String {
+        guard let name = try answer(fromReply: data)["name"] as? String else {
+            throw PawnTaggingError.unreadableReply(String(decoding: data, as: UTF8.self))
+        }
+        return name
+    }
+
+    /// The model's answer inside Ollama's reply, or the error Ollama answered with.
+    private static func answer(fromReply data: Data) throws -> [String: Any] {
+        let text = String(decoding: data, as: UTF8.self)
         guard let reply = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw PawnTaggingError.unreadableReply(text)
         }
         if let error = reply["error"] as? String { throw PawnTaggingError.refused(error) }
         guard let response = (reply["response"] as? String)?.data(using: .utf8),
-              let answer = try? JSONSerialization.jsonObject(with: response) as? [String: Any],
-              let tags = answer["tags"] as? [String]
+              let answer = try? JSONSerialization.jsonObject(with: response) as? [String: Any]
         else { throw PawnTaggingError.unreadableReply(text) }
-        return tags
+        return answer
     }
 
     static func pngData(of image: CGImage) throws -> Data {
@@ -121,5 +168,29 @@ public enum PawnTags {
             guard !clean.isEmpty, !meaningless.contains(clean), seen.insert(clean).inserted else { return nil }
             return clean
         }
+    }
+}
+
+/// What the model saw in art printed without a name.
+public struct PawnDescription: Equatable, Sendable {
+    public var tags: [String]
+    public var suggestedName: String
+}
+
+/// A name the model suggests for a pawn printed without one.
+public enum SuggestedName {
+    static let maximumWords = 3
+    /// Words left in lowercase inside a name, as in "Captain of Guards".
+    static let minorWords: Set<String> = ["a", "an", "and", "of", "the", "in", "on", "with"]
+
+    /// At most three words, trimmed of punctuation and capitalized like a printed name.
+    public static func normalized(_ name: String) -> String {
+        let words = name.split(whereSeparator: \.isWhitespace)
+            .map { $0.trimmingCharacters(in: .punctuationCharacters).lowercased() }
+            .filter { !$0.isEmpty }
+            .prefix(maximumWords)
+        return words.enumerated().map { index, word in
+            index > 0 && minorWords.contains(word) ? word : word.prefix(1).uppercased() + word.dropFirst()
+        }.joined(separator: " ")
     }
 }
