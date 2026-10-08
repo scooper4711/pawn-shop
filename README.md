@@ -61,7 +61,8 @@ the right.*
 ## Requirements
 
 macOS 15 or later. You need the pawn PDFs themselves: buy them from [paizo.com](https://paizo.com) and
-download them from your account, or let Scrollkeeper download them.
+download them from your account, or let [Scrollkeeper](https://github.com/scooper4711/scrollkeeper), a
+library manager for your Paizo purchases, download them.
 
 ## Installing a release
 
@@ -78,7 +79,8 @@ After that it opens normally.
 
 ## Using Pawn Shop
 
-- **Import:** Library › Import from Scrollkeeper imports every pawn and token PDF that Scrollkeeper
+- **Import:** Library › Import from Scrollkeeper imports every pawn and token PDF that
+  [Scrollkeeper](https://github.com/scooper4711/scrollkeeper)
   downloaded and that is not in the library yet. Library › Import PDF… (⇧⌘I), or dropping PDFs on a window,
   imports others. The import summary lists the pawns added and any PDF where nothing was found. A PDF whose
   file name does not mention Starfinder counts as Pathfinder, so rename such a file before importing it.
