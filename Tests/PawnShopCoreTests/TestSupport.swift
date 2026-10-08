@@ -63,13 +63,17 @@ func drawText(_ context: CGContext, _ text: String, at origin: CGPoint, size: CG
 }
 
 /// A PDF written by hand around `content`, for operators CGContext never emits (such as `v` and `y`).
-func rawPDF(content: String, size: CGSize = letterPage) -> CGPDFDocument {
+/// `resources` is the page's resource dictionary; `extraObjects` are numbered from 5 on.
+func rawPDF(content: String, size: CGSize = letterPage, resources: String = "<< >>",
+            extraObjects: [String] = []) -> CGPDFDocument {
+    let page = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 \(Int(size.width)) \(Int(size.height))] "
+        + "/Resources \(resources) /Contents 4 0 R >>"
     let objects = [
         "<< /Type /Catalog /Pages 2 0 R >>",
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 \(Int(size.width)) \(Int(size.height))] /Contents 4 0 R >>",
+        page,
         "<< /Length \(content.utf8.count) >>\nstream\n\(content)\nendstream"
-    ]
+    ] + extraObjects
     var pdf = "%PDF-1.4\n"
     var offsets: [Int] = []
     for (index, object) in objects.enumerated() {

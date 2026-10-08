@@ -44,11 +44,14 @@ struct Subpath {
     private(set) var points: [CGPoint] = []
     /// Midpoints of the curve segments' end points.
     private(set) var curveMidpoints: [CGPoint] = []
+    /// The points the path passes through: segment ends, without curve control points.
+    private(set) var anchors: [CGPoint] = []
 
     var lastPoint: CGPoint? { points.last }
 
     mutating func add(line point: CGPoint) {
         points.append(point)
+        anchors.append(point)
     }
 
     mutating func add(curveTo end: CGPoint, controls: [CGPoint]) {
@@ -56,7 +59,18 @@ struct Subpath {
         curveMidpoints.append(CGPoint(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2))
         points.append(contentsOf: controls)
         points.append(end)
+        anchors.append(end)
     }
+
+    /// The circle this subpath draws, whole or with flat sides: at least `minimumCurves` curves, and every point
+    /// it passes through on one circle.
+    func circle() -> Circle? {
+        guard curveMidpoints.count >= Self.minimumCurves else { return nil }
+        return Circle.through(anchors)
+    }
+
+    /// A circle takes four curves; a token's clip cut flat on one side keeps three.
+    static let minimumCurves = 3
 
     /// The outline this subpath draws, when it has exactly two curves at one edge.
     func outline() -> Outline? {
