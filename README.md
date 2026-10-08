@@ -204,10 +204,7 @@ The pawns in the picture above are custom pawns made from public-domain illustra
 
 Pawn Shop is released under the [MIT license](LICENSE). It uses no third-party libraries.
 
-## Community Use Policy
+## Trademarks
 
-> Pawn Shop uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy
-> ([paizo.com/licenses/communityuse](https://paizo.com/licenses/communityuse)). We are expressly prohibited
-> from charging you to use or access this content. Pawn Shop is not published, endorsed, or specifically
-> approved by Paizo. For more information about Paizo Inc. and Paizo products, visit
-> [paizo.com](https://paizo.com).
+Pathfinder, Starfinder and Paizo are trademarks of Paizo Inc. Pawn Shop is an independent fan project. It is not
+published, endorsed, or specifically approved by Paizo, and it contains no Paizo content.
