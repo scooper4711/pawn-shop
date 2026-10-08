@@ -46,9 +46,10 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
 
 @Suite struct PawnTaggerTests {
     @Test func cleansUpTheModelsTags() {
-        let tags = PawnTags.normalized([" Woman", "warrior.", "WOMAN", "", "fantasy", "Aldori Swordlord", "scimitar"],
+        let tags = PawnTags.normalized([" Woman", "warrior.", "WOMAN", "", "fantasy", "Aldori Swordlord", "scimitar",
+                                        "undead and dwarf", "Tabletop", "roleplaying game", "creature"],
                                        name: "Aldori Swordlord")
-        #expect(tags == ["woman", "warrior", "scimitar"])
+        #expect(tags == ["woman", "warrior", "scimitar", "undead", "dwarf"])
     }
 
     @Test func asksForTagsOfTheArt() throws {
@@ -62,6 +63,7 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
         #expect(body["stream"] as? Bool == false)
         #expect((body["format"] as? [String: Any])?["required"] as? [String] == ["tags"])
         #expect(body["prompt"] as? String == OllamaTagger.prompt)
+        #expect(OllamaTagger.prompt.contains("vehicle") && OllamaTagger.prompt.contains("undead"))
     }
 
     @Test func asksForANameOnlyWhenAskedForTagsAndName() throws {

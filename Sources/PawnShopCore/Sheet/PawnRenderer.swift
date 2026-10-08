@@ -88,17 +88,29 @@ public final class PawnRenderer {
         }
     }
 
-    /// The front face with its printed words painted out, so a model describing it sees only the art.
+    /// The front face with its printed words painted out, so a model describing it sees only the art, `height`
+    /// pixels tall upright. Art printed on its side, as the words along it show, is turned to read level.
     public func artImage(of pawn: Pawn, height: Int) -> CGImage? {
         var artOnly = pawn
         if case .custom(var art) = pawn.art {
             art.showsName = false
             artOnly.art = .custom(art)
         }
-        return bitmap(of: artOnly, height: height) { context, rect in
+        let image = bitmap(of: artOnly, height: height) { context, rect in
             self.drawFace(of: artOnly, side: .front, in: rect, context: context)
             self.paintOutText(of: artOnly, in: rect, context: context)
         }
+        return image?.rotated(clockwiseQuarterTurns: levelingTurns(of: pawn))
+    }
+
+    /// The quarter turns clockwise that make the words printed on an upright PDF pawn's front read level.
+    func levelingTurns(of pawn: Pawn) -> Int {
+        guard case .pdf(let sourceID, let front, _) = pawn.art,
+              let page = textDocument(sourceID)?.page(at: front.pageIndex)
+        else { return 0 }
+        let direction = NameDirection.readingDirection(on: page, inside: front.rect)
+        let upright = front.transform(into: CGRect(origin: .zero, size: front.uprightSize))
+        return NameDirection.clockwiseQuarterTurns(toLevel: direction.applying(upright))
     }
 
     private func bitmap(of pawn: Pawn, height: Int, draw: (CGContext, CGRect) -> Void) -> CGImage? {

@@ -37,13 +37,18 @@ public struct OllamaTagger: Sendable {
 
     static let prompt = """
         This is a pawn (a standee) for a tabletop role-playing game. List 3 to 10 lowercase search keywords for \
-        what you can clearly see: who or what it is (woman, man, child, elf, dwarf, orc, goblin, dragon, skeleton, \
-        robot, beast...; for a person, always say man or woman), their role if obvious (warrior, wizard, archer, \
-        priest, rogue, knight...), and their weapons, armor, gear and animals (shield, scimitar, longsword, axe, \
-        bow, spear, staff, gun, plate armor, cloak, wolf, horse...). Prefer specific weapon names, and list the \
-        general kind as well: longsword and sword, scimitar and sword, longbow and bow, rifle and gun, plate armor \
-        and armor. Do not use generic words such as fantasy, character, art or figure. Only list things you are \
-        sure of.
+        what you can clearly see. First say what it is: a person or humanoid (human, elf, dwarf, orc, goblin...), \
+        a creature (dragon, insect, bird, beast...), a robot, or a vehicle (spaceship, starship, mech, car...). For \
+        a person or humanoid, always say man or woman. If it is undead (a skeleton, zombie, mummy, ghost or \
+        rotting corpse), add undead as a keyword of its own next to what it was: an undead dwarf gets the two \
+        keywords undead and dwarf. For a person, humanoid or creature, add their role if obvious (warrior, \
+        wizard, archer, priest, rogue, knight...) and the weapons, armor, gear and animals they carry or ride \
+        (shield, scimitar, longsword, axe, bow, spear, staff, gun, plate armor, cloak, wolf, horse...). For a \
+        vehicle, add its kind (fighter, freighter, battleship, station...) and its visible weapons (turret, \
+        cannon, missiles...); a vehicle is never a man or a woman. Prefer specific weapon names, and list the \
+        general kind as well: longsword and sword, scimitar and sword, longbow and bow, rifle and gun, plate \
+        armor and armor. Do not list colors, or generic words such as fantasy, character, creature, art or \
+        figure. Only list things you are sure of: a creature without weapons gets no weapon keywords.
         """
 
     public let model: String
@@ -157,8 +162,10 @@ public struct OllamaTagger: Sendable {
 /// Search keywords describing what a pawn's art shows.
 public enum PawnTags {
     /// Words that would describe every pawn, so they find nothing in particular.
-    static let meaningless: Set<String> = ["fantasy", "character", "art", "artwork", "figure", "pawn", "standee",
-                                           "illustration", "person"]
+    static let meaningless: Set<String> = ["fantasy", "character", "creature", "art", "artwork", "figure", "pawn",
+                                           "standee", "illustration", "person", "tabletop", "game", "rpg",
+                                           "roleplaying", "role-playing", "roleplaying game", "role-playing game",
+                                           "tabletop rpg", "tabletop game"]
 
     /// Lowercased and trimmed, once each, without meaningless words or the pawn's own name.
     public static func normalized(_ tags: [String], name: String) -> [String] {
@@ -168,7 +175,9 @@ public enum PawnTags {
     /// Lowercased and trimmed, once each, without empty ones: the user's own tags are otherwise kept as typed.
     public static func cleaned(_ tags: [String]) -> [String] {
         var seen: Set<String> = []
-        return tags.compactMap { tag in
+        // The model sometimes runs two keywords together, as in "undead and dwarf".
+        let separate = tags.flatMap { $0.components(separatedBy: " and ") }
+        return separate.compactMap { tag in
             let clean = tag.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).lowercased()
             guard !clean.isEmpty, seen.insert(clean).inserted else { return nil }
             return clean
