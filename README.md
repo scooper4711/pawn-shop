@@ -22,6 +22,11 @@ discs.
 
 It is free, and it works only with PDFs you bought: the app contains no Paizo art itself.
 
+![Seven pawns as Pawn Shop prints them, each a strip with the front below and the back above, to fold at the heads](docs/images/sample-pawns.jpg)
+
+*Printed strips: fold each at the heads and stand it in a pawn base. These are custom pawns made from
+public-domain illustrations (see [Sample art](#sample-art)); Paizo's pawns print the same way.*
+
 ## Features
 
 - Imports every pawn and token PDF that [Scrollkeeper](https://github.com/scooper4711/scrollkeeper) has
@@ -168,6 +173,23 @@ gets me to the destination faster than I could on foot. But I'm still the one be
 
 If you don't want to use tools written with AI assistance, then I respect that decision. That's why I'm
 transparent about it. You can make up your own mind.
+
+## Sample art
+
+The pawns in the picture above are custom pawns made from public-domain illustrations on Wikimedia Commons:
+
+- Merlin, King Arthur and Sir Gawaine: Howard Pyle, *The Story of King Arthur and His Knights* (1903)
+  ([1](https://commons.wikimedia.org/wiki/File:Arthur-Pyle_The_Enchanter_Merlin.JPG),
+  [2](https://commons.wikimedia.org/wiki/File:Arthur-Pyle_King_Arthur_of_Britain.JPG),
+  [3](https://commons.wikimedia.org/wiki/File:Arthur-Pyle_Sir_Gawaine_the_Son_of_Lot,_King_of_Orkney.JPG))
+- Baba Yaga: Ivan Bilibin, 1900
+  ([source](https://commons.wikimedia.org/wiki/File:Bilibin._Baba_Yaga.jpg))
+- Jabberwock: John Tenniel, *Through the Looking-Glass* (1871)
+  ([source](https://commons.wikimedia.org/wiki/File:Jabberwocky.jpg))
+- Cave Troll: John Bauer, *Bland tomtar och troll* (1912), Nationalmuseum, Stockholm
+  ([source](https://commons.wikimedia.org/wiki/File:John_Bauer_-_%22Ho,_What_a_Pipsqueak%5E_Said_the_Troll%22,_Bland_tomtar_och_troll,_1912_-_NMH_118-1982_-_Nationalmuseum.jpg))
+- Welsh Giant: Arthur Rackham, *The Allies' Fairy Book* (1916)
+  ([source](https://commons.wikimedia.org/wiki/File:At_the_dead_time_of_the_night_in_came_the_Welsh_Giant.jpg))
 
 ## License
 
