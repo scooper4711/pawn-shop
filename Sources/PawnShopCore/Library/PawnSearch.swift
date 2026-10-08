@@ -40,12 +40,16 @@ public extension PawnLibrary {
     }
 
     /// Pawns not yet tagged by `model` (unless the user corrected their tags), or needing a name and without a
-    /// suggestion, those needing a name first so their review can start soon; otherwise in library order.
-    func pawnsNeedingTags(by model: String) -> [Pawn] {
+    /// suggestion: those in `visible` first, as the user is looking at them, then those needing a name so their
+    /// review can start soon; otherwise in library order.
+    func pawnsNeedingTags(by model: String, visible: Set<UUID> = []) -> [Pawn] {
         let pending = pawns.filter {
             ($0.tagModel != model && !$0.tagsCorrected) || ($0.needsName && $0.suggestedName.isEmpty)
         }
-        return pending.filter(\.needsName) + pending.filter { !$0.needsName }
+        func rank(_ pawn: Pawn) -> Int { visible.contains(pawn.id) ? 0 : pawn.needsName ? 1 : 2 }
+        return pending.enumerated()
+            .sorted { (rank($0.element), $0.offset) < (rank($1.element), $1.offset) }
+            .map(\.element)
     }
 
     /// Pawns still waiting for a name, in library order, so a review picks up where it stopped.

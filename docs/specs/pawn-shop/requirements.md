@@ -36,13 +36,13 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R2.4 Pawns with the same name are shown next to each other with their product, so the art can be compared.
 - R2.5 A pawn can be removed from the library, or renamed.
 - R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
-- R2.7 Each pawn is tagged in the background with keywords for what its art shows (person, role, weapons,
-  armor, animals) by a vision model running locally in Ollama, without the printed name in view. Tagging
-  resumes at launch and after imports, skips quietly when Ollama is not running, and starts over when the
-  model is changed. A pawn's tags show in its tooltip and preview. Pawns needing a name are tagged first, and
-  for those alone the model also suggests a name of at most three words (R1.12). The user can correct a
-  pawn's tags from its preview or context menu; tagging never changes corrected tags, even when the model is
-  changed.
+- R2.7 Each pawn is tagged in the background with keywords for what its art shows (person, role, weapons, armor,
+  animals) by a vision model running locally in Ollama, without the printed name in view. Tagging resumes at
+  launch and after imports, skips quietly when Ollama is not running, and starts over when the model is changed.
+  A pawn's tags show in its tooltip and preview. Pawns shown in the library grid are tagged first, then pawns
+  needing a name, and for those alone the model also suggests a name of at most three words (R1.12). The user
+  can correct a pawn's tags from its preview or context menu; tagging never changes corrected tags, even when
+  the model is changed.
 - R2.8 Space shows the selected pawn's front and back large over the window, with its name, size, products
   and tags. The arrow keys move the selection and the preview with it; Space, Escape or a click outside
   closes it.

@@ -62,6 +62,8 @@ struct LibraryBrowser: View {
                             .onTapGesture { select(pawn.id) }
                             .contextMenu { menu(for: pawn) }
                             .help(help(for: pawn))
+                            .onAppear { PawnTaggingModel.shared.show(pawn.id) }
+                            .onDisappear { PawnTaggingModel.shared.hide(pawn.id) }
                     }
                 }
                 .padding(Self.gridPadding)

@@ -206,6 +206,23 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
         #expect(reopened.pawn(id: nameless.id)?.needsName == false)
     }
 
+    @Test func asksAboutPawnsOnScreenFirst() throws {
+        let library = try library()
+        let names = ["First", "Second", "Third", "Fourth"]
+        for name in names {
+            try library.add(Pawn(name: name, size: .medium, art: .custom(CustomArt(imageFile: "x.png")),
+                                 needsName: name == "Fourth"))
+        }
+        let ids = Dictionary(uniqueKeysWithValues: library.pawns.map { ($0.name, $0.id) })
+        let order = { (visible: Set<String>) in
+            library.pawnsNeedingTags(by: "model", visible: Set(visible.compactMap { ids[$0] })).map(\.name)
+        }
+        #expect(order([]) == ["Fourth", "First", "Second", "Third"])
+        #expect(order(["Third", "Second"]) == ["Second", "Third", "Fourth", "First"])
+        library.setTags(["axe"], by: "model", of: ids["Second"]!)
+        #expect(order(["Third", "Second"]) == ["Third", "Fourth", "First"])
+    }
+
     @Test func keepsTagsTheUserCorrected() throws {
         let library = try library()
         let forgeSpurned = Pawn(name: "Accursed Forge-Spurned", size: .medium,

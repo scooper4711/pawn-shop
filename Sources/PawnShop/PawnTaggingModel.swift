@@ -27,6 +27,8 @@ final class PawnTaggingModel {
     @ObservationIgnored private var isRunning = false
     /// Pawns this run has asked about, so one the model can't name isn't asked about again until the next run.
     @ObservationIgnored private var asked: Set<UUID> = []
+    /// How many grids show each pawn; the pawns on screen are tagged next.
+    @ObservationIgnored private var showing: [UUID: Int] = [:]
 
     init(library: LibraryModel) {
         self.library = library
@@ -44,6 +46,16 @@ final class PawnTaggingModel {
     /// Tags the pawns not yet tagged by the current model, quietly giving up when Ollama isn't there.
     func tagNewPawns() {
         start()
+    }
+
+    /// Notes a pawn appearing in a grid, so it is tagged ahead of the rest.
+    func show(_ id: UUID) {
+        showing[id, default: 0] += 1
+    }
+
+    func hide(_ id: UUID) {
+        guard let count = showing[id] else { return }
+        showing[id] = count > 1 ? count - 1 : nil
     }
 
     /// Like `tagNewPawns`, but reports a failure in an alert, for when the user asked for it.
@@ -64,36 +76,38 @@ final class PawnTaggingModel {
     private func run(_ tagger: OllamaTagger) async {
         problem = nil
         asked = []
-        // Pawns added while a run is going are picked up by the next pass.
-        var pending = pawnsToAsk(tagger)
-        while !pending.isEmpty, problem == nil {
-            await tag(pending, with: tagger)
-            pending = pawnsToAsk(tagger)
+        defer {
+            library.saveTags()
+            progress = nil
         }
-        progress = nil
+        // The next pawn is chosen afresh each time, so pawns scrolled into view, or added, go ahead of the rest.
+        var done = 0
+        while problem == nil, let (pawn, remaining) = nextPawn(tagger) {
+            progress = TaggingProgress(done: done, total: done + remaining)
+            await tag(pawn, with: tagger)
+            done += 1
+            if done.isMultiple(of: Self.saveInterval) { library.saveTags() }
+        }
     }
 
-    private func pawnsToAsk(_ tagger: OllamaTagger) -> [Pawn] {
-        library.pawnsNeedingTags(by: tagger.model).filter { !asked.contains($0.id) }
+    /// The pawn to tag next and how many are left, counting it.
+    private func nextPawn(_ tagger: OllamaTagger) -> (Pawn, Int)? {
+        let pending = library.pawnsNeedingTags(by: tagger.model, visible: Set(showing.keys))
+            .filter { !asked.contains($0.id) }
+        return pending.first.map { ($0, pending.count) }
     }
 
-    private func tag(_ pawns: [Pawn], with tagger: OllamaTagger) async {
-        defer { library.saveTags() }
-        for (index, pawn) in pawns.enumerated() {
-            progress = TaggingProgress(done: index, total: pawns.count)
-            asked.insert(pawn.id)
-            do {
-                try await describe(pawn, with: tagger)
-            } catch let error as PawnTaggingError where error.stopsTagging {
-                problem = "\(error)"
-                return
-            } catch where pawn.tagModel != tagger.model {
-                // One pawn the model can't describe is left without tags rather than holding up the rest.
-                library.setTags([], by: tagger.model, of: pawn.id)
-            } catch {
-                // A pawn already tagged that the model couldn't name keeps its tags, and is asked again next run.
-            }
-            if index % Self.saveInterval == Self.saveInterval - 1 { library.saveTags() }
+    private func tag(_ pawn: Pawn, with tagger: OllamaTagger) async {
+        asked.insert(pawn.id)
+        do {
+            try await describe(pawn, with: tagger)
+        } catch let error as PawnTaggingError where error.stopsTagging {
+            problem = "\(error)"
+        } catch where pawn.tagModel != tagger.model {
+            // One pawn the model can't describe is left without tags rather than holding up the rest.
+            library.setTags([], by: tagger.model, of: pawn.id)
+        } catch {
+            // A pawn already tagged that the model couldn't name keeps its tags, and is asked again next run.
         }
     }
 

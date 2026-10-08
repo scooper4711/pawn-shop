@@ -53,7 +53,9 @@ final class LibraryModel {
 
     func search(_ query: PawnQuery) -> [Pawn] { library?.search(query) ?? [] }
 
-    func pawnsNeedingTags(by model: String) -> [Pawn] { library?.pawnsNeedingTags(by: model) ?? [] }
+    func pawnsNeedingTags(by model: String, visible: Set<UUID>) -> [Pawn] {
+        library?.pawnsNeedingTags(by: model, visible: visible) ?? []
+    }
 
     func sourceTitle(of pawn: Pawn) -> String { library?.sourceTitle(of: pawn) ?? "" }
 
