@@ -1,6 +1,6 @@
 #!/usr/bin/env swift
 // Draws the app icon (a wizard on a Paizo-style pawn standing in its base, on green) and writes a 1024 px PNG.
-// Few, bold shapes so it still reads at small sizes. Usage: swift scripts-build/make-icon.swift <output.png>
+// Few, bold shapes so it still reads at small sizes. Usage: swift scripts/make-icon.swift <output.png>
 import AppKit
 import CoreGraphics
 

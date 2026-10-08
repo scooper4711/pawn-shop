@@ -43,6 +43,23 @@ struct ReviewNamesView: View {
                 PawnThumbnail(pawn: pawn, pixelHeight: 600).frame(height: 300)
                 PawnThumbnail(pawn: pawn, side: .back, pixelHeight: 600).frame(height: 300)
             }
+            details(of: pawn)
+            nameControls(for: pawn)
+        }
+        .onAppear {
+            name = pawn.suggestedName
+            nameFocused = true
+        }
+        // A suggestion arriving while the pawn is on screen fills the field, unless something is typed already.
+        .onChange(of: pawn.suggestedName) { _, suggestion in
+            if name.isEmpty { name = suggestion }
+        }
+        .id(pawn.id)
+    }
+
+    /// The pawn's size, products and tags.
+    private func details(of pawn: Pawn) -> some View {
+        VStack(spacing: 14) {
             Text("\(pawn.size.displayName) · \(library.sourceTitles(of: pawn).joined(separator: ", "))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -52,6 +69,12 @@ struct ReviewNamesView: View {
                     .font(.callout)
                     .multilineTextAlignment(.center)
             }
+        }
+    }
+
+    /// The name field, with Skip and Save and Next.
+    private func nameControls(for pawn: Pawn) -> some View {
+        VStack(spacing: 14) {
             TextField("Name", text: $name)
                 .textFieldStyle(.roundedBorder)
                 .focused($nameFocused)
@@ -64,15 +87,6 @@ struct ReviewNamesView: View {
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
-        .onAppear {
-            name = pawn.suggestedName
-            nameFocused = true
-        }
-        // A suggestion arriving while the pawn is on screen fills the field, unless something is typed already.
-        .onChange(of: pawn.suggestedName) { _, suggestion in
-            if name.isEmpty { name = suggestion }
-        }
-        .id(pawn.id)
     }
 
     private func save(_ pawn: Pawn) {
