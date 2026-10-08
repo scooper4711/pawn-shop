@@ -77,7 +77,7 @@ func tokenPDF(pages: [[DrawnToken]], background: Bool = false) -> Data {
     makePDF(pages: pages.map { tokens in
         { context in
             if background { context.draw(darkBackground(), in: CGRect(origin: .zero, size: letterPage)) }
-            tokens.forEach { $0.draw(context) }
+            for token in tokens { token.draw(context) }
         }
     })
 }
