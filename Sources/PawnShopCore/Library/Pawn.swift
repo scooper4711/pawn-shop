@@ -118,6 +118,8 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     public var tagModel = ""
     /// A name the model suggests while the pawn needs one (`needsName`); empty until it has looked.
     public var suggestedName = ""
+    /// True once the user has corrected `tags`; tagging then leaves them alone.
+    public var tagsCorrected = false
 
     public init(id: UUID = UUID(), name: String, size: PawnSize, art: PawnArt,
                 fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = [],
@@ -132,11 +134,12 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, size, art, fingerprint, appearances, needsName, tags, tagModel, suggestedName
+        case id, name, size, art, fingerprint, appearances, needsName, tags, tagModel, suggestedName,
+             tagsCorrected
     }
 
     /// Libraries saved before `needsName` existed read as having every name, and before tags as untagged and
-    /// without suggested names.
+    /// without suggested names or corrections.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -149,6 +152,7 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
         tags = try container.decodeIfPresent([String].self, forKey: .tags) ?? []
         tagModel = try container.decodeIfPresent(String.self, forKey: .tagModel) ?? ""
         suggestedName = try container.decodeIfPresent(String.self, forKey: .suggestedName) ?? ""
+        tagsCorrected = try container.decodeIfPresent(Bool.self, forKey: .tagsCorrected) ?? false
     }
 
     public var isCustom: Bool {

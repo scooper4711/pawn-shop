@@ -140,11 +140,19 @@ public final class PawnLibrary {
     }
 
     /// Records the tags `model` chose for a pawn, without saving, since tagging a whole library would otherwise
-    /// write it out once per pawn; call `save()` after a batch.
+    /// write it out once per pawn; call `save()` after a batch. Tags the user corrected are kept.
     public func setTags(_ tags: [String], by model: String, of id: UUID) {
-        guard let index = pawns.firstIndex(where: { $0.id == id }) else { return }
+        guard let index = pawns.firstIndex(where: { $0.id == id }), !pawns[index].tagsCorrected else { return }
         pawns[index].tags = tags
         pawns[index].tagModel = model
+    }
+
+    /// Replaces a pawn's tags with the user's own, which tagging then keeps, and saves.
+    public func correctTags(_ tags: [String], of id: UUID) throws {
+        guard var pawn = pawn(id: id) else { return }
+        pawn.tags = PawnTags.cleaned(tags)
+        pawn.tagsCorrected = true
+        try update(pawn)
     }
 
     /// Records the name the model suggests for a pawn needing one, without saving, like `setTags`.

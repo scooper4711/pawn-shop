@@ -9,6 +9,7 @@ struct PawnPreview: View {
     let pawn: Pawn
     let close: () -> Void
     @Environment(LibraryModel.self) private var library
+    @State private var editingKeywords = false
 
     var body: some View {
         ZStack {
@@ -24,8 +25,12 @@ struct PawnPreview: View {
                 Text(pawn.name).font(.title2.weight(.semibold))
                 Text("\(pawn.size.displayName) · \(library.sourceTitles(of: pawn).joined(separator: ", "))")
                     .foregroundStyle(.secondary)
-                if !pawn.tags.isEmpty {
-                    Text(pawn.tags.joined(separator: ", ")).font(.callout).foregroundStyle(.secondary)
+                HStack {
+                    if !pawn.tags.isEmpty {
+                        Text(pawn.tags.joined(separator: ", ")).font(.callout).foregroundStyle(.secondary)
+                    }
+                    Button("Edit Keywords…") { editingKeywords = true }
+                        .controlSize(.small)
                 }
             }
             .multilineTextAlignment(.center)
@@ -34,5 +39,37 @@ struct PawnPreview: View {
             .padding(40)
         }
         .ignoresSafeArea()
+        .sheet(isPresented: $editingKeywords) {
+            EditKeywordsView(pawn: pawn) { library.correctTags($0, of: pawn.id) }
+        }
+    }
+}
+
+/// Lets the user correct a pawn's tags, as a comma-separated list.
+struct EditKeywordsView: View {
+    let pawn: Pawn
+    let save: ([String]) -> Void
+    @State private var text = ""
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Form {
+            TextField("Keywords", text: $text, prompt: Text("dwarf, undead, hammer"))
+            Text("Separate keywords with commas. Tagging won't change keywords you've edited.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .frame(width: 420)
+        .onAppear { text = pawn.tags.joined(separator: ", ") }
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    save(PawnTags.parsed(text))
+                    dismiss()
+                }
+            }
+        }
     }
 }

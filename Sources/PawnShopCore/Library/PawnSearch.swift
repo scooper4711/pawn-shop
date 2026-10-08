@@ -39,10 +39,12 @@ public extension PawnLibrary {
             }
     }
 
-    /// Pawns not yet tagged by `model`, or needing a name and without a suggestion, those needing a name first so
-    /// their review can start soon; otherwise in library order.
+    /// Pawns not yet tagged by `model` (unless the user corrected their tags), or needing a name and without a
+    /// suggestion, those needing a name first so their review can start soon; otherwise in library order.
     func pawnsNeedingTags(by model: String) -> [Pawn] {
-        let pending = pawns.filter { $0.tagModel != model || ($0.needsName && $0.suggestedName.isEmpty) }
+        let pending = pawns.filter {
+            ($0.tagModel != model && !$0.tagsCorrected) || ($0.needsName && $0.suggestedName.isEmpty)
+        }
         return pending.filter(\.needsName) + pending.filter { !$0.needsName }
     }
 

@@ -162,12 +162,22 @@ public enum PawnTags {
 
     /// Lowercased and trimmed, once each, without meaningless words or the pawn's own name.
     public static func normalized(_ tags: [String], name: String) -> [String] {
-        var seen: Set<String> = [name.lowercased()]
+        cleaned(tags).filter { $0 != name.lowercased() && !meaningless.contains($0) }
+    }
+
+    /// Lowercased and trimmed, once each, without empty ones: the user's own tags are otherwise kept as typed.
+    public static func cleaned(_ tags: [String]) -> [String] {
+        var seen: Set<String> = []
         return tags.compactMap { tag in
             let clean = tag.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).lowercased()
-            guard !clean.isEmpty, !meaningless.contains(clean), seen.insert(clean).inserted else { return nil }
+            guard !clean.isEmpty, seen.insert(clean).inserted else { return nil }
             return clean
         }
+    }
+
+    /// The tags in a comma-separated list, as the user types them.
+    public static func parsed(_ text: String) -> [String] {
+        cleaned(text.split(separator: ",").map(String.init))
     }
 }
 

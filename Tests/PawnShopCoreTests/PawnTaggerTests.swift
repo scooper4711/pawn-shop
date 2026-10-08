@@ -75,6 +75,11 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
         #expect(!OllamaTagger.prompt.contains("three words"))
     }
 
+    @Test func readsTheUsersKeywords() {
+        #expect(PawnTags.parsed(" Dwarf, undead,, UNDEAD , war hammer.") == ["dwarf", "undead", "war hammer"])
+        #expect(PawnTags.parsed("  ").isEmpty)
+    }
+
     @Test func tidiesTheSuggestedName() {
         #expect(SuggestedName.normalized("  goblin ARCHER. ") == "Goblin Archer")
         #expect(SuggestedName.normalized("captain of the guard") == "Captain of the")
@@ -201,6 +206,29 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
         #expect(reopened.pawn(id: nameless.id)?.needsName == false)
     }
 
+    @Test func keepsTagsTheUserCorrected() throws {
+        let library = try library()
+        let forgeSpurned = Pawn(name: "Accursed Forge-Spurned", size: .medium,
+                                art: .custom(CustomArt(imageFile: "x.png")))
+        let nameless = Pawn(name: "Unknown Heroes", size: .medium, art: .custom(CustomArt(imageFile: "y.png")),
+                            needsName: true)
+        try library.add(forgeSpurned)
+        try library.add(nameless)
+        library.setTags(["orc"], by: "model", of: forgeSpurned.id)
+        try library.correctTags(["Undead", "dwarf", "undead"], of: forgeSpurned.id)
+        try library.correctTags(["elf"], of: nameless.id)
+        try library.correctTags(["x"], of: UUID())
+        library.setTags(["orc"], by: "model", of: forgeSpurned.id)
+        let reopened = try self.library()
+        #expect(reopened.pawn(id: forgeSpurned.id)?.tags == ["undead", "dwarf"])
+        #expect(reopened.pawn(id: forgeSpurned.id)?.tagsCorrected == true)
+        // A new model leaves corrected tags alone, but a pawn needing a name is still asked for one.
+        #expect(reopened.pawnsNeedingTags(by: "another-model").map(\.id) == [nameless.id])
+        reopened.setTags(["goblin"], by: "another-model", of: nameless.id)
+        #expect(reopened.pawn(id: nameless.id)?.tags == ["elf"])
+        #expect(reopened.search(PawnQuery(text: "dwarf")).map(\.id) == [forgeSpurned.id])
+    }
+
     @Test func readsPawnsSavedBeforeTags() throws {
         var pawn = Pawn(name: "Old", size: .small, art: .custom(CustomArt(imageFile: "old.png")))
         pawn.tags = ["axe"]
@@ -209,8 +237,9 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
         json["tags"] = nil
         json["tagModel"] = nil
         json["suggestedName"] = nil
+        json["tagsCorrected"] = nil
         let old = try JSONDecoder().decode(Pawn.self, from: JSONSerialization.data(withJSONObject: json))
-        #expect(old.tags.isEmpty && old.tagModel.isEmpty && old.suggestedName.isEmpty)
+        #expect(old.tags.isEmpty && old.tagModel.isEmpty && old.suggestedName.isEmpty && !old.tagsCorrected)
     }
 }
 

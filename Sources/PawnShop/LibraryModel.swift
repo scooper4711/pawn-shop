@@ -139,6 +139,10 @@ final class LibraryModel {
         perform { try $0.rename(id, to: name) }
     }
 
+    func correctTags(_ tags: [String], of id: UUID) {
+        perform { try $0.correctTags(tags, of: id) }
+    }
+
     func remove(_ ids: Set<UUID>) {
         perform { try $0.remove(ids) }
         ids.forEach { backgroundRenderer?.forget($0) }

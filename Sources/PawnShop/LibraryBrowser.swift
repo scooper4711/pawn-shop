@@ -14,6 +14,7 @@ struct LibraryBrowser: View {
     @State private var selection: Set<UUID> = []
     @State private var copies = 1
     @State private var renaming: Pawn?
+    @State private var editingKeywords: Pawn?
     /// The pawn the arrow keys move from: the one last clicked or arrowed to.
     @State private var cursor: UUID?
     @State private var columnCount = 1
@@ -44,6 +45,9 @@ struct LibraryBrowser: View {
         }
         .sheet(item: $renaming) { pawn in
             RenamePawnView(pawn: pawn) { library.rename(pawn.id, to: $0) }
+        }
+        .sheet(item: $editingKeywords) { pawn in
+            EditKeywordsView(pawn: pawn) { library.correctTags($0, of: pawn.id) }
         }
     }
 
@@ -142,6 +146,7 @@ struct LibraryBrowser: View {
         }
         Divider()
         Button("Rename…") { renaming = pawn }
+        Button("Edit Keywords…") { editingKeywords = pawn }
         Button("Remove from Library", role: .destructive) {
             library.remove(selection.contains(pawn.id) ? selection : [pawn.id])
             selection.subtract([pawn.id])
