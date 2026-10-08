@@ -27,6 +27,13 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.12 Library ▸ Review Unnamed Pawns… steps through the pawns needing a name, showing each large with its
   tags (R2.7) and a name field filled in with the name the tagging model suggests, so Return accepts it. Each
   name is saved as it is entered, so the review can be closed and resumed at any time.
+- R1.13 Round tokens (token boxes such as the Alien Core Token Box, and adventures' token sheets) are imported
+  as pawns, since folded pawns look better than flat tokens. A token is found from the circle its art is
+  clipped to, sized from its cut circle (up to 1" medium, 2" large, 3" huge, larger gargantuan), and named
+  from the label on the mirrored back page, or else from the name printed along its rim. The token's art is
+  kept alone, without the page background, the cut line or the printed name, and printed as large as it fits
+  above the pawn's name on white. A back page repeating the art gives the pawn's back; otherwise the back is
+  the front mirrored.
 
 ## R2 The library
 - R2.1 The library is kept between launches and shared by every sheet.

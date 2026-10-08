@@ -57,13 +57,13 @@ public extension PawnLibrary {
 
     /// The title of the product a pawn's faces come from, or "Custom".
     func sourceTitle(of pawn: Pawn) -> String {
-        guard case .pdf(let sourceID, _, _) = pawn.art else { return "Custom" }
+        guard let sourceID = pawn.art.sourceID else { return "Custom" }
         return source(id: sourceID)?.title ?? "Unknown product"
     }
 
     /// The short title of the product a pawn's faces come from, or "Custom".
     func shortSourceTitle(of pawn: Pawn) -> String {
-        guard case .pdf(let sourceID, _, _) = pawn.art else { return "Custom" }
+        guard let sourceID = pawn.art.sourceID else { return "Custom" }
         return source(id: sourceID)?.shortTitle ?? "Unknown product"
     }
 
