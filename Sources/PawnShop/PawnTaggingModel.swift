@@ -63,7 +63,9 @@ final class PawnTaggingModel {
         start { [library] in library.errorMessage = $0 }
     }
 
-    private func start(reportingProblem report: @escaping (String) -> Void = { _ in /* stay quiet */ }) {
+    private func start(reportingProblem report: @escaping (String) -> Void = { _ in
+        // Tagging in the background reports nothing: without Ollama, pawns simply stay untagged.
+    }) {
         guard !isRunning else { return }
         isRunning = true
         Task {
