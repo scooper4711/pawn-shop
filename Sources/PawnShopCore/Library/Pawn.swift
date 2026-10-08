@@ -21,11 +21,12 @@ public struct PawnSource: Codable, Identifiable, Hashable, Sendable {
     public var game: Game { title.localizedCaseInsensitiveContains("Starfinder") ? .starfinder : .pathfinder }
 
     /// The title without the words every product shares: "Pathfinder Pawns: Bestiary 2 Box" becomes
-    /// "Bestiary 2", "Starfinder Alien Archive Pawn Box" becomes "Alien Archive".
+    /// "Bestiary 2", "Starfinder Alien Archive Pawn Box" becomes "Alien Archive", "Starfinder Alien Core Token
+    /// Box" becomes "Alien Core".
     public var shortTitle: String {
         var short = title
         for pattern in [#"^(Pathfinder|Starfinder)\s+"#, #"^Pawns:\s*"#, #"^(Pathfinder|Starfinder)\s+"#,
-                        #"\s+(Pawn\s+)?(Collection|Box)$"#, #"\s+Pawn$"#] {
+                        #"\s+((Pawn|Token)\s+)?(Collection|Box)$"#, #"\s+(Pawn|Tokens)$"#] {
             short = short.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
         }
         return short.isEmpty ? title : short

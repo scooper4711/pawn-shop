@@ -7,12 +7,17 @@ the paper: the front below, the back above it turned upside down, head to head. 
 at the heads: the pawn is two sheets thick, and the base holds both.
 
 ## Use
-- **Import:** Library › Import from Scrollkeeper imports every pawn PDF that
+- **Import:** Library › Import from Scrollkeeper imports every pawn and token PDF that
   [Scrollkeeper](https://github.com/scooper4711/scrollkeeper) downloaded. Library › Import PDF… (⇧⌘I) or
   dropping PDFs on a window imports others. Each pawn is found from its cut outline, named from its label,
   sized (small, medium, large, huge) and turned upright. Copies of the same art are stored once, also when
   another product reprints them; pawns that share a name but not their art (1e and 2e, variants) are kept
   apart. The library keeps its own copy of each PDF in `~/Library/Application Support/Pawn Shop`.
+- **Tokens:** round tokens (token boxes, adventures' token sheets) become pawns too: each token's art, without
+  the page background, cut line or the name printed on it, stands above the pawn's name on white. Tokens are
+  named from the label on their back page or the name along their rim, and sized from the token (1" medium,
+  2" large, 3" huge). A file named without "Starfinder" counts as Pathfinder, so rename such a file before
+  importing it.
 - **Find:** search by name, product or tag, and filter by size, game, product or custom pawns. Pawns with the
   same name sit next to each other, so you can pick the art you like. Right-click to rename or remove a pawn.
   Select a pawn and press Space to see it large, with its tags; the arrow keys move through the library,

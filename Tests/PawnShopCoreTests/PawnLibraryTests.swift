@@ -104,6 +104,8 @@ func writePawnPDF(_ pawns: [DrawnPawn], named name: String, in folder: URL) thro
                       ("Starfinder Alien Archive Pawn Box", "Alien Archive"),
                       ("Pathfinder Pawns: Pathfinder Society Pawn Collection", "Society"),
                       ("Pathfinder Monster Core 2 Pawn Box", "Monster Core 2"),
+                      ("Starfinder Alien Core Token Box", "Alien Core"),
+                      ("Starfinder Murder in Metal City Tokens", "Murder in Metal City"),
                       ("Box", "Box")])
     func shortensProductTitles(title: String, short: String) {
         let source = PawnSource(id: "x", title: title, importedAt: Date(), originalPath: "", byteCount: 0)
@@ -164,16 +166,16 @@ func writePawnPDF(_ pawns: [DrawnPawn], named name: String, in folder: URL) thro
 }
 
 @Suite struct ScrollkeeperScannerTests {
-    @Test func findsPawnPDFsInSubfolders() throws {
+    @Test func findsPawnAndTokenPDFsInSubfolders() throws {
         let folder = temporaryFolder()
         let product = folder.appendingPathComponent("Bestiary Pawn Box", isDirectory: true)
         try FileManager.default.createDirectory(at: product, withIntermediateDirectories: true)
-        for name in ["Bestiary Pawn Box PDF.pdf", "Bestiary PDF.pdf", "pawns.txt"] {
+        for name in ["Bestiary Pawn Box PDF.pdf", "Bestiary PDF.pdf", "pawns.txt", "Core Token Box PDF.pdf"] {
             try Data().write(to: product.appendingPathComponent(name))
         }
         try Data().write(to: folder.appendingPathComponent("Another Pawn Collection.PDF"))
         let names = ScrollkeeperScanner.pawnPDFs(in: folder).map(\.lastPathComponent)
-        #expect(names == ["Another Pawn Collection.PDF", "Bestiary Pawn Box PDF.pdf"])
+        #expect(names == ["Another Pawn Collection.PDF", "Bestiary Pawn Box PDF.pdf", "Core Token Box PDF.pdf"])
         #expect(ScrollkeeperScanner.pawnPDFs(in: folder.appendingPathComponent("Missing")).isEmpty)
         #expect(ScrollkeeperScanner.defaultFolder.path.hasSuffix("Scrollkeeper/Files"))
     }

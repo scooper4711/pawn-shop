@@ -91,19 +91,21 @@ public extension PawnLibrary {
     private static var searchOptions: String.CompareOptions { [.caseInsensitive, .diacriticInsensitive] }
 }
 
-/// Finds the pawn PDFs Scrollkeeper has downloaded.
+/// Finds the pawn and token PDFs Scrollkeeper has downloaded.
 public enum ScrollkeeperScanner {
     /// `~/Library/Application Support/Scrollkeeper/Files`.
     public static var defaultFolder: URL {
         URL.applicationSupportDirectory.appendingPathComponent("Scrollkeeper/Files", isDirectory: true)
     }
 
-    /// PDFs under `folder` whose file name mentions pawns, sorted by name.
+    /// PDFs under `folder` whose file name mentions pawns or tokens, sorted by name.
     public static func pawnPDFs(in folder: URL = defaultFolder) -> [URL] {
         let files = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: nil)?
             .compactMap { $0 as? URL } ?? []
         return files.filter { url in
-            url.pathExtension.lowercased() == "pdf" && url.lastPathComponent.localizedCaseInsensitiveContains("pawn")
+            url.pathExtension.lowercased() == "pdf" && ["pawn", "token"].contains {
+                url.lastPathComponent.localizedCaseInsensitiveContains($0)
+            }
         }.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
     }
 }

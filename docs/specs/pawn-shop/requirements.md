@@ -7,7 +7,7 @@ is cut out and folded at the heads, giving a two-ply pawn.
 
 ## R1 Importing pawn PDFs
 - R1.1 File ▸ Import PDF… and dropping PDFs on a window import them into the library.
-- R1.2 Library ▸ Import from Scrollkeeper… finds every pawn PDF in Scrollkeeper's Files folder
+- R1.2 Library ▸ Import from Scrollkeeper… finds every pawn and token PDF in Scrollkeeper's Files folder
   (`~/Library/Application Support/Scrollkeeper/Files`) that is not yet imported and imports them all.
 - R1.3 Every pawn in the PDF is found from its red cut outline, named from the label printed inside it, and
   sized (small, medium, large, huge) from the outline.

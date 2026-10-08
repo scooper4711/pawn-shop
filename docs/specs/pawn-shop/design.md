@@ -97,7 +97,7 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
     its name. `pawnsNeedingNames` lists them in library order.
   - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name or a product title;
     filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
-- `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn".
+- `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn" or "token".
 - Importing all 61 PDFs takes about 25 seconds (release build); about 420 pawns merge across products, such as
   Monster Core reusing Bestiary art.
 

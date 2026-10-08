@@ -75,11 +75,11 @@ final class LibraryModel {
         importPDFs(panel.urls)
     }
 
-    /// Imports every pawn PDF Scrollkeeper downloaded that isn't in the library yet.
+    /// Imports every pawn and token PDF Scrollkeeper downloaded that isn't in the library yet.
     func importFromScrollkeeper() {
         let files = ScrollkeeperScanner.pawnPDFs()
         guard !files.isEmpty else {
-            importSummary = "No pawn PDFs were found in Scrollkeeper's downloads "
+            importSummary = "No pawn or token PDFs were found in Scrollkeeper's downloads "
                 + "(\(ScrollkeeperScanner.defaultFolder.path))."
             return
         }
