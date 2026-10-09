@@ -70,16 +70,16 @@ final class LibraryModel {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.pdf]
         panel.allowsMultipleSelection = true
-        panel.message = "Choose Paizo pawn PDFs to add to the library."
+        panel.message = "Choose Paizo pawn, token or Battle Cards PDFs to add to the library."
         guard panel.runModal() == .OK else { return }
         importPDFs(panel.urls)
     }
 
-    /// Imports every pawn and token PDF Scrollkeeper downloaded that isn't in the library yet.
+    /// Imports every pawn, token and Battle Cards PDF Scrollkeeper downloaded that isn't in the library yet.
     func importFromScrollkeeper() {
         let files = ScrollkeeperScanner.pawnPDFs()
         guard !files.isEmpty else {
-            importSummary = "No pawn or token PDFs were found in Scrollkeeper's downloads "
+            importSummary = "No pawn, token or Battle Cards PDFs were found in Scrollkeeper's downloads "
                 + "(\(ScrollkeeperScanner.defaultFolder.path))."
             return
         }
@@ -89,7 +89,7 @@ final class LibraryModel {
     /// Imports PDFs one at a time, reading each off the main thread.
     func importPDFs(_ urls: [URL]) {
         guard !isImporting, let library else { return }
-        let pending = urls.filter { !library.hasImported($0) }
+        let pending = PawnLibrary.importableFiles(urls).filter { !library.hasImported($0) }
         guard !pending.isEmpty else {
             importSummary = urls.count == 1 ? "That PDF is already in the library."
                                             : "Those PDFs are already in the library."
@@ -120,10 +120,12 @@ final class LibraryModel {
         let added = reports.reduce(0) { $0 + $1.added }
         let known = reports.reduce(0) { $0 + $1.alreadyKnown }
         let borrowed = reports.reduce(0) { $0 + $1.namedFromOtherProducts }
+        let sharpened = reports.reduce(0) { $0 + $1.sharpened }
         let needingNames = reports.reduce(0) { $0 + $1.needingNames }
         let empty = reports.filter { $0.added + $0.alreadyKnown == 0 }.map(\.sourceTitle)
         var lines = ["Added \(added) pawns from \(reports.count) PDF\(reports.count == 1 ? "" : "s")."]
         if known > 0 { lines.append("\(known) were already in the library from other products.") }
+        if sharpened > 0 { lines.append("\(sharpened) pawns now use the sharper art from Battle Cards.") }
         if borrowed > 0 {
             lines.append("\(borrowed) pawns with no name printed took the name of the same art elsewhere.")
         }
@@ -146,8 +148,9 @@ final class LibraryModel {
     }
 
     func remove(_ ids: Set<UUID>) {
+        let removed = ids.compactMap { library?.pawn(id: $0) }
         perform { try $0.remove(ids) }
-        ids.forEach { backgroundRenderer?.forget($0) }
+        removed.forEach { backgroundRenderer?.forget($0) }
     }
 
     func add(_ pawn: Pawn) {

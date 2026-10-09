@@ -8,6 +8,8 @@ public enum PrintedShape: Equatable, Sendable {
     case pawn
     /// A round token, its faces being the squares around its art's circle, with its art drawn alone.
     case token(TokenPictures)
+    /// A creature on a Battle Card: the picture drawn `imageIndex`th on its art page, cut to the face's rect.
+    case card(imageIndex: Int)
 }
 
 /// A token's art drawn alone, as PNG: transparent outside the art and its circle.
@@ -33,6 +35,8 @@ public struct ExtractedPawn: Equatable, Sendable {
     /// How many copies the PDF prints.
     public var copies: Int
     public var shape: PrintedShape = .pawn
+    /// The creature's traits, from its Battle Card (see `Pawn.traits`).
+    public var traits: [String] = []
 }
 
 /// A cut outline with no name printed in it.
@@ -58,7 +62,9 @@ public enum PawnExtractionError: Error, Equatable, CustomStringConvertible {
 
 /// Finds the pawns and round tokens in a Paizo pawn or token PDF, with their names, sizes and backs.
 public enum PawnExtractor {
+    /// The pawns in a pawn or token PDF, or the creatures in a deck of Battle Cards.
     public static func extract(from url: URL) throws -> ExtractionResult {
+        if let deck = CardDeck.containing(url) { return try CardExtractor.extract(from: deck) }
         guard let document = PDFDocument(url: url), let first = document.page(at: 0)?.pageRef,
               let cgDocument = first.document
         else { throw PawnExtractionError.unreadable(url.lastPathComponent) }
@@ -128,7 +134,7 @@ public enum PawnExtractor {
     }
 
     /// Counts a copy when the same name, size and art is already listed; notes a pawn with no name.
-    private static func add(_ pawn: ExtractedPawn, to result: inout ExtractionResult) {
+    static func add(_ pawn: ExtractedPawn, to result: inout ExtractionResult) {
         if pawn.name.isEmpty {
             result.unnamed.append(UnnamedOutline(pageIndex: pawn.front.pageIndex, rect: pawn.front.rect))
         }

@@ -24,7 +24,9 @@ from any picture, such as the art from a scenario PDF, which [Pluck](https://git
 gets out for you.
 
 Paizo's newer round tokens become pawns too, so a token box gives you folding pawns rather than flat
-discs.
+discs. So do Paizo's Battle Cards: if you have a deck of them, with or without the pawns, each card's creature
+becomes a pawn. Where a pawn box prints the same painting, the pawn uses the card's art, which is usually
+several times sharper, and every creature from a card can be found by its traits, such as undead or construct.
 
 It is free, and it works only with PDFs you bought: the app contains no Paizo art itself.
 
@@ -40,17 +42,23 @@ the right.*
 
 ## Features
 
-- Imports every pawn and token PDF that [Scrollkeeper](https://github.com/scooper4711/scrollkeeper) has
-  downloaded in one go, or any PDF you choose or drop on a window.
+- Imports every pawn, token and Battle Cards PDF that
+  [Scrollkeeper](https://github.com/scooper4711/scrollkeeper) has downloaded in one go, or any PDF you choose
+  or drop on a window.
 - Finds each pawn from its cut outline, names it from its label, sizes it (small, medium, large, huge) and
   turns it upright. Pawns printed on their side, with backs on the following page or with no back page at
   all, are handled.
 - Turns round tokens into pawns: the token's art alone, without the page background, the cut line or the
   name printed on it, above the pawn's name on white. Tokens are named from the label on their back page or
   the name along their rim, and sized from the token (1" medium, 2" large, 3" huge).
+- Turns Battle Cards into pawns: each card's creature alone, from the art side, standing above its name on
+  white, named and sized from the stat side, with its traits (rarity and alignment left out) to search on.
+  Decks in one PDF or in two (fronts and backs) are both read, for Pathfinder and Starfinder.
+- Uses the sharpest art it has: a pawn whose painting a deck of Battle Cards also prints is drawn from the
+  card, and a card already in the library keeps its art when the pawn box comes later.
 - Stores copies of the same art once, also when another product reprints them, and keeps pawns that share
   a name but not their art (first and second edition, variants) side by side so you can pick.
-- Search by name, product or what the art shows, and filter by size, game, product or your own pawns.
+- Search by name, product, trait or what the art shows, and filter by size, game, product or your own pawns.
 - Optional tagging by a vision model running on your Mac in [Ollama](https://ollama.com), which describes
   each pawn's art in keywords such as "woman, warrior, shield, scimitar" and suggests names for pawns printed
   without one.
@@ -83,13 +91,16 @@ After that it opens normally.
 
 ## Using Pawn Shop
 
-- **Import:** Library › Import from Scrollkeeper imports every pawn and token PDF that
+- **Import:** Library › Import from Scrollkeeper imports every pawn, token and Battle Cards PDF that
   [Scrollkeeper](https://github.com/scooper4711/scrollkeeper)
   downloaded and that is not in the library yet. Library › Import PDF… (⇧⌘I), or dropping PDFs on a window,
-  imports others. The import summary lists the pawns added and any PDF where nothing was found. A PDF whose
-  file name does not mention Starfinder counts as Pathfinder, so rename such a file before importing it.
-- **Find:** search by name, product or tag, and filter by size, game, product or custom pawns. Right-click a
-  pawn to rename or remove it. Select a pawn and press Space to see it large, front and back, with its tags;
+  imports others. The import summary lists the pawns added, the pawns that now use sharper art from Battle
+  Cards, and any PDF where nothing was found. A PDF whose file name does not mention Starfinder counts as
+  Pathfinder, so rename such a file before importing it. Battle Cards are recognized by "Battle Cards" in the
+  file or folder name; for a deck in two PDFs (FRONT and BACKS), import either one and the other is read too.
+- **Find:** search by name, product, trait or tag, and filter by size, game, product or custom pawns.
+  Right-click a pawn to rename or remove it. Select a pawn and press Space to see it large, front and back,
+  with its traits and tags;
   the arrow keys move through the library, and Space or a click outside closes it.
 - **Name:** some products print no names. Their pawns take the name of the same art in another product, or
   wait for you under Library › Review Unnamed Pawns…, with a suggested name when tagging is on.
@@ -126,7 +137,8 @@ defaults write com.github.scooper4711.PawnShop TaggingModel <model>
 - Pages that are a single picture with no text (the second half of the NPC Core Pawn Box).
 - Terrain collections with rectangular outlines (Dungeon Decor, Traps & Treasures, Tech Terrain).
 
-These import with fewer pawns, or none; the import summary names the PDFs where nothing was found.
+These import with fewer pawns, or none; the import summary names the PDFs where nothing was found. The
+Monster Core and NPC Core Battle Cards print the creatures those two pawn boxes are missing.
 
 ## Pawn bases
 

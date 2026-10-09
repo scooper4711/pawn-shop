@@ -25,6 +25,8 @@ public final class PawnRenderer {
     private var images: [String: CGImage] = [:]
     /// The same PDFs opened with PDFKit, which knows where their text is.
     private var textDocuments: [String: PDFDocument] = [:]
+    /// The creatures of Battle Card pawns.
+    private(set) lazy var figures = FigureReader(folders: folders)
 
     public init(folders: LibraryFolders) {
         self.folders = folders
@@ -38,7 +40,7 @@ public final class PawnRenderer {
     public func uprightSize(of pawn: Pawn) -> CGSize {
         switch pawn.art {
         case .pdf(_, let front, _): front.uprightSize
-        case .custom, .token: pawn.size.outlineSize
+        case .custom, .token, .card: pawn.size.outlineSize
         }
     }
 
@@ -58,6 +60,8 @@ public final class PawnRenderer {
             if art.showsName { drawNameBand(pawn.name, in: rect, context: context) }
         case .token:
             drawToken(of: pawn, side: side, in: rect, context: context)
+        case .card:
+            drawCard(of: pawn, side: side, in: rect, context: context)
         }
         context.restoreGState()
     }
@@ -93,10 +97,9 @@ public final class PawnRenderer {
     /// The front face with its printed words painted out, so a model describing it sees only the art, `height`
     /// pixels tall upright. Art printed on its side, as the words along it show, is turned to read level.
     public func artImage(of pawn: Pawn, height: Int) -> CGImage? {
-        if case .token(let art) = pawn.art {
-            return bitmap(of: pawn, height: height) { context, rect in
-                self.drawTokenPicture(art, side: .front, in: Self.tokenCircle(in: rect), context: context)
-            }
+        switch pawn.art {
+        case .token, .card: return pictureAlone(of: pawn, height: height)
+        case .pdf, .custom: break
         }
         var artOnly = pawn
         if case .custom(var art) = pawn.art {
@@ -120,7 +123,7 @@ public final class PawnRenderer {
         return NameDirection.clockwiseQuarterTurns(toLevel: direction.applying(upright))
     }
 
-    private func bitmap(of pawn: Pawn, height: Int, draw: (CGContext, CGRect) -> Void) -> CGImage? {
+    func bitmap(of pawn: Pawn, height: Int, draw: (CGContext, CGRect) -> Void) -> CGImage? {
         let size = uprightSize(of: pawn)
         let width = max(1, Int((CGFloat(height) * size.width / size.height).rounded()))
         guard height > 0, let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,

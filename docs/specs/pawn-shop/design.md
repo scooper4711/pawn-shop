@@ -32,6 +32,28 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
 - Not yet handled: pawns printed without outlines (the second half of Monster Core, Dawn of Flame), pages
   that are only a raster image (the second half of NPC Core), and terrain sets with rectangular outlines.
 
+## Paizo Battle Cards
+Measured across eleven decks (Bestiary 1–3, Monster Core, NPC, NPC Core, Abomination Vaults, Book of the Dead,
+Fists of the Ruby Phoenix, Alien Archive 1 & 2 and 3 & 4), 289 × 425 pt cards (Starfinder 289 × 431):
+- Layouts: one PDF with each card's art page just before its stat page (Bestiary); one PDF with runs of stat
+  pages each followed by a run of the same cards' art (Monster Core, NPC Core: runs of about 110); or two PDFs,
+  "… FRONT(S)" and "… BACKS", paired page by page. Art pages print no text, except Starfinder's, which print the
+  name above the art. The NPC deck's combined PDF prints no art of its own, and the Deck of Endless NPCs is not
+  a Battle Cards deck.
+- An art page draws the background, frame and badges every card shares, then the card's own pictures. The
+  creature is the last of those, an image with a soft mask that is transparent around the figure; first-edition
+  decks draw a zoomed copy of it behind the frame, and the creature's canvas is often the whole card, with
+  transparent margins.
+- The creature's picture is the pawn box's painting, at about 2.9 times the pixels across (1.2 to 6.3) in the
+  Bestiary deck, and some cards use different paintings from the pawn box (Giant Centipede, Flash Beetle, Orc
+  Warrior).
+- PDFKit reads stat pages in a mostly natural order: "AEON, ARBITER CREATURE 1" (a backspace sometimes follows
+  the name), then the traits in capitals, wrapping onto the Perception line in Bestiary 2. On a few cards the
+  alignment and size come before or after the name. Starfinder prints "NAME CR n", "XP n" and "LE Medium
+  humanoid (human)", but sometimes the name shares its line with the type, or CR comes several lines down.
+  Long stat blocks continue on a card headed "(Name; continued from card n)".
+- Reading all eleven decks takes about 35 seconds (release build); they give about 2,700 creatures.
+
 ## Extraction (`PawnShopCore/Extraction`)
 - `PageScanner` walks a page's content stream with `CGPDFScanner`, tracking `q`/`Q`/`cm`, recursing into
   form XObjects (with their `Matrix`), and building paths from `m l c v y re h`.
@@ -67,6 +89,34 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
     matches: equal digests, or thumbnails with a correlation distance (100 × (1 − r)) of at most 20. Copies
     embedded separately measure up to about 10; different figures start above 40.
 
+## Battle Cards (`PawnShopCore/Cards`)
+- `CardDeck.containing(_:)` takes a PDF whose name, or one of its two enclosing folders, says "Battle Cards".
+  A file naming a side (FRONT, FRONTS, BACK, BACKS) is paired with the file beside it whose name differs only
+  in naming the other side; the BACKS file is the deck's `artFile`, which the library keeps. The title comes
+  from the nearest enclosing folder naming the deck and starting with Pathfinder or Starfinder (as Scrollkeeper
+  files them), without "(Download)" and "- PDF(s)", or else from the file name.
+- `CardPairing` pairs pages: page *n* of both PDFs; or in one PDF, each textless page with the page after it
+  when such pairs cover over a third of the pages, else the *k*th page of each run of text pages with the *k*th
+  of the run of textless pages after it.
+- `CardExtractor` scans art pages with `PageScanner.images(on:)` (placements without identities, which are
+  slow to compute) and digests each image once. Images on at least half the art pages, and on three or more,
+  are shared; the creature is the last image drawn that is not shared, has a soft mask and is at least 20 pt
+  across. It becomes an `ExtractedPawn` with the `.card(imageIndex:)` shape, a face on the art page whose rect
+  is the creature's opaque bounds, the back the front mirrored, and the creature's digest and thumbnail as its
+  fingerprint.
+- `CardStats.read(_:)` reads the stat page's PDFKit text (control characters become spaces). The name is the
+  run of words in capitals starting the header's line, or one of the three lines above it; rarity, alignment
+  and size words read beside it move to the traits, except after a comma ("Herd Animal, Huge"). Pathfinder's
+  traits are the words in capitals between the header and "Perception"; Starfinder's are the size, type and
+  subtypes of the first "[alignment] Size type (subtypes)" line, without a book reference after a semicolon.
+- `Figure` (in Extraction) is one image as its page draws it: the image with its soft mask, and its opaque
+  bounds in page space, found in a bitmap at most 512 px across (alpha above 24). `pixelArea` is those bounds in
+  the image's own pixels. `palette()` counts the opaque pixels of the figure drawn 64 × 64 into 64 colors (four
+  levels of red, green and blue); `paletteDistance` is 1 minus the Bhattacharyya coefficient. In the Bestiary,
+  the same painting however cropped measured at most 0.013 and different paintings of the same creature 0.027
+  or more, so 0.02 is the same painting. Thumbnails (16 × 24) cannot tell these apart, since a crop moves the
+  figure in its frame, and Vision's feature prints rate young and adult dragons closer than one painting's crops.
+
 ## Library (`PawnShopCore/Library`)
 - Stored under `~/Library/Application Support/Pawn Shop/`:
   - `Sources/<sha256>.pdf`: a copy of each imported PDF;
@@ -77,8 +127,11 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
 - `PawnSource`: id (SHA-256 of the file), title (from the file name, without product codes and " PDF"),
   import date, original path and byte count (to recognize a file again without hashing it), and the game,
   read from the title.
-- `Pawn`: id, name, size, fingerprint, `needsName`, `art` (`.pdf(sourceID, front, back)`, `.custom(CustomArt)`
-  or `.token(TokenArt)`: source id and front and optional back picture files) and
+- `Pawn`: id, name, size, fingerprint, `needsName`, `traits` (from Battle Cards), `art` (`.pdf(sourceID, front,
+  back)`, `.custom(CustomArt)`, `.token(TokenArt)`: source id and front and optional back picture files, or
+  `.card(CardArt)`: source id, the art page and creature bounds as a face, and the image's index in drawing
+  order, drawn straight from the kept PDF rather than stored as a picture, since PNGs of every deck's creatures
+  would take over a gigabyte) and
   `appearances` (each product printing the art, with its copies; the first supplies the faces).
   `CustomArt`: image file name, scaling (`.fill` covers the face; `.fit` shows the whole picture in the area
   above the name band), focus point (where the image sits within its room to move: the overflow when filling,
@@ -89,15 +142,25 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
     same name, size and matching art (adding an appearance) or adds it; then saves. A known file is a no-op.
   - `add`, `update`, `rename` (which clears `needsName`) and `remove` (deleting custom art and token pictures) save
     immediately.
+  - Battle Cards (`SharperArt.swift`): when either the extracted pawn or a library pawn is a card, only equal
+    digests merge them directly. Otherwise a named pawn is compared with the library pawns whose names match
+    (`namesMatch`, found through an index by the part after the last comma, built for the import) by their
+    figures' palettes; `FigureReader` finds a card's creature, or a printed pawn's largest image inside its front,
+    in the kept PDFs, keeping the last 24 figures. A match adds the appearance (first when the imported picture
+    has more pixels and becomes the art), takes a printed pawn's size and adds the traits. Into a copy of the
+    real library (8,620 pawns), the Bestiary deck merged 340 of its 398 cards, 339 of them now drawn from the
+    card; Monster Core, Bestiary 2 and Alien Archive 1 & 2 merged 318, 291 and 163.
   - Nameless pawns (`PawnMerging.swift`): an extracted pawn with no name merges into a pawn with the same art
     when its product is in `NamelessProducts` (Heroes & Villains) and `ArtFingerprint.isSameArt(as:)` holds:
     equal digests or a thumbnail distance of at most 15, stricter than the 20 used with equal names because
     across the whole library 16 and up were different figures. Otherwise it is added as
     "Unknown <product title>" with `needsName`. A named pawn imported later that matches such a pawn gives it
     its name. `pawnsNeedingNames` lists them in library order.
-  - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name or a product title;
+  - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name or a product title, or
+    begin a word of a trait or tag;
     filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
-- `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn" or "token".
+- `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn" or "token", and
+  each Battle Cards deck once, as its art PDF (`PawnLibrary.importableFiles`).
 - Importing all 61 PDFs takes about 25 seconds (release build); about 420 pawns merge across products, such as
   Monster Core reusing Bestiary art.
 
@@ -118,7 +181,9 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
   and turned upright (vector text and full-resolution art kept), or a custom image covering the outline around
   its focus point, mirrored for the back, with the name in a band at the foot, or a token's picture cut round
   as large as fits above the name band, on white (the front mirrored for the back when it has no back
-  picture). `NameLayout` fits the name: one line at full size
+  picture), or a card's creature (`PawnRenderer+Cards`) as large as fits above the name band, centered and
+  standing on it, drawn from its image in the kept PDF through the page's transform and clipped to its bounds,
+  so a printed sheet embeds the full-resolution picture. `NameLayout` fits the name: one line at full size
   (60% of a 13% band) if it fits 92% of the width, else two lines at that size (the band grows), and only then
   smaller type, down to 3 pt. It draws strips with a hairline
   gray cut outline and a dashed fold line, a gray placeholder for a missing pawn, and face thumbnails.
@@ -129,8 +194,9 @@ Measured across 61 Pathfinder and Starfinder pawn PDFs:
 - `DocumentGroup` for `.pawnsheet` (`PawnSheetDocument`, JSON). `LibraryModel` (`@Observable`, main actor) wraps
   the shared library: imports read each PDF off the main thread (`prepareImport`) and commit on the main
   thread, one at a time, with progress and a summary afterwards.
-- `BackgroundRenderer` renders thumbnails (kept in an `NSCache`) and preview pages on one background queue
-  with its own `PawnRenderer`.
+- `BackgroundRenderer` renders thumbnails (kept in an `NSCache`, keyed by the pawn's id and a hash of its name,
+  size and art, so a pawn given sharper art is drawn again) and preview pages on one background queue with its
+  own `PawnRenderer`.
 - Window: `LibraryBrowser` (search field, filter menu for size, game, product and custom; a lazy grid of
   tiles with name, size and short product title; double-click adds the chosen number of copies; context menu
   adds 1–6, renames or removes), `SheetPreview` (pages from `SheetExporter.layout()`, each rendered in the

@@ -7,8 +7,9 @@ is cut out and folded at the heads, giving a two-ply pawn.
 
 ## R1 Importing pawn PDFs
 - R1.1 File ▸ Import PDF… and dropping PDFs on a window import them into the library.
-- R1.2 Library ▸ Import from Scrollkeeper… finds every pawn and token PDF in Scrollkeeper's Files folder
-  (`~/Library/Application Support/Scrollkeeper/Files`) that is not yet imported and imports them all.
+- R1.2 Library ▸ Import from Scrollkeeper… finds every pawn, token and Battle Cards PDF in Scrollkeeper's
+  Files folder (`~/Library/Application Support/Scrollkeeper/Files`) that is not yet imported and imports them
+  all.
 - R1.3 Every pawn in the PDF is found from its red cut outline, named from the label printed inside it, and
   sized (small, medium, large, huge) from the outline.
 - R1.4 Each pawn's back is taken from the mirrored position on the following page. When there is none, the
@@ -35,10 +36,27 @@ is cut out and folded at the heads, giving a two-ply pawn.
   above the pawn's name on white. A back page repeating the art gives the pawn's back; otherwise the back is
   the front mirrored.
 
+- R1.14 Battle Cards (a PDF, or the folders it is in, named "… Battle Cards") are imported as pawns, so a deck
+  bought without its pawns still gives pawns. A deck may be one PDF, with each card's art before its stat block
+  or runs of stat blocks each followed by the same cards' art, or two PDFs ("… FRONT" with the stat blocks,
+  "… BACKS" with the art), paired page by page; importing either PDF of a pair imports the deck once. Each
+  card's creature (the last picture of its own that its art side draws, transparent around the figure, not
+  the background, frame or badges every card shares) is drawn alone, trimmed to its opaque part, as large
+  as it fits above the pawn's name on white, standing on it. Its name comes from the stat block (Pathfinder:
+  before "CREATURE n"; Starfinder: before "CR n" or "XP n"), its size from its size (up to medium a medium
+  pawn, colossal a gargantuan one), and its traits from the trait line (Starfinder: size, type and subtypes),
+  without rarity and alignment; traits show in the pawn's tooltip and preview. Hazards, continued stat blocks
+  and rules pages are skipped.
+- R1.15 A Battle Card and a pawn (or two decks' cards) showing the same painting are one pawn: the names match
+  (equal, or the same after the last comma when at most one names a family, as "Elemental, Air, Invisible
+  Stalker" and "Elemental, Invisible Stalker" do) and the figures' colors match. The pawn is drawn from
+  whichever picture has more pixels, which is usually the card's, takes the printed pawn's size, and gains
+  the card's traits. The import report counts the pawns that now use sharper art.
+
 ## R2 The library
 - R2.1 The library is kept between launches and shared by every sheet.
 - R2.2 Search matches names and product titles, ignoring case and accents, and the start of words in a pawn's
-  tags (R2.7), so "man" does not find "woman".
+  traits (R1.14) and tags (R2.7), so "man" does not find "woman".
 - R2.3 Results can be filtered by size and by product.
 - R2.4 Pawns with the same name are shown next to each other with their product, so the art can be compared.
 - R2.5 A pawn can be removed from the library, or renamed.
@@ -51,8 +69,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
   needing a name, and for those alone the model also suggests a name of at most three words (R1.12). The user
   can correct a pawn's tags from its preview or context menu; tagging never changes corrected tags, even when
   the model is changed.
-- R2.8 Space shows the selected pawn's front and back large over the window, with its name, size, products
-  and tags. The arrow keys move the selection and the preview with it; Space, Escape or a click outside
+- R2.8 Space shows the selected pawn's front and back large over the window, with its name, size, products,
+  traits and tags. The arrow keys move the selection and the preview with it; Space, Escape or a click outside
   closes it.
 
 ## R3 Custom pawns

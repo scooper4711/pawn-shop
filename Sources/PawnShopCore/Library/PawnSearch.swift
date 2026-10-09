@@ -3,7 +3,7 @@ import Foundation
 /// What to look for in the library.
 public struct PawnQuery: Equatable, Sendable {
     /// Words that must all appear in the pawn's name or one of its products' titles, or begin a word of one of its
-    /// tags, so "man" finds the tag "man" but not "woman".
+    /// tags or traits, so "man" finds the tag "man" but not "woman".
     public var text = ""
     /// Sizes to show; empty shows every size.
     public var sizes: Set<PawnSize> = []
@@ -84,7 +84,7 @@ public extension PawnLibrary {
               query.games.isEmpty || pawn.isCustom || sources.contains(where: { query.games.contains($0.game) })
         else { return false }
         let haystack = ([pawn.name] + sourceTitles(of: pawn)).joined(separator: " ")
-        let tagWords = pawn.tags.flatMap { $0.split(whereSeparator: \.isWhitespace) }
+        let tagWords = (pawn.tags + pawn.traits).flatMap { $0.split(whereSeparator: \.isWhitespace) }
         return words.allSatisfy { word in
             haystack.range(of: word, options: Self.searchOptions) != nil
                 || tagWords.contains { $0.range(of: word, options: Self.searchOptions.union(.anchored)) != nil }
@@ -94,21 +94,24 @@ public extension PawnLibrary {
     private static var searchOptions: String.CompareOptions { [.caseInsensitive, .diacriticInsensitive] }
 }
 
-/// Finds the pawn and token PDFs Scrollkeeper has downloaded.
+/// Finds the pawn, token and Battle Cards PDFs Scrollkeeper has downloaded.
 public enum ScrollkeeperScanner {
     /// `~/Library/Application Support/Scrollkeeper/Files`.
     public static var defaultFolder: URL {
         URL.applicationSupportDirectory.appendingPathComponent("Scrollkeeper/Files", isDirectory: true)
     }
 
-    /// PDFs under `folder` whose file name mentions pawns or tokens, sorted by name.
+    /// PDFs under `folder` whose file name mentions pawns or tokens, and decks of Battle Cards (see `CardDeck`),
+    /// each deck once, sorted by name.
     public static func pawnPDFs(in folder: URL = defaultFolder) -> [URL] {
         let files = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: nil)?
             .compactMap { $0 as? URL } ?? []
-        return files.filter { url in
-            url.pathExtension.lowercased() == "pdf" && ["pawn", "token"].contains {
+        let pdfs = files.filter { url in
+            url.pathExtension.lowercased() == "pdf" && (CardDeck.containing(url) != nil || ["pawn", "token"].contains {
                 url.lastPathComponent.localizedCaseInsensitiveContains($0)
-            }
-        }.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+            })
+        }
+        return PawnLibrary.importableFiles(pdfs)
+            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
     }
 }

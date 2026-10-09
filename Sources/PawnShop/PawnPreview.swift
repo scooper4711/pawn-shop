@@ -25,6 +25,9 @@ struct PawnPreview: View {
                 Text(pawn.name).font(.title2.weight(.semibold))
                 Text("\(pawn.size.displayName) · \(library.sourceTitles(of: pawn).joined(separator: ", "))")
                     .foregroundStyle(.secondary)
+                if !pawn.traits.isEmpty {
+                    Text("Traits: \(pawn.traits.joined(separator: ", "))").font(.callout).foregroundStyle(.secondary)
+                }
                 HStack {
                     if !pawn.tags.isEmpty {
                         Text(pawn.tags.joined(separator: ", ")).font(.callout).foregroundStyle(.secondary)
