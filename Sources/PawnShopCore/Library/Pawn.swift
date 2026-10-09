@@ -17,6 +17,10 @@ public struct PawnSource: Codable, Identifiable, Hashable, Sendable {
     /// Where the file was imported from, and its size then, to recognize it again without hashing it.
     public var originalPath: String
     public var byteCount: Int
+    /// How many pawns importing it found; nil for products imported before this was recorded.
+    public var pawnsFound: Int?
+    /// The `PawnExtractor.version` that read it; nil (version 0) for products imported before this was recorded.
+    public var readerVersion: Int?
 
     public var game: Game { title.localizedCaseInsensitiveContains("Starfinder") ? .starfinder : .pathfinder }
 

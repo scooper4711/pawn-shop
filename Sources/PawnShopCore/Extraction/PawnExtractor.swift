@@ -62,6 +62,10 @@ public enum PawnExtractionError: Error, Equatable, CustomStringConvertible {
 
 /// Finds the pawns and round tokens in a Paizo pawn or token PDF, with their names, sizes and backs.
 public enum PawnExtractor {
+    /// Raised when extraction finds pawns it could not before, so that PDFs in which nothing was found are read
+    /// again. 1: Battle Cards whose art pages credit the illustrator.
+    public static let version = 1
+
     /// The pawns in a pawn or token PDF, or the creatures in a deck of Battle Cards.
     public static func extract(from url: URL) throws -> ExtractionResult {
         if let deck = CardDeck.containing(url) { return try CardExtractor.extract(from: deck) }

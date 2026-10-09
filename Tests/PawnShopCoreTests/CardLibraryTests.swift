@@ -3,6 +3,12 @@ import Foundation
 import Testing
 @testable import PawnShopCore
 
+/// Writes a library file holding `sources` and `pawns` into `folder`.
+func saveLibrary(sources: [PawnSource], pawns: [Pawn], in folder: URL) throws {
+    try JSONEncoder().encode(StoredLibrary(sources: sources, pawns: pawns))
+        .write(to: folder.appendingPathComponent(PawnLibrary.indexFile))
+}
+
 @Suite struct CardLibraryTests {
     let folder = temporaryFolder()
 
@@ -34,6 +40,49 @@ import Testing
         try library.commit(prepared)
         #expect(library.hasImported(deck.fronts) && library.hasImported(deck.backs))
         #expect(library.pawns.count == 3)
+    }
+
+    @Test func readsAgainOnlyWhatAnOlderReaderFoundNothingIn() throws {
+        let empty = try writeCardDeck(threeCards.map { DrawnCard(name: $0.name, creature: nil) }, in: folder)
+        let library = try library()
+        let first = try library.importPDF(at: empty)
+        let source = try #require(library.sources.first)
+        let copy = library.fileURL(forSource: source.id)
+        #expect(first.added == 0 && !FileManager.default.fileExists(atPath: copy.path))
+        #expect(source.pawnsFound == 0 && source.readerVersion == PawnExtractor.version)
+        // The current reader found nothing, so it doesn't try again.
+        let again = try library.importPDF(at: empty)
+        #expect(library.hasImported(empty) && again.wasImported)
+        var older = source
+        older.readerVersion = PawnExtractor.version - 1
+        try saveLibrary(sources: [older], pawns: [], in: library.folder)
+        try writeCardDeck(threeCards, in: folder)
+        let reopened = try PawnLibrary(folder: library.folder)
+        #expect(!reopened.hasImported(empty))
+        #expect(try reopened.importPDF(at: empty).added == 3)
+        #expect(reopened.sources.count == 1 && reopened.hasImported(empty))
+    }
+
+    @Test func keepsAProductImportedWhenItsPawnsAreRemoved() throws {
+        let deck = try writeCardDeck(threeCards, in: folder)
+        let library = try library()
+        try library.importPDF(at: deck)
+        try library.remove(Set(library.pawns.map(\.id)))
+        let again = try library.importPDF(at: deck)
+        #expect(library.hasImported(deck) && again.wasImported)
+    }
+
+    @Test func triesAgainAnOlderProductThatNoPawnComesFrom() throws {
+        let deck = try writeCardDeck(threeCards, in: folder)
+        let library = try library()
+        try library.importPDF(at: deck)
+        let older = try #require(library.sources.first)
+        let unrecorded = PawnSource(id: older.id, title: older.title, importedAt: older.importedAt,
+                                    originalPath: older.originalPath, byteCount: older.byteCount)
+        try saveLibrary(sources: [unrecorded], pawns: [], in: library.folder)
+        let reopened = try PawnLibrary(folder: library.folder)
+        #expect(!reopened.hasImported(deck))
+        #expect(try reopened.importPDF(at: deck).added == 3)
     }
 
     @Test func drawsAPawnBoxPawnFromTheSharperCard() throws {

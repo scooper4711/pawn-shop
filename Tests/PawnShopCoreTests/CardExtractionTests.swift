@@ -87,6 +87,16 @@ import Testing
                                                ["large", "dragon", "fire"]])
     }
 
+    @Test func readsArtPagesThatCreditTheirIllustrator() throws {
+        let cards = threeCards.map { card in
+            var credited = card
+            credited.credit = "Illustration by Diana Martinez"
+            return credited
+        }
+        let result = try extract(try writeCardDeck(cards, in: folder))
+        #expect(result.pawns.map(\.name) == ["Aeon, Arbiter", "Ghoul", "Dragon, Young Red"])
+    }
+
     @Test func takesTheCreatureAloneTrimmedToItsOpaquePart() throws {
         let pawn = try #require(try extract(try writeCardDeck(threeCards, in: folder)).pawns.first)
         // The background, the faded copy and the frame come first on the page; the creature is drawn last.
