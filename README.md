@@ -58,6 +58,8 @@ the right.*
 - Cut lines shared between strips (one cut separates two pawns) or gaps between them, and an optional fold
   line.
 - Custom pawns from your own images, from small to gargantuan.
+- Tells you when a new version is released, if you like: it checks when it opens (turn that off in Settings)
+  and on Pawn Shop › Check for Updates….
 
 ## Requirements
 

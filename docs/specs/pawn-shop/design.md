@@ -170,3 +170,9 @@ shapes so the pawn and the hat still read at 32 px.
 - GitHub Actions: `ci.yml` lints strictly, runs the coverage gate (tests reading Paizo's PDFs are skipped, as
   the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds a
   universal disk image for each pushed `v*` tag and attaches it to the tag's GitHub release.
+- Updates (`PawnShopCore/Updates`): `AppUpdater` asks GitHub's `releases/latest` for the repository, compares
+  the tag with the bundle version (`AppVersion`, number by number), and offers the release's `.dmg`. A 404,
+  which GitHub answers before the first release, counts as up to date. Builds without a version (0.0.0) skip
+  the launch check, which would otherwise always find an update. The app shows the results in app-modal
+  alerts (`UpdateAlerts`), so they appear once however many sheet windows are open; the launch check is the
+  user default `checksForUpdatesAtLaunch`, on unless turned off in Settings.
