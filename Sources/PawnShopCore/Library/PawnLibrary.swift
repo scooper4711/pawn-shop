@@ -3,7 +3,10 @@ import Foundation
 
 /// A PDF read and ready to add to the library.
 public struct PreparedImport: Sendable {
+    /// The PDF the library keeps: for a two-file deck of Battle Cards, the one with the art.
     public let file: URL
+    /// The product's title.
+    public let title: String
     public let digest: String
     public let byteCount: Int
     public let extraction: ExtractionResult
@@ -18,6 +21,8 @@ public struct ImportReport: Equatable, Sendable {
     public var alreadyKnown = 0
     /// Outlines with no name printed.
     public var unnamed: [UnnamedOutline] = []
+    /// Pawns now drawn from a sharper picture of the same painting, from Battle Cards.
+    public var sharpened = 0
     /// Pawns with no name printed that took the name of the same art in another product.
     public var namedFromOtherProducts = 0
     /// Pawns added with a stand-in name, waiting to be named.
@@ -45,6 +50,10 @@ public final class PawnLibrary {
     public let folder: URL
     public private(set) var sources: [PawnSource] = []
     public internal(set) var pawns: [Pawn] = []
+    /// Reads pawns' pictures to compare them while importing.
+    private(set) lazy var figures = FigureReader(folders: folders)
+    /// Pawn indexes by name (see `nameKey`), while importing; nil until needed.
+    var paintingIndex: [String: [Int]]?
 
     /// `~/Library/Application Support/Pawn Shop`.
     public static var defaultFolder: URL {
@@ -77,24 +86,38 @@ public final class PawnLibrary {
     public func pawn(id: UUID) -> Pawn? { pawns.first { $0.id == id } }
 
     /// True when the PDF at `url` was imported before: recognized by its path and size, or else its contents.
-    public func hasImported(_ url: URL) -> Bool {
+    /// Either PDF of a two-file deck of Battle Cards stands for the deck.
+    public func hasImported(_ file: URL) -> Bool {
+        let url = CardDeck.containing(file)?.artFile ?? file
         let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? -1
         if sources.contains(where: { $0.originalPath == url.path && $0.byteCount == size }) { return true }
         return (try? Self.digest(of: url)).map { source(id: $0) != nil } ?? false
     }
 
+    /// The PDFs to import for `urls`: each once, and a two-file deck of Battle Cards as its art PDF.
+    public static func importableFiles(_ urls: [URL]) -> [URL] {
+        var files: [URL] = []
+        for url in urls.map({ CardDeck.containing($0)?.artFile ?? $0 }) where !files.contains(url) {
+            files.append(url)
+        }
+        return files
+    }
+
     /// Reads a PDF's pawns. It touches nothing in the library, so it can run off the main thread.
     public static func prepareImport(of url: URL) throws -> PreparedImport {
-        let digest = try digest(of: url)
-        let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? 0
-        let extraction = try PawnExtractor.extract(from: url)
-        return PreparedImport(file: url, digest: digest, byteCount: size, extraction: extraction)
+        let deck = CardDeck.containing(url)
+        let file = deck?.artFile ?? url
+        let digest = try digest(of: file)
+        let size = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? Int) ?? 0
+        let extraction = try PawnExtractor.extract(from: file)
+        return PreparedImport(file: file, title: deck?.title ?? PawnSource.title(fromFileName: url.lastPathComponent),
+                              digest: digest, byteCount: size, extraction: extraction)
     }
 
     /// Adds a prepared PDF's pawns, merging art the library already has, and saves.
     @discardableResult
     public func commit(_ prepared: PreparedImport) throws -> ImportReport {
-        let title = PawnSource.title(fromFileName: prepared.file.lastPathComponent)
+        let title = prepared.title
         var report = ImportReport(sourceTitle: title, unnamed: prepared.extraction.unnamed)
         guard source(id: prepared.digest) == nil else {
             report.wasImported = true
@@ -104,6 +127,10 @@ public final class PawnLibrary {
         sources.append(PawnSource(id: prepared.digest, title: title, importedAt: Date(),
                                   originalPath: prepared.file.path, byteCount: prepared.byteCount))
         let source = sources[sources.count - 1]
+        defer {
+            figures.forgetPages()
+            paintingIndex = nil
+        }
         for found in prepared.extraction.pawns {
             try merge(found, from: source, into: &report)
         }
@@ -172,7 +199,7 @@ public final class PawnLibrary {
                 for file in art.pictures {
                     try? FileManager.default.removeItem(at: folders.tokens.appendingPathComponent(file))
                 }
-            case .pdf:
+            case .pdf, .card:
                 break
             }
         }

@@ -23,9 +23,25 @@ enum EmbeddedImage {
         guard let data = CGPDFStreamCopyData(stream, &format) as Data?,
               let dictionary = CGPDFStreamGetDictionary(stream)
         else { return .empty }
-        let digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         let image = decode(data, format: format, dictionary: dictionary)
-        return ImageIdentity(digest: digest, thumbnail: image.map(thumbnail(of:)) ?? [])
+        return ImageIdentity(digest: digest(of: data), thumbnail: image.map(thumbnail(of:)) ?? [])
+    }
+
+    /// The digest an image's identity has, without decoding it; empty when its data can't be read.
+    static func digest(of stream: CGPDFStreamRef) -> String {
+        var format = CGPDFDataFormat.raw
+        return (CGPDFStreamCopyData(stream, &format) as Data?).map(digest(of:)) ?? ""
+    }
+
+    private static func digest(of data: Data) -> String {
+        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// True when the image has a soft mask, so it is transparent around the art it shows.
+    static func hasSoftMask(_ stream: CGPDFStreamRef) -> Bool {
+        var mask: CGPDFStreamRef?
+        guard let dictionary = CGPDFStreamGetDictionary(stream) else { return false }
+        return CGPDFDictionaryGetStream(dictionary, "SMask", &mask)
     }
 
     static func decode(_ data: Data, format: CGPDFDataFormat, dictionary: CGPDFDictionaryRef) -> CGImage? {

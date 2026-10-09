@@ -50,14 +50,34 @@ public enum PawnArt: Codable, Hashable, Sendable {
     case custom(CustomArt)
     /// A round token on the pages of an imported PDF, drawn in a pawn's outline.
     case token(TokenArt)
+    /// A creature on a Battle Card in an imported PDF, drawn in a pawn's outline.
+    case card(CardArt)
 
     /// The imported PDF the faces come from; nil for custom art.
     public var sourceID: String? {
         switch self {
         case .pdf(let sourceID, _, _): sourceID
         case .token(let art): art.sourceID
+        case .card(let art): art.sourceID
         case .custom: nil
         }
+    }
+}
+
+/// A creature on a Battle Card, drawn in a pawn's outline as large as it fits above the name, standing on it,
+/// on white. Only the creature's picture is drawn, not the card around it, straight from the library's copy of
+/// the PDF; the back is the front mirrored.
+public struct CardArt: Codable, Hashable, Sendable {
+    public var sourceID: String
+    /// The art page, and the creature's bounds on it: the part of its picture that isn't transparent.
+    public var face: PawnFace
+    /// Which picture the page draws the creature with, counting from 0 in drawing order.
+    public var imageIndex: Int
+
+    public init(sourceID: String, face: PawnFace, imageIndex: Int) {
+        self.sourceID = sourceID
+        self.face = face
+        self.imageIndex = imageIndex
     }
 }
 
@@ -151,6 +171,8 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     public var suggestedName = ""
     /// True once the user has corrected `tags`; tagging then leaves them alone.
     public var tagsCorrected = false
+    /// The creature's traits from its Battle Card, lowercase, such as "undead" and "zombie"; searched like tags.
+    public var traits: [String] = []
 
     public init(id: UUID = UUID(), name: String, size: PawnSize, art: PawnArt,
                 fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = [],
@@ -166,11 +188,11 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case id, name, size, art, fingerprint, appearances, needsName, tags, tagModel, suggestedName,
-             tagsCorrected
+             tagsCorrected, traits
     }
 
-    /// Libraries saved before `needsName` existed read as having every name, and before tags as untagged and
-    /// without suggested names or corrections.
+    /// Libraries saved before `needsName` existed read as having every name, before tags as untagged and
+    /// without suggested names or corrections, and before Battle Cards without traits.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -184,6 +206,7 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
         tagModel = try container.decodeIfPresent(String.self, forKey: .tagModel) ?? ""
         suggestedName = try container.decodeIfPresent(String.self, forKey: .suggestedName) ?? ""
         tagsCorrected = try container.decodeIfPresent(Bool.self, forKey: .tagsCorrected) ?? false
+        traits = try container.decodeIfPresent([String].self, forKey: .traits) ?? []
     }
 
     public var isCustom: Bool {

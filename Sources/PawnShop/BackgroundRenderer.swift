@@ -27,7 +27,7 @@ final class BackgroundRenderer: @unchecked Sendable {
 
     /// The thumbnail if it is ready.
     func cachedThumbnail(of pawn: Pawn, side: PawnSide = .front, height: Int = thumbnailHeight) -> CGImage? {
-        thumbnails.object(forKey: key(pawn.id, side, height))
+        thumbnails.object(forKey: key(pawn, side, height))
     }
 
     /// The thumbnail, rendering it first if needed.
@@ -35,7 +35,7 @@ final class BackgroundRenderer: @unchecked Sendable {
         if let image = cachedThumbnail(of: pawn, side: side, height: height) { return image }
         return await onQueue { renderer in
             let image = renderer.thumbnail(of: pawn, side: side, height: height)
-            if let image { self.thumbnails.setObject(image, forKey: self.key(pawn.id, side, height)) }
+            if let image { self.thumbnails.setObject(image, forKey: self.key(pawn, side, height)) }
             return image
         }
     }
@@ -65,10 +65,10 @@ final class BackgroundRenderer: @unchecked Sendable {
         }
     }
 
-    /// Drops a pawn's thumbnails, after it changed or was removed.
-    func forget(_ id: UUID) {
+    /// Drops a pawn's thumbnails, after it was removed.
+    func forget(_ pawn: Pawn) {
         for side in [PawnSide.front, .back] {
-            thumbnails.removeObject(forKey: key(id, side, Self.thumbnailHeight))
+            thumbnails.removeObject(forKey: key(pawn, side, Self.thumbnailHeight))
         }
     }
 
@@ -82,7 +82,13 @@ final class BackgroundRenderer: @unchecked Sendable {
         }
     }
 
-    private func key(_ id: UUID, _ side: PawnSide, _ height: Int) -> NSString {
-        "\(id)-\(side == .front ? "front" : "back")-\(height)" as NSString
+    /// Changes with what the face shows (its name, size and art, which sharper art from Battle Cards replaces),
+    /// not with tags.
+    private func key(_ pawn: Pawn, _ side: PawnSide, _ height: Int) -> NSString {
+        var looks = Hasher()
+        looks.combine(pawn.name)
+        looks.combine(pawn.size)
+        looks.combine(pawn.art)
+        return "\(pawn.id)-\(looks.finalize())-\(side == .front ? "front" : "back")-\(height)" as NSString
     }
 }

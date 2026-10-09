@@ -135,10 +135,11 @@ struct LibraryBrowser: View {
         .padding(8)
     }
 
-    /// The pawn's products and tags, shown on hover.
+    /// The pawn's products, traits and tags, shown on hover.
     private func help(for pawn: Pawn) -> String {
         let products = library.sourceTitles(of: pawn).joined(separator: "\n")
-        return pawn.tags.isEmpty ? products : products + "\n\n" + pawn.tags.joined(separator: ", ")
+        let words = [pawn.traits, pawn.tags].filter { !$0.isEmpty }.map { $0.joined(separator: ", ") }
+        return ([products] + words).joined(separator: "\n\n")
     }
 
     @ViewBuilder

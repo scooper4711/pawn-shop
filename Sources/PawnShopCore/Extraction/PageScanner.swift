@@ -44,6 +44,8 @@ final class PageScanner {
     private var subpaths: [Subpath] = []
     var content = PageContent()
     private var identities: [Int: ImageIdentity] = [:]
+    /// False when only where images are drawn is wanted, not what they show, which is slower to work out.
+    private var identifiesImages = true
     let operators: CGPDFOperatorTableRef
 
     /// The pawn outlines stroked and the images drawn on `page`, in page space and drawing order.
@@ -53,6 +55,16 @@ final class PageScanner {
         scanner.scan(stream)
         CGPDFContentStreamRelease(stream)
         return scanner.content
+    }
+
+    /// The images drawn on `page`, in page space and drawing order, without their identities.
+    static func images(on page: CGPDFPage) -> [ImagePlacement] {
+        let scanner = PageScanner()
+        scanner.identifiesImages = false
+        let stream = CGPDFContentStreamCreateWithPage(page)
+        scanner.scan(stream)
+        CGPDFContentStreamRelease(stream)
+        return scanner.content.images
     }
 
     /// The pawn outlines stroked on `page`.
@@ -219,7 +231,7 @@ final class PageScanner {
 
     private func recordImage(_ stream: CGPDFStreamRef) {
         let key = unsafeBitCast(stream, to: Int.self)
-        let identity = identities[key] ?? EmbeddedImage.identity(of: stream)
+        let identity = identities[key] ?? (identifiesImages ? EmbeddedImage.identity(of: stream) : .empty)
         identities[key] = identity
         let rect = CGRect(x: 0, y: 0, width: 1, height: 1).applying(transform)
         content.images.append(ImagePlacement(rect: rect, identity: identity, clip: state.clip, transform: transform,
