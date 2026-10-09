@@ -1,6 +1,6 @@
 # Pawn Shop: design
 
-A SwiftPM macOS app in the style of Flip Map Printer: `PawnShopCore` holds all logic and is unit tested;
+A SwiftPM macOS app in the style of Mapsmith: `PawnShopCore` holds all logic and is unit tested;
 `PawnShop` is a thin SwiftUI/AppKit layer; `scripts/build-app.sh` builds `Pawn Shop.app`.
 
 ## Paizo pawn PDFs
