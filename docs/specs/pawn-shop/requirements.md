@@ -85,3 +85,7 @@ is cut out and folded at the heads, giving a two-ply pawn.
 ## R6 The app
 - R6.1 macOS 15 or later.
 - R6.2 The app has its own icon, legible at small sizes: a wizard on a pawn standing in its base.
+- R6.3 When it opens, the app asks GitHub whether a newer version has been released, and says so only when
+  there is one. A switch in Settings turns this off.
+- R6.4 Pawn Shop › Check for Updates… checks at any time and always reports the result. A newer version is
+  downloaded to the Downloads folder only when the user agrees.

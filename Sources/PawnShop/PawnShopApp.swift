@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct PawnShopApp: App {
+    @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @State private var library = LibraryModel.shared
 
     init() {
@@ -19,9 +20,19 @@ struct PawnShopApp: App {
                 .frame(minWidth: 1100, minHeight: 600)
         }
         .commands {
+            UpdateCommands(updater: .shared)
             SheetFileCommands()
             LibraryCommands(library: library)
         }
+
+        Settings { UpdateSettingsView(updater: .shared) }
+    }
+}
+
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_: Notification) {
+        Task { await UpdateAlerts.checkAtLaunch(.shared) }
     }
 }
 
