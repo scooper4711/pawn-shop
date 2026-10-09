@@ -45,6 +45,8 @@ struct DrawnCard {
     var name: String
     var traits = "N MEDIUM HUMANOID"
     var creature: CGImage? = creatureArt()
+    /// A line printed on the art side, as the NPC deck credits its illustrators.
+    var credit: String?
 
     /// The art side: a background and frame every card shares, a large faded copy of the creature, then the
     /// creature itself.
@@ -58,6 +60,7 @@ struct DrawnCard {
         }
         context.draw(cardFrame, in: CGRect(origin: .zero, size: cardPage))
         if let creature { context.draw(creature, in: creatureRect) }
+        if let credit { drawText(context, credit, at: CGPoint(x: 12, y: 8), size: 5) }
     }
 
     /// The stat side: the name and level, the traits, then the stat block.

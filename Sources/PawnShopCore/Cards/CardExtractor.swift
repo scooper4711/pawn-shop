@@ -18,7 +18,7 @@ enum CardExtractor {
             pairs = CardPairing.pairs(artPages: artText.pageCount, statPages: statsText.pageCount)
         } else {
             stats = artText
-            pairs = CardPairing.pairs(textless: (0..<artText.pageCount).map { pageIsTextless(artText, $0) })
+            pairs = CardPairing.pairs(textless: (0..<artText.pageCount).map { printsLittleText(artText, $0) })
         }
         return cards(in: pairs, art: art, stats: stats)
     }
@@ -53,8 +53,13 @@ enum CardExtractor {
                              copies: 1, shape: .card(imageIndex: index), traits: card.traits)
     }
 
-    private static func pageIsTextless(_ document: PDFDocument, _ index: Int) -> Bool {
-        document.page(at: index)?.string?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
+    /// Art pages print no words, or only a credit such as "Illustration by Diana Martinez" (the NPC deck's
+    /// combined PDF): little text, and no stat block.
+    static let artPageText = 80
+
+    private static func printsLittleText(_ document: PDFDocument, _ index: Int) -> Bool {
+        let text = document.page(at: index)?.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return text.count < artPageText && CardStats.read(text) == nil
     }
 }
 

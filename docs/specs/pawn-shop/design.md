@@ -95,9 +95,10 @@ Fists of the Ruby Phoenix, Alien Archive 1 & 2 and 3 & 4), 289 × 425 pt cards (
   in naming the other side; the BACKS file is the deck's `artFile`, which the library keeps. The title comes
   from the nearest enclosing folder naming the deck and starting with Pathfinder or Starfinder (as Scrollkeeper
   files them), without "(Download)" and "- PDF(s)", or else from the file name.
-- `CardPairing` pairs pages: page *n* of both PDFs; or in one PDF, each textless page with the page after it
-  when such pairs cover over a third of the pages, else the *k*th page of each run of text pages with the *k*th
-  of the run of textless pages after it.
+- `CardPairing` pairs pages: page *n* of both PDFs; or in one PDF, each art page with the page after it when
+  such pairs cover over a third of the pages, else the *k*th page of each run of other pages with the *k*th of
+  the run of art pages after it. An art page prints under 80 characters and no stat block: the NPC deck's
+  combined PDF credits the illustrator on each art page.
 - `CardExtractor` scans art pages with `PageScanner.images(on:)` (placements without identities, which are
   slow to compute) and digests each image once. Images on at least half the art pages, and on three or more,
   are shared; the creature is the last image drawn that is not shared, has a soft mask and is at least 20 pt
@@ -125,8 +126,12 @@ Fists of the Ruby Phoenix, Alien Archive 1 & 2 and 3 & 4), 289 × 425 pt cards (
   - `library.json`: sources and pawns (`StoredLibrary`, with a version number). Thumbnails are stored as
     base64 data; the whole collection (about 8,000 pawns from 61 PDFs) is under 10 MB.
 - `PawnSource`: id (SHA-256 of the file), title (from the file name, without product codes and " PDF"),
-  import date, original path and byte count (to recognize a file again without hashing it), and the game,
-  read from the title.
+  import date, original path and byte count (to recognize a file again without hashing it), the game, read
+  from the title, and how many pawns the import found with which `PawnExtractor.version`. A source read by an
+  older version that found nothing (for sources recorded before the count, one no pawn comes from) is not
+  counted as imported; importing it again drops the record and reads it afresh. The version is raised when
+  extraction improves (1: credited card art), so each empty PDF is read once per improvement, not on every
+  import. A PDF with no pawns is not copied.
 - `Pawn`: id, name, size, fingerprint, `needsName`, `traits` (from Battle Cards), `art` (`.pdf(sourceID, front,
   back)`, `.custom(CustomArt)`, `.token(TokenArt)`: source id and front and optional back picture files, or
   `.card(CardArt)`: source id, the art page and creature bounds as a face, and the image's index in drawing

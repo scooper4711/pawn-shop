@@ -18,7 +18,9 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.6 A pawn is a duplicate only when its artwork matches. Copies of the same art (on one page or reprinted
   in another product) are stored once; pawns with the same name and different art (1e and 2e, Pathfinder and
   Starfinder, variants) are kept apart.
-- R1.7 Importing a PDF that is already in the library changes nothing.
+- R1.7 Importing a PDF that is already in the library changes nothing, except a PDF in which nothing was found:
+  it is read again once by each newer version of the reader, so improvements reach it, and no copy of it is
+  kept (R1.9) while it gives no pawns.
 - R1.8 Importing shows progress, then a report of the pawns added, the pawns whose art was already in the
   library, and the outlines with no name printed.
 - R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved.
@@ -39,7 +41,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.14 Battle Cards (a PDF, or the folders it is in, named "… Battle Cards") are imported as pawns, so a deck
   bought without its pawns still gives pawns. A deck may be one PDF, with each card's art before its stat block
   or runs of stat blocks each followed by the same cards' art, or two PDFs ("… FRONT" with the stat blocks,
-  "… BACKS" with the art), paired page by page; importing either PDF of a pair imports the deck once. Each
+  "… BACKS" with the art), paired page by page (an art page prints no words or only a short credit, such as
+  "Illustration by …"); importing either PDF of a pair imports the deck once. Each
   card's creature (the last picture of its own that its art side draws, transparent around the figure, not
   the background, frame or badges every card shares) is drawn alone, trimmed to its opaque part, as large
   as it fits above the pawn's name on white, standing on it. Its name comes from the stat block (Pathfinder:

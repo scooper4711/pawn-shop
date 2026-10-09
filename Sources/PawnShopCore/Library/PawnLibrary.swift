@@ -86,12 +86,24 @@ public final class PawnLibrary {
     public func pawn(id: UUID) -> Pawn? { pawns.first { $0.id == id } }
 
     /// True when the PDF at `url` was imported before: recognized by its path and size, or else its contents.
-    /// Either PDF of a two-file deck of Battle Cards stands for the deck.
+    /// Either PDF of a two-file deck of Battle Cards stands for the deck. A PDF in which an older reader found
+    /// nothing is not counted, so that it is tried again (see `isWorthRereading`).
     public func hasImported(_ file: URL) -> Bool {
         let url = CardDeck.containing(file)?.artFile ?? file
         let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? -1
-        if sources.contains(where: { $0.originalPath == url.path && $0.byteCount == size }) { return true }
-        return (try? Self.digest(of: url)).map { source(id: $0) != nil } ?? false
+        let imported = sources.filter { !isWorthRereading($0) }
+        if imported.contains(where: { $0.originalPath == url.path && $0.byteCount == size }) { return true }
+        return (try? Self.digest(of: url)).map { digest in imported.contains { $0.id == digest } } ?? false
+    }
+
+    /// True when an older reader (`PawnExtractor.version`) found no pawns in the source, so the current one may.
+    /// For products imported before the count was recorded, no pawn coming from it counts as none found.
+    func isWorthRereading(_ source: PawnSource) -> Bool {
+        guard (source.readerVersion ?? 0) < PawnExtractor.version else { return false }
+        guard let found = source.pawnsFound else {
+            return !pawns.contains { $0.appearances.contains { $0.sourceID == source.id } }
+        }
+        return found == 0
     }
 
     /// The PDFs to import for `urls`: each once, and a two-file deck of Battle Cards as its art PDF.
@@ -119,13 +131,17 @@ public final class PawnLibrary {
     public func commit(_ prepared: PreparedImport) throws -> ImportReport {
         let title = prepared.title
         var report = ImportReport(sourceTitle: title, unnamed: prepared.extraction.unnamed)
-        guard source(id: prepared.digest) == nil else {
+        if let known = source(id: prepared.digest), !isWorthRereading(known) {
             report.wasImported = true
             return report
         }
-        try copySource(prepared)
+        sources.filter { ($0.id == prepared.digest || $0.originalPath == prepared.file.path) && isWorthRereading($0) }
+            .forEach(forget)
+        // A PDF with no pawns is not kept: nothing would be drawn from it.
+        if !prepared.extraction.pawns.isEmpty { try copySource(prepared) }
         sources.append(PawnSource(id: prepared.digest, title: title, importedAt: Date(),
-                                  originalPath: prepared.file.path, byteCount: prepared.byteCount))
+                                  originalPath: prepared.file.path, byteCount: prepared.byteCount,
+                                  pawnsFound: prepared.extraction.pawns.count, readerVersion: PawnExtractor.version))
         let source = sources[sources.count - 1]
         defer {
             figures.forgetPages()
@@ -205,6 +221,12 @@ public final class PawnLibrary {
         }
         pawns.removeAll { ids.contains($0.id) }
         try save()
+    }
+
+    /// Drops a source in which nothing was found, and its copy, before its PDF is read again.
+    private func forget(_ source: PawnSource) {
+        sources.removeAll { $0.id == source.id }
+        try? FileManager.default.removeItem(at: fileURL(forSource: source.id))
     }
 
     private func copySource(_ prepared: PreparedImport) throws {
