@@ -1,5 +1,5 @@
 #!/bin/sh
-# Packages the built app into build/Pawn-Shop-<VERSION>.dmg.
+# Packages the built app into build/Pawn-Shop-<VERSION>.dmg, with the 3D-printable pawn bases beside it.
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -14,6 +14,9 @@ DMG="build/Pawn-Shop-$VERSION.dmg"
 rm -rf "$STAGING" "$DMG"
 mkdir -p "$STAGING"
 cp -R "$APP" "$STAGING/"
+# The bases' sources and ready-made STL files; the scripts that rebuild them stay in the repository.
+mkdir -p "$STAGING/Pawn Bases"
+cp -R pawn-bases/README.md pawn-bases/pawn_base.scad pawn-bases/slot_test.scad pawn-bases/stl "$STAGING/Pawn Bases/"
 ln -s /Applications "$STAGING/Applications"
 hdiutil create -volname "Pawn Shop" -srcfolder "$STAGING" -ov -format UDZO "$DMG" >/dev/null
 rm -rf "$STAGING"

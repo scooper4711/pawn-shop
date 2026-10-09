@@ -19,8 +19,9 @@ creature you want at all, because it only appears as art in a Pathfinder or Star
 Pawn Shop collects the pawns from those PDFs into a library and prints only the pawns you choose, as many of
 each as you need, each as one strip on one side of the paper: the front below, the back above it turned upside
 down, head to head. Cut the strip out and fold it at the heads: the pawn is two sheets thick, and a pawn base
-holds both. For a creature without a pawn, make your own from any picture, such as the art from a scenario
-PDF, which [Pluck](https://github.com/scooper4711/pluck) gets out for you.
+holds both ([printable bases](#pawn-bases) come with the app). For a creature without a pawn, make your own
+from any picture, such as the art from a scenario PDF, which [Pluck](https://github.com/scooper4711/pluck)
+gets out for you.
 
 Paizo's newer round tokens become pawns too, so a token box gives you folding pawns rather than flat
 discs.
@@ -127,6 +128,14 @@ defaults write com.github.scooper4711.PawnShop TaggingModel <model>
 
 These import with fewer pawns, or none; the import summary names the PDFs where nothing was found.
 
+## Pawn bases
+
+The disk image also holds a Pawn Bases folder: 3D-printable bases sized for the pawns, from medium to
+gargantuan, ready to print as STL files labeled 1–4 or blank, with a slot test piece to find the slot width
+that grips your paper. To make your own, open `pawn_base.scad` in [OpenSCAD](https://openscad.org) and set the
+size, the label and how far the slot curves in its Customizer. See the folder's
+[README](pawn-bases/README.md).
+
 ## Supporting the project
 
 The app is free and always will be. If it saves you time and you would like to say thanks, you can leave a
@@ -144,6 +153,9 @@ make coverage # runs the tests and enforces the coverage threshold
 make dmg      # packages the app into a disk image
 make icon     # redraws Resources/AppIcon.icns
 ```
+
+`pawn-bases/build.sh` renders every base and the slot test piece to `pawn-bases/stl/` with OpenSCAD (by default
+from `/Applications/OpenSCAD-2021.01.app`; set `OPENSCAD` to use another copy). It takes a minute or two.
 
 Building needs Xcode 16 or later (Swift 6 toolchain). The app is ad-hoc signed.
 
