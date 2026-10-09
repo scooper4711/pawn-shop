@@ -4,7 +4,7 @@ import Foundation
 /// Strips of one sheet entry to place.
 public struct LayoutItem: Equatable, Sendable {
     public var entryID: UUID
-    /// The folded strip upright: the pawn's width by twice its height.
+    /// The folded strip upright: the pawn's width by twice its height and the room below each foot.
     public var stripSize: CGSize
     public var count: Int
 
@@ -14,9 +14,9 @@ public struct LayoutItem: Equatable, Sendable {
         self.count = count
     }
 
-    /// The strip for a pawn of `upright` size: front below, back above.
-    public static func stripSize(forPawn upright: CGSize) -> CGSize {
-        CGSize(width: upright.width, height: upright.height * 2)
+    /// The strip for a pawn of `upright` size: front below, back above, each with `footRoom` below its foot.
+    public static func stripSize(forPawn upright: CGSize, footRoom: CGFloat = 0) -> CGSize {
+        CGSize(width: upright.width, height: (upright.height + max(0, footRoom)) * 2)
     }
 }
 

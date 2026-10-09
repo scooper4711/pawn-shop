@@ -66,6 +66,8 @@ the right.*
   sheet to print again later. Strips are packed upright or on their side, whichever needs fewer pages.
 - Cut lines shared between strips (one cut separates two pawns) or gaps between them, and an optional fold
   line.
+- Optional room for a base: blank paper below each face's foot, so the base's slot holds that instead of
+  hiding the bottom of the name. The art keeps its size and the strip gets taller.
 - Custom pawns from your own images, from small to gargantuan.
 - Tells you when a new version is released, if you like: it checks when it opens (turn that off in Settings)
   and on Pawn Shop › Check for Updates….
@@ -106,7 +108,9 @@ After that it opens normally.
   wait for you under Library › Review Unnamed Pawns…, with a suggested name when tagging is on.
 - **Build a sheet:** File › New makes a sheet. Double-click a pawn, or set the copies and press Add to Sheet.
   The middle of the window shows the pages as they will print; click a strip and press Delete to remove a
-  copy, or change copies in the inspector on the right, where the cut style is chosen too.
+  copy, or change copies in the inspector on the right, where the cut style is chosen too. Turn on Leave room
+  for a base there when the base hides the bottom of the name: it adds 6 mm, the depth of the slot in the
+  included bases, below each foot, and you can change the amount.
 - **Print:** File › Page Setup… (⇧⌘P) picks the paper, then File › Print… (⌘P) or Export PDF… (⌘E). Print at
   100% scale (Actual Size), so the pawns fit their bases.
 - **Your own art:** Library › Add Custom Pawn… (⌥⌘N): choose, drop or paste an image, name it, pick a size,
@@ -146,7 +150,8 @@ The disk image also holds a Pawn Bases folder: 3D-printable bases sized for the 
 gargantuan, ready to print as STL files labeled 1–4 or blank, with a slot test piece to find the slot width
 that grips your paper. To make your own, open `pawn_base.scad` in [OpenSCAD](https://openscad.org) and set the
 size, the label and how far the slot curves in its Customizer. See the folder's
-[README](pawn-bases/README.md).
+[README](pawn-bases/README.md). The slot is 6 mm deep, which a sheet's Leave room for a base setting matches
+by default, so the whole name stays in view.
 
 ## Supporting the project
 

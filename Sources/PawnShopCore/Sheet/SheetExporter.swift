@@ -16,11 +16,12 @@ public struct SheetExporter {
         self.renderer = renderer
     }
 
-    /// One layout item per entry, sized from the pawn's outline.
+    /// One layout item per entry, sized from the pawn's outline and the room left for a base.
     public func layoutItems() -> [LayoutItem] {
         sheet.entries.map { entry in
             let upright = library.pawn(id: entry.pawnID).map(renderer.uprightSize(of:)) ?? Self.placeholderSize
-            return LayoutItem(entryID: entry.id, stripSize: LayoutItem.stripSize(forPawn: upright), count: entry.count)
+            let strip = LayoutItem.stripSize(forPawn: upright, footRoom: sheet.settings.footRoom)
+            return LayoutItem(entryID: entry.id, stripSize: strip, count: entry.count)
         }
     }
 

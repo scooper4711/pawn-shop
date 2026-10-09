@@ -36,14 +36,37 @@ public struct PaperSetup: Codable, Hashable, Sendable {
 }
 
 public struct SheetSettings: Codable, Hashable, Sendable {
+    /// The room left by default under each face for a base: the depth of the slot in the bases the app comes with
+    /// (`slot_depth` in `pawn-bases/pawn_base.scad`), 6 mm.
+    public static let defaultBaseRoom: CGFloat = .millimeters(6)
+
     public var cutStyle: CutStyle = .sharedLines
     public var showsFoldLine = true
     public var paper: PaperSetup = .letter
+    /// Whether each face gets blank room below its foot, so the base's slot hides that room rather than the name.
+    public var leavesRoomForBase = false
+    /// How much room, in points; kept while `leavesRoomForBase` is off.
+    public var baseRoom = SheetSettings.defaultBaseRoom
 
     public init(cutStyle: CutStyle = .sharedLines, showsFoldLine: Bool = true, paper: PaperSetup = .letter) {
         self.cutStyle = cutStyle
         self.showsFoldLine = showsFoldLine
         self.paper = paper
+    }
+
+    /// The blank room below each face's foot: `baseRoom` when room is left for a base, else none.
+    public var footRoom: CGFloat { leavesRoomForBase ? max(0, baseRoom) : 0 }
+
+    private enum CodingKeys: String, CodingKey { case cutStyle, showsFoldLine, paper, leavesRoomForBase, baseRoom }
+
+    /// Sheets saved before room for a base existed leave none.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        cutStyle = try container.decode(CutStyle.self, forKey: .cutStyle)
+        showsFoldLine = try container.decode(Bool.self, forKey: .showsFoldLine)
+        paper = try container.decode(PaperSetup.self, forKey: .paper)
+        leavesRoomForBase = try container.decodeIfPresent(Bool.self, forKey: .leavesRoomForBase) ?? false
+        baseRoom = try container.decodeIfPresent(CGFloat.self, forKey: .baseRoom) ?? Self.defaultBaseRoom
     }
 }
 

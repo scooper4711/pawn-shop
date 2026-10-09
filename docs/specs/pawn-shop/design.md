@@ -168,8 +168,10 @@ Fists of the Ruby Phoenix, Alien Archive 1 & 2 and 3 & 4), 289 × 425 pt cards (
 - `PawnSheet` (Codable, the `.pawnsheet` document): entries (pawn id, count; adding a pawn again adds to its
   entry) and `SheetSettings`: cut style (`.sharedLines` or `.gaps(points)`, default gap 0.1"), show fold line,
   and `PaperSetup` (paper size and imageable rect; Letter with ¼" margins by default).
-- A pawn prints as a strip of `w × 2h`: the front face in the lower half, the back face rotated 180° in the
-  upper half, heads meeting at the fold. Folding over a horizontal line and viewing from behind is a 180°
+- A pawn prints as a strip of `w × 2(h + r)`: the front face in the lower half, the back face rotated 180° in
+  the upper half, heads meeting at the fold, each above `r`, the blank room for a base (`SheetSettings.footRoom`:
+  `baseRoom` when `leavesRoomForBase`, else 0; `defaultBaseRoom` is the 6 mm `slot_depth` of
+  `pawn_base.scad`, which a test checks). Sheets saved without these settings read as leaving no room. Folding over a horizontal line and viewing from behind is a 180°
   rotation, so the back reads upright, and because Paizo's back art is already mirrored the silhouettes match.
 - `SheetLayout.arrange(_:settings:)` is shelf packing: strips sorted tallest first (then widest, then sheet
   order), placed left to right in rows from the top, rows top to bottom, new pages as needed, separated by the

@@ -93,6 +93,10 @@ is cut out and folded at the heads, giving a two-ply pawn.
   gaps (each strip outlined separately, with an adjustable gap). The fold line can be shown or hidden.
 - R4.7 Paper size and margins come from File ▸ Page Setup… and are saved with the sheet.
 - R4.8 A pawn missing from the library shows as a placeholder rather than breaking the sheet.
+- R4.9 A sheet can leave room for a base: blank paper below the foot of each face, front and back, so a base's
+  slot hides it rather than the bottom of the name. The faces keep their size and the strip grows. The room
+  is set in millimeters, defaults to 6 mm (the depth of the slot in the bases the app comes with, R7), and is
+  off by default; it is saved with the sheet and can be changed when exporting or printing (R5.3).
 
 ## R5 Output
 - R5.1 File ▸ Export PDF… writes the pages at 100% scale.
