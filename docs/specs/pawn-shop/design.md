@@ -165,7 +165,8 @@ shapes so the pawn and the hat still read at 32 px.
 ## Releases
 - `make` wraps the scripts in `scripts/`: `build-app.sh` (release build, ad-hoc signed, `VERSION` written to
   the bundle, `UNIVERSAL=1` for Apple silicon and Intel, `--install` to move it to /Applications),
-  `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`) and `coverage.sh` (fails below 80% line or region coverage
+  `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`, with `pawn-bases/` as a Pawn Bases folder, minus its build
+  scripts) and `coverage.sh` (fails below 80% line or region coverage
   of `PawnShopCore`, and writes `coverage/sonar-coverage.xml`).
 - GitHub Actions: `ci.yml` lints strictly, runs the coverage gate (tests reading Paizo's PDFs are skipped, as
   the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds a
@@ -176,3 +177,9 @@ shapes so the pawn and the hat still read at 32 px.
   the launch check, which would otherwise always find an update. The app shows the results in app-modal
   alerts (`UpdateAlerts`), so they appear once however many sheet windows are open; the launch check is the
   user default `checksForUpdatesAtLaunch`, on unless turned off in Settings.
+- Pawn bases (`pawn-bases/`): `pawn_base.scad` puts its Customizer parameters first, in Base, Fit and Hidden
+  tabs, before any function or module, as the Customizer requires. A label's height is the size's label height
+  times min(1, 1.6 / (characters + 0.6)), so one character keeps the original size and the ready-made 1–4
+  bases are unchanged. `build.sh` renders all 21 STL files in parallel; `stl_to_binary.py` rewrites OpenSCAD
+  2021's ASCII STL as binary, about a fifth of the size. The STL files are committed so the release workflow
+  needs no OpenSCAD.

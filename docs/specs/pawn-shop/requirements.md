@@ -89,3 +89,10 @@ is cut out and folded at the heads, giving a two-ply pawn.
   there is one. A switch in Settings turns this off.
 - R6.4 Pawn Shop › Check for Updates… checks at any time and always reports the result. A newer version is
   downloaded to the Downloads folder only when the user agrees.
+
+## R7 Pawn bases
+- R7.1 The disk image holds a Pawn Bases folder with ready-to-print STL bases for medium, large, huge and
+  gargantuan pawns, each labeled 1–4 and blank, a slot test piece, and the OpenSCAD sources.
+- R7.2 The base's size, label and slot curvature, and the slot width, are OpenSCAD Customizer parameters: a
+  size dropdown, a label text field, and sliders.
+- R7.3 A label of any length fits its flat spot: one character is full size, longer ones shrink.
