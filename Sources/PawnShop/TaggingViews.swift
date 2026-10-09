@@ -1,22 +1,17 @@
 import PawnShopCore
 import SwiftUI
 
-/// While pawns are being tagged, a progress bar and how many are left; a warning when tagging stopped.
+/// While pawns are being tagged, a progress bar whose tooltip says how many are left; a warning when tagging
+/// stopped.
 struct TaggingStatus: View {
     private let tagging = PawnTaggingModel.shared
 
     var body: some View {
         if tagging.isRunning {
             let progress = tagging.progress
-            HStack(spacing: 4) {
-                ProgressView(value: progress.fraction)
-                    .frame(width: 60)
-                Text("\(progress.remaining.formatted()) to tag")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            }
-            .help("Tagging pawns with \(tagging.tagger.model): \(progress.summary)")
+            ProgressView(value: progress.fraction)
+                .frame(width: 60)
+                .help("Tagging pawns with \(tagging.tagger.model): \(progress.summary)")
         } else if let problem = tagging.problem {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundStyle(.secondary)

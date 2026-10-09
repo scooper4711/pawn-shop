@@ -229,8 +229,8 @@ Fists of the Ruby Phoenix, Alien Archive 1 & 2 and 3 & 4), 289 × 425 pt cards (
   `OllamaTagger.isOn(in:)` the switch, the user default `tagsPawns`, on unless turned off in Settings; the run
   checks it before each pawn. `TaggingProgress(of:by:)` counts the library's pawns still to tag (the same test
   as `pawnsNeedingTags`) against all of them, so the count includes pawns tagged in earlier runs. Settings has
-  Updates and Tagging tabs; the Tagging tab's toggle, progress bar and status, and the library's progress bar,
-  observe the model.
+  Updates and Tagging tabs; the Tagging tab's toggle, progress bar and status, and the library's progress bar
+  (its tooltip has the counts), observe the model.
 - For trying the app from a script: `PAWN_SHOP_LIBRARY` points it at another library folder, and
   `PAWN_SHOP_SNAPSHOT=<prefix>` draws each window, and the library and inspector panels on their own, to
   PNG files a few seconds after launch (drawing its own views needs no screen-recording access; glass panels
