@@ -174,23 +174,6 @@ struct LibraryBrowser: View {
     }
 }
 
-/// A spinner while pawns are being tagged, or a warning when tagging stopped.
-struct TaggingStatus: View {
-    private let tagging = PawnTaggingModel.shared
-
-    var body: some View {
-        if let progress = tagging.progress {
-            ProgressView()
-                .controlSize(.small)
-                .help("Tagging pawns with \(tagging.tagger.model): \(progress.done) of \(progress.total)")
-        } else if let problem = tagging.problem {
-            Image(systemName: "exclamationmark.triangle")
-                .foregroundStyle(.secondary)
-                .help(problem + "\nLibrary › Tag New Pawns tries again.")
-        }
-    }
-}
-
 /// Search field and filter menus.
 struct LibraryFilterBar: View {
     @Binding var query: PawnQuery

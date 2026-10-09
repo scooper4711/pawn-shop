@@ -3,12 +3,6 @@ import Foundation
 import Observation
 import PawnShopCore
 
-/// How far tagging has come.
-struct TaggingProgress: Equatable {
-    var done: Int
-    var total: Int
-}
-
 /// Tags the library's pawns in the background with a vision model running in Ollama on this Mac.
 @MainActor
 @Observable
@@ -19,12 +13,18 @@ final class PawnTaggingModel {
     /// Tags are saved after this many pawns, so quitting part way loses little.
     static let saveInterval = 10
 
-    private(set) var progress: TaggingProgress?
+    private(set) var isRunning = false
     /// Why the last run stopped early, until a run finishes.
     private(set) var problem: String?
+    /// The Settings switch; turning it off stops tagging after the pawn in hand, and turning it on resumes.
+    var isOn = OllamaTagger.isOn(in: .standard) {
+        didSet {
+            UserDefaults.standard.set(isOn, forKey: OllamaTagger.isOnKey)
+            if isOn { tagNewPawns() }
+        }
+    }
 
     @ObservationIgnored private let library: LibraryModel
-    @ObservationIgnored private var isRunning = false
     /// Pawns this run has asked about, so one the model can't name isn't asked about again until the next run.
     @ObservationIgnored private var asked: Set<UUID> = []
     /// How many grids show each pawn; the pawns on screen are tagged next.
@@ -35,13 +35,10 @@ final class PawnTaggingModel {
     }
 
     /// The model, set with `defaults write <bundle id> TaggingModel <name>`; changing it tags every pawn again.
-    var tagger: OllamaTagger {
-        let defaults = UserDefaults.standard
-        let endpoint = defaults.string(forKey: "OllamaURL").flatMap(URL.init(string:))
-            ?? OllamaTagger.defaultEndpoint
-        return OllamaTagger(model: defaults.string(forKey: "TaggingModel") ?? OllamaTagger.defaultModel,
-                            endpoint: endpoint)
-    }
+    var tagger: OllamaTagger { .configured(by: .standard) }
+
+    /// How many of the library's pawns the current model has tagged; observed through the library's pawns.
+    var progress: TaggingProgress { TaggingProgress(of: library.pawns, by: tagger.model) }
 
     /// Tags the pawns not yet tagged by the current model, quietly giving up when Ollama isn't there.
     func tagNewPawns() {
@@ -66,7 +63,7 @@ final class PawnTaggingModel {
     private func start(reportingProblem report: @escaping (String) -> Void = { _ in
         // Tagging in the background reports nothing: without Ollama, pawns simply stay untagged.
     }) {
-        guard !isRunning else { return }
+        guard isOn, !isRunning else { return }
         isRunning = true
         Task {
             await run(tagger)
@@ -78,25 +75,19 @@ final class PawnTaggingModel {
     private func run(_ tagger: OllamaTagger) async {
         problem = nil
         asked = []
-        defer {
-            library.saveTags()
-            progress = nil
-        }
+        defer { library.saveTags() }
         // The next pawn is chosen afresh each time, so pawns scrolled into view, or added, go ahead of the rest.
         var done = 0
-        while problem == nil, let (pawn, remaining) = nextPawn(tagger) {
-            progress = TaggingProgress(done: done, total: done + remaining)
+        while isOn, problem == nil, let pawn = nextPawn(tagger) {
             await tag(pawn, with: tagger)
             done += 1
             if done.isMultiple(of: Self.saveInterval) { library.saveTags() }
         }
     }
 
-    /// The pawn to tag next and how many are left, counting it.
-    private func nextPawn(_ tagger: OllamaTagger) -> (Pawn, Int)? {
-        let pending = library.pawnsNeedingTags(by: tagger.model, visible: Set(showing.keys))
-            .filter { !asked.contains($0.id) }
-        return pending.first.map { ($0, pending.count) }
+    /// The pawn to tag next.
+    private func nextPawn(_ tagger: OllamaTagger) -> Pawn? {
+        library.pawnsNeedingTags(by: tagger.model, visible: Set(showing.keys)).first { !asked.contains($0.id) }
     }
 
     private func tag(_ pawn: Pawn, with tagger: OllamaTagger) async {

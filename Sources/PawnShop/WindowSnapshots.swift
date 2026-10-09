@@ -29,6 +29,7 @@ enum WindowSnapshots {
             ("inspector", AnyView(SheetInspector(sheet: .constant(sheet), selectedEntry: .constant(nil),
                                                  pageCount: 1))),
             ("review", AnyView(ReviewNamesView().frame(width: 520, height: 560))),
+            ("tagging", AnyView(TaggingSettingsView(tagging: .shared))),
             ("custom", AnyView(CustomPawnPreview(image: sampleArt, name: "Nodocite Experimenter", size: .medium,
                                                  art: .constant(CustomArt(imageFile: "", scaling: .fit)))
                 .frame(width: 200, height: 300)))
