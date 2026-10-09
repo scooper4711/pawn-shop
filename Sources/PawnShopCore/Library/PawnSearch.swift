@@ -43,9 +43,7 @@ public extension PawnLibrary {
     /// suggestion: those in `visible` first, as the user is looking at them, then those needing a name so their
     /// review can start soon; otherwise in library order.
     func pawnsNeedingTags(by model: String, visible: Set<UUID> = []) -> [Pawn] {
-        let pending = pawns.filter {
-            ($0.tagModel != model && !$0.tagsCorrected) || ($0.needsName && $0.suggestedName.isEmpty)
-        }
+        let pending = pawns.filter { $0.needsTagging(by: model) }
         func rank(_ pawn: Pawn) -> Int {
             if visible.contains(pawn.id) { return 0 }
             return pawn.needsName ? 1 : 2

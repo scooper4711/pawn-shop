@@ -61,6 +61,21 @@ public struct OllamaTagger: Sendable {
         self.session = session
     }
 
+    /// The user default that turns tagging on and off.
+    public static let isOnKey = "tagsPawns"
+
+    /// Whether to tag pawns: on unless the user turned it off in Settings.
+    public static func isOn(in defaults: UserDefaults) -> Bool {
+        defaults.object(forKey: isOnKey) as? Bool ?? true
+    }
+
+    /// The tagger the user chose with `defaults write <bundle id> TaggingModel <name>` (and `OllamaURL`), or the
+    /// default one.
+    public static func configured(by defaults: UserDefaults) -> OllamaTagger {
+        let endpoint = defaults.string(forKey: "OllamaURL").flatMap(URL.init(string:)) ?? defaultEndpoint
+        return OllamaTagger(model: defaults.string(forKey: "TaggingModel") ?? defaultModel, endpoint: endpoint)
+    }
+
     static let namePrompt = prompt + """
          Also suggest a name for the pawn of at most three words, like the names printed on pawns: the kind of \
         creature or person and their role, such as Goblin Archer, Elf Wizard, Fire Giant or Dwarf Priest.

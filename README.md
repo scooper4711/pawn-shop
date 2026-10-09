@@ -128,7 +128,9 @@ ollama pull gemma3:12b
 ```
 
 While Pawn Shop runs, it then tags the pawns in the background, about 8 seconds a pawn, starting with those
-on screen. Without Ollama, pawns stay untagged and Library › Tag New Pawns tries again. To use another
+on screen. A progress bar below the library shows how far it has come (hover over it for the numbers), and
+Settings › Tagging shows how many are tagged. Turn off Tag pawns with AI there to stop tagging, and turn it
+back on to pick up where it left off. Without Ollama, pawns stay untagged and Library › Tag New Pawns tries again. To use another
 vision model, which tags every pawn again:
 
 ```sh

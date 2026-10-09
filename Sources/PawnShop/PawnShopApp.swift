@@ -25,7 +25,14 @@ struct PawnShopApp: App {
             LibraryCommands(library: library)
         }
 
-        Settings { UpdateSettingsView(updater: .shared) }
+        Settings {
+            TabView {
+                UpdateSettingsView(updater: .shared)
+                    .tabItem { Label("Updates", systemImage: "arrow.down.circle") }
+                TaggingSettingsView(tagging: .shared)
+                    .tabItem { Label("Tagging", systemImage: "tag") }
+            }
+        }
     }
 }
 
@@ -47,7 +54,7 @@ struct LibraryCommands: Commands {
                 .keyboardShortcut("i", modifiers: [.command, .shift])
             Button("Import from Scrollkeeper") { library.importFromScrollkeeper() }
             Button("Tag New Pawns") { PawnTaggingModel.shared.tagNewPawnsReportingProblems() }
-                .disabled(PawnTaggingModel.shared.progress != nil)
+                .disabled(!PawnTaggingModel.shared.isOn || PawnTaggingModel.shared.isRunning)
             Divider()
             Button("Review Unnamed Pawns…") { actions?.reviewNames() }
                 .disabled(actions == nil || library.pawnsNeedingNames.isEmpty)
