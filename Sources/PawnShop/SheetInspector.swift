@@ -72,7 +72,7 @@ struct SheetEntryRow: View {
     }
 }
 
-/// Cut style and fold line.
+/// Cut style, fold line and room for a base.
 struct CutSettingsForm: View {
     @Binding var settings: SheetSettings
 
@@ -88,8 +88,20 @@ struct CutSettingsForm: View {
                         value: gapInches, in: 0.05...0.5, step: 0.05)
             }
             Toggle("Show fold line", isOn: $settings.showsFoldLine)
+            Toggle("Leave room for a base", isOn: $settings.leavesRoomForBase)
+                .help("Adds blank room below each face's foot, so the base's slot covers it instead of the name. "
+                      + "The pawn's art stays the same size; the strip gets taller.")
+            if settings.leavesRoomForBase {
+                Stepper(String(format: "Room: %.1f mm", settings.baseRoom.millimeters),
+                        value: baseRoomMillimeters, in: 0.5...20, step: 0.5)
+            }
         }
         .padding(8)
+    }
+
+    private var baseRoomMillimeters: Binding<Double> {
+        Binding(get: { Double(settings.baseRoom.millimeters) },
+                set: { settings.baseRoom = .millimeters(CGFloat($0)) })
     }
 
     private var sharedLines: Binding<Bool> {

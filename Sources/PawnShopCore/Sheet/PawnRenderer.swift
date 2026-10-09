@@ -66,11 +66,13 @@ public final class PawnRenderer {
         context.restoreGState()
     }
 
-    /// Draws a folded strip where `placed` says: the front below the fold, the back above it turned 180°.
-    /// A missing pawn is drawn as a gray placeholder.
+    /// Draws a folded strip where `placed` says: the front below the fold, the back above it turned 180°, each
+    /// above the blank room left for a base (`SheetSettings.footRoom`). A missing pawn is drawn as a gray
+    /// placeholder.
     public func drawStrip(_ pawn: Pawn?, in placed: PlacedStrip, settings: SheetSettings, context: CGContext) {
         let upright = placed.sideways ? CGSize(width: placed.rect.height, height: placed.rect.width) : placed.rect.size
-        let half = CGRect(x: 0, y: 0, width: upright.width, height: upright.height / 2)
+        let room = min(settings.footRoom, upright.height / 2)
+        let half = CGRect(x: 0, y: room, width: upright.width, height: upright.height / 2 - room)
         context.saveGState()
         context.concatenate(Self.stripTransform(for: placed))
         if let pawn {
