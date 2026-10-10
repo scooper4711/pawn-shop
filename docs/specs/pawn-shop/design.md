@@ -18,14 +18,16 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 - `PawnSource`: id (SHA-256 of the file), title (from the file name, without product codes and " PDF"),
   import date, original path and byte count (to recognize a file again without hashing it), the game, read
   from the title, and how many pawns the import found with which `PawnExtractor.version`. A source read by an
-  older version that found nothing (for sources recorded before the count, one no pawn comes from) is not
-  counted as imported; importing it again drops the record and reads it afresh. The version is raised when
-  extraction improves (1: credited card art), so each empty PDF is read once per improvement, not on every
-  import. A PDF with no pawns is not copied.
+  older version is not counted as imported (`PawnRereading.swift`), so importing from Scrollkeeper reads it
+  again once per improvement (1: credited card art; 2: pawns without cut outlines), not on every import. One no
+  pawn comes from is dropped and read afresh; one with pawns is reread in place: its record takes the new version
+  and count, and each pawn found is merged unless a pawn from that source already has its size and art, so
+  names, tags and corrections stay. `Pawn.add(_:)` and `merge(_ match:)` never list a product twice on one pawn.
+  A PDF with no pawns is not copied.
 - `Pawn`: id, name, size, fingerprint, `needsName`, `traits` (from Battle Cards), `art` (`.pdf(sourceID, front,
   back)`, `.custom(CustomArt)`, `.token(TokenArt)`: source id and front and optional back picture files, or
-  `.card(CardArt)`: source id, the art page and creature bounds as a face, and the image's index in drawing
-  order, drawn straight from the kept PDF rather than stored as a picture, since PNGs of every deck's creatures
+  `.card(CardArt)`: source id, the art page and creature bounds as a face (with the rotation that turns a
+  sideways outline-less pawn upright), and the image's index in drawing order, drawn straight from the kept PDF rather than stored as a picture, since PNGs of every deck's creatures
   would take over a gigabyte) and
   `appearances` (each product printing the art, with its copies; the first supplies the faces).
   `CustomArt`: image file name, scaling (`.fill` covers the face; `.fit` shows the whole picture in the area
