@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import Testing
+import ArtExtractionTestSupport
 @testable import PawnShopCore
 
 /// Answers requests to a test's own host with a canned reply, or fails them, without touching the network.

@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import Testing
+import ArtExtraction
 @testable import PawnShopCore
 
 @Suite struct NameLayoutTests {

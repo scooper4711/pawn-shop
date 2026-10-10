@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import Testing
+import ArtExtractionTestSupport
 @testable import PawnShopCore
 
 @Suite struct CustomPawnTests {

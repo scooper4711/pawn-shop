@@ -1,6 +1,8 @@
 import CoreGraphics
 import Foundation
 import Testing
+import ArtExtraction
+import ArtExtractionTestSupport
 @testable import PawnShopCore
 
 /// Writes a library file holding `sources` and `pawns` into `folder`.

@@ -1,21 +1,8 @@
 import CoreGraphics
 import Foundation
 import Testing
+import ArtExtractionTestSupport
 @testable import PawnShopCore
-
-/// A fresh folder under the system's temporary directory.
-func temporaryFolder() -> URL {
-    let url = FileManager.default.temporaryDirectory.appendingPathComponent("PawnShopTests-\(UUID())")
-    try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-    return url
-}
-
-/// Writes a pawn PDF with a front page and its mirrored back.
-func writePawnPDF(_ pawns: [DrawnPawn], named name: String, in folder: URL) throws -> URL {
-    let url = folder.appendingPathComponent(name)
-    try pawnPDF(pages: [pawns, pawns.map { $0.mirrored(pageWidth: letterPage.width) }]).write(to: url)
-    return url
-}
 
 @Suite struct PawnLibraryTests {
     let folder = temporaryFolder()

@@ -2,6 +2,8 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import Testing
+import ArtExtraction
+import ArtExtractionTestSupport
 @testable import PawnShopCore
 
 /// A picture whose top half is red and bottom half blue, to tell which way up it was drawn.
