@@ -122,7 +122,10 @@ final class LibraryModel {
         let borrowed = reports.reduce(0) { $0 + $1.namedFromOtherProducts }
         let sharpened = reports.reduce(0) { $0 + $1.sharpened }
         let needingNames = reports.reduce(0) { $0 + $1.needingNames }
-        let empty = reports.filter { $0.added + $0.alreadyKnown == 0 }.map(\.sourceTitle)
+        let empty = reports.filter { !$0.reread && $0.added + $0.alreadyKnown == 0 }.map(\.sourceTitle)
+        let reread = reports.filter(\.reread).count
+        let flattened = reports.filter { !$0.unreadablePages.isEmpty }
+            .map { "\($0.sourceTitle) (\($0.unreadablePages.count) pages)" }
         var lines = ["Added \(added) pawns from \(reports.count) PDF\(reports.count == 1 ? "" : "s")."]
         if known > 0 { lines.append("\(known) were already in the library from other products.") }
         if sharpened > 0 { lines.append("\(sharpened) pawns now use the sharper art from Battle Cards.") }
@@ -132,7 +135,15 @@ final class LibraryModel {
         if needingNames > 0 {
             lines.append("\(needingNames) pawns have no name yet; name them with Library › Review Unnamed Pawns.")
         }
+        if reread > 0 {
+            lines.append("\(reread) PDF\(reread == 1 ? " was" : "s were") read again by the newer reader, adding only "
+                         + "the pawns it found anew.")
+        }
         if !empty.isEmpty { lines.append("No pawns were found in: \(empty.joined(separator: ", ")).") }
+        if !flattened.isEmpty {
+            lines.append("Some pages print their pawns as one flat picture, which can't be split into pawns: "
+                         + "\(flattened.joined(separator: ", ")).")
+        }
         if !failures.isEmpty { lines.append("Could not import: \(failures.joined(separator: "; ")).") }
         return lines.joined(separator: "\n")
     }

@@ -41,6 +41,9 @@ extension PawnLibrary {
         let found = match.found
         let appearance = Appearance(sourceID: match.source.id, copies: found.copies)
         var pawn = pawns[match.index]
+        report.alreadyKnown += 1
+        // Read again by a newer reader, a product the pawn already lists adds nothing.
+        guard !pawn.appearances.contains(where: { $0.sourceID == match.source.id }) else { return }
         if match.foundFigure.pixelArea > match.figure.pixelArea {
             pawn.art = try art(of: found, from: match.source)
             pawn.appearances.insert(appearance, at: 0)
@@ -51,7 +54,6 @@ extension PawnLibrary {
         if case .pawn = found.shape { pawn.size = found.size }
         pawn.traits = Self.combined(pawn.traits, found.traits)
         pawns[match.index] = pawn
-        report.alreadyKnown += 1
     }
 
     /// The first traits, then those of the second not among them.

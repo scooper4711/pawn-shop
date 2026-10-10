@@ -37,13 +37,13 @@ extension PawnLibrary {
         } else if let index = pawns.firstIndex(where: {
             $0.name == found.name && $0.size == found.size && $0.printsSameArt(as: found)
         }) {
-            pawns[index].appearances.append(appearance)
+            pawns[index].add(appearance)
             pawns[index].traits = Self.combined(pawns[index].traits, found.traits)
             report.alreadyKnown += 1
         } else if let index = waitingForName(sameArtAs: found) {
             pawns[index].name = found.name
             pawns[index].needsName = false
-            pawns[index].appearances.append(appearance)
+            pawns[index].add(appearance)
             paintingIndex = nil
             report.alreadyKnown += 1
         } else if let match = samePainting(as: found, from: source) {
@@ -59,12 +59,12 @@ extension PawnLibrary {
         if NamelessProducts.contains(source), let index = pawns.firstIndex(where: {
             !$0.needsName && !$0.isCustom && $0.size == found.size && $0.fingerprint.isSameArt(as: found.fingerprint)
         }) {
-            pawns[index].appearances.append(appearance)
+            pawns[index].add(appearance)
             report.namedFromOtherProducts += 1
         } else if let index = pawns.firstIndex(where: {
             $0.needsName && $0.size == found.size && $0.fingerprint.matches(found.fingerprint)
         }) {
-            pawns[index].appearances.append(appearance)
+            pawns[index].add(appearance)
             report.alreadyKnown += 1
         } else {
             var nameless = found

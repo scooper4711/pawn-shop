@@ -30,6 +30,10 @@ public struct ImportReport: Equatable, Sendable {
     public var needingNames = 0
     /// True when the PDF had been imported before, so nothing changed.
     public var wasImported = false
+    /// True when a PDF imported before was read again by a newer reader, adding only the pawns it found anew.
+    public var reread = false
+    /// Pages printed as one flattened picture, whose pawns can't be read (zero-based).
+    public var unreadablePages: [Int] = []
 }
 
 public enum PawnLibraryError: Error, Equatable, CustomStringConvertible {
@@ -49,7 +53,7 @@ public final class PawnLibrary {
     static let indexFile = "library.json"
 
     public let folder: URL
-    public private(set) var sources: [PawnSource] = []
+    public internal(set) var sources: [PawnSource] = []
     public internal(set) var pawns: [Pawn] = []
     /// Reads pawns' pictures to compare them while importing.
     private(set) lazy var figures = FigureReader(folders: folders)
@@ -97,16 +101,6 @@ public final class PawnLibrary {
         return (try? Self.digest(of: url)).map { digest in imported.contains { $0.id == digest } } ?? false
     }
 
-    /// True when an older reader (`PawnExtractor.version`) found no pawns in the source, so the current one may.
-    /// For products imported before the count was recorded, no pawn coming from it counts as none found.
-    func isWorthRereading(_ source: PawnSource) -> Bool {
-        guard (source.readerVersion ?? 0) < PawnExtractor.version else { return false }
-        guard let found = source.pawnsFound else {
-            return !pawns.contains { $0.appearances.contains { $0.sourceID == source.id } }
-        }
-        return found == 0
-    }
-
     /// The PDFs to import for `urls`: each once, and a two-file deck of Battle Cards as its art PDF.
     public static func importableFiles(_ urls: [URL]) -> [URL] {
         var files: [URL] = []
@@ -131,10 +125,14 @@ public final class PawnLibrary {
     @discardableResult
     public func commit(_ prepared: PreparedImport) throws -> ImportReport {
         let title = prepared.title
-        var report = ImportReport(sourceTitle: title, unnamed: prepared.extraction.unnamed)
-        if let known = source(id: prepared.digest), !isWorthRereading(known) {
-            report.wasImported = true
-            return report
+        var report = ImportReport(sourceTitle: title, unnamed: prepared.extraction.unnamed,
+                                  unreadablePages: prepared.extraction.unreadablePages)
+        if let known = source(id: prepared.digest) {
+            guard isWorthRereading(known) else {
+                report.wasImported = true
+                return report
+            }
+            if hasPawns(from: known) { return try reread(known, as: prepared, into: report) }
         }
         sources.filter { ($0.id == prepared.digest || $0.originalPath == prepared.file.path) && isWorthRereading($0) }
             .forEach(forget)
