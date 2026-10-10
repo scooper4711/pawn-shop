@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-/// Drawing pawns made from Battle Cards.
+/// Drawing pawns made from Battle Cards, and pawns printed without cut outlines, drawn alone the same way.
 extension PawnRenderer {
     /// The creature as large as fits above the name, standing on it, on white.
     func drawCard(of pawn: Pawn, side: PawnSide, in rect: CGRect, context: CGContext) {
@@ -28,13 +28,14 @@ extension PawnRenderer {
         }
     }
 
-    /// The creature as large as fits in `area`, centered across it and standing on its foot.
+    /// The creature as large as fits in `area`, centered across it and standing on its foot, turned upright when
+    /// its page prints it sideways.
     func drawCardFigure(_ art: CardArt, in area: CGRect, mirrored: Bool, context: CGContext) {
         guard let figure = figures.figure(of: art) else {
             drawPlaceholder(in: area, context: context)
             return
         }
-        let placed = Self.artRect(for: art.face.rect.size, in: area, focus: CGPoint(x: 0.5, y: 0), scaling: .fit)
-        figure.draw(in: placed, mirrored: mirrored, context: context)
+        let placed = Self.artRect(for: art.face.uprightSize, in: area, focus: CGPoint(x: 0.5, y: 0), scaling: .fit)
+        figure.draw(in: placed, mirrored: mirrored, rotation: art.face.rotation, context: context)
     }
 }
