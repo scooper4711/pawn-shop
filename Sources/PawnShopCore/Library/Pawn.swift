@@ -1,4 +1,5 @@
 import CoreGraphics
+import ArtExtraction
 import Foundation
 
 /// The game a product belongs to, read from its title.
@@ -39,10 +40,7 @@ public struct PawnSource: Codable, Identifiable, Hashable, Sendable {
     /// A readable title from a file name: "PZO1234 Pathfinder Pawns- Bestiary Box PDF.pdf" becomes
     /// "Pathfinder Pawns: Bestiary Box".
     public static func title(fromFileName name: String) -> String {
-        var title = (name as NSString).deletingPathExtension
-        title = title.replacingOccurrences(of: #"^PZO\w+\s+"#, with: "", options: .regularExpression)
-        title = title.replacingOccurrences(of: #"\s+PDF$"#, with: "", options: [.regularExpression, .caseInsensitive])
-        return title.replacingOccurrences(of: "- ", with: ": ")
+        ProductTitle.fromFileName(name)
     }
 }
 

@@ -1,4 +1,5 @@
 import CoreGraphics
+import ArtExtraction
 import Foundation
 
 /// Finds the figure a pawn's art shows (see `Figure`) in the library's copies of its PDFs. It keeps the PDFs

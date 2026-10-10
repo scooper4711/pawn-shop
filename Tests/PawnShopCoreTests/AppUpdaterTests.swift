@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import ArtExtractionTestSupport
 @testable import PawnShopCore
 
 /// Answers requests for registered addresses with a canned status and body, without touching the network.

@@ -1,3 +1,4 @@
+import ArtExtraction
 import Foundation
 
 /// A painting printed both on a Battle Card and as a pawn (or in two decks) is one pawn. Its pictures differ,

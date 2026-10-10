@@ -1,3 +1,4 @@
+import ArtExtraction
 import Foundation
 
 /// Products that print no names on their pawns. Their pawns borrow the name of the same art printed in

@@ -1,5 +1,6 @@
 import CoreGraphics
 import CoreText
+import ArtExtraction
 import Foundation
 import ImageIO
 import PDFKit

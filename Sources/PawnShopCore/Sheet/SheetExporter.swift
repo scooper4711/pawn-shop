@@ -1,4 +1,5 @@
 import CoreGraphics
+import ArtExtraction
 import Foundation
 
 /// Turns a sheet into pages: the layout for previews, and PDF data for export and printing.

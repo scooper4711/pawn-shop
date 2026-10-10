@@ -1,6 +1,8 @@
 import CoreGraphics
 import Foundation
 import Testing
+import ArtExtraction
+import ArtExtractionTestSupport
 @testable import PawnShopCore
 
 /// A picture whose left half is red and right half blue, to tell a face from its mirror image.
