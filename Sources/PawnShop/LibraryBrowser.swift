@@ -1,3 +1,4 @@
+import ArtExtraction
 import AppKit
 import PawnShopCore
 import SwiftUI

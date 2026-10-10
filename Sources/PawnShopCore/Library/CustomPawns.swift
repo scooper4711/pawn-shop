@@ -1,4 +1,5 @@
 import CoreGraphics
+import ArtExtraction
 import Foundation
 import ImageIO
 

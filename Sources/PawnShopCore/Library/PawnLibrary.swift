@@ -1,4 +1,5 @@
 import CryptoKit
+import ArtExtraction
 import Foundation
 
 /// A PDF read and ready to add to the library.

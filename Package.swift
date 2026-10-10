@@ -8,9 +8,14 @@ let package = Package(
         .executable(name: "PawnShop", targets: ["PawnShop"]),
         .library(name: "PawnShopCore", targets: ["PawnShopCore"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "0.1.0")
+    ],
     targets: [
-        .target(name: "PawnShopCore"),
+        .target(name: "PawnShopCore", dependencies: [.product(name: "ArtExtraction", package: "tabletop-kit")]),
         .executableTarget(name: "PawnShop", dependencies: ["PawnShopCore"]),
-        .testTarget(name: "PawnShopCoreTests", dependencies: ["PawnShopCore"])
+        .testTarget(name: "PawnShopCoreTests", dependencies: [
+            "PawnShopCore", .product(name: "ArtExtractionTestSupport", package: "tabletop-kit")
+        ])
     ]
 )
