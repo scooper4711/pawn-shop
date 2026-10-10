@@ -216,3 +216,11 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
         return false
     }
 }
+
+extension Pawn {
+    /// Lists a product printing the pawn's art, unless it is listed already (a PDF read again by a newer reader).
+    mutating func add(_ appearance: Appearance) {
+        guard !appearances.contains(where: { $0.sourceID == appearance.sourceID }) else { return }
+        appearances.append(appearance)
+    }
+}

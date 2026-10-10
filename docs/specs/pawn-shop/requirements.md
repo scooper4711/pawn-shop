@@ -18,9 +18,10 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.6 A pawn is a duplicate only when its artwork matches. Copies of the same art (on one page or reprinted
   in another product) are stored once; pawns with the same name and different art (1e and 2e, Pathfinder and
   Starfinder, variants) are kept apart.
-- R1.7 Importing a PDF that is already in the library changes nothing, except a PDF in which nothing was found:
-  it is read again once by each newer version of the reader, so improvements reach it, and no copy of it is
-  kept (R1.9) while it gives no pawns.
+- R1.7 Importing a PDF that is already in the library changes nothing, except a PDF read by an older version of
+  the reader: it is read again once by each newer version, so improvements reach it. A PDF that gave no pawns is
+  imported afresh, with no copy of it kept (R1.9) while it gives none; one that gave pawns keeps them, with their
+  names, tags and corrections, and gains only the pawns found anew, each product listed once per pawn.
 - R1.8 Importing shows progress, then a report of the pawns added, the pawns whose art was already in the
   library, and the outlines with no name printed.
 - R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved.
@@ -55,6 +56,11 @@ is cut out and folded at the heads, giving a two-ply pawn.
   Stalker" and "Elemental, Invisible Stalker" do) and the figures' colors match. The pawn is drawn from
   whichever picture has more pixels, which is usually the card's, takes the printed pawn's size, and gains
   the card's traits. The import report counts the pawns that now use sharper art.
+- R1.16 Pawns printed without cut outlines (the second half of the Monster Core Pawn Box, Dawn of Flame) are
+  found from their pictures and the labels along their feet, as Tabletop Kit reads them, and drawn alone above
+  their name on white, turned upright, like Battle Cards' creatures. Their size is estimated from the picture.
+  Pages printed as one flattened picture (the second half of the NPC Core Pawn Box) are named in the import
+  summary.
 
 ## R2 The library
 - R2.1 The library is kept between launches and shared by every sheet.

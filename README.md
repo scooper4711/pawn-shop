@@ -47,7 +47,8 @@ the right.*
   or drop on a window.
 - Finds each pawn from its cut outline, names it from its label, sizes it (small, medium, large, huge) and
   turns it upright. Pawns printed on their side, with backs on the following page or with no back page at
-  all, are handled.
+  all, are handled. Pawns printed without cut outlines (the second half of the Monster Core Pawn Box, Dawn of
+  Flame) are found from their pictures and labels, and drawn alone above their name, like Battle Cards.
 - Turns round tokens into pawns: the token's art alone, without the page background, the cut line or the
   name printed on it, above the pawn's name on white. Tokens are named from the label on their back page or
   the name along their rim, and sized from the token (1" medium, 2" large, 3" huge).
@@ -139,12 +140,15 @@ defaults write com.github.scooper4711.PawnShop TaggingModel <model>
 
 ## Not handled yet
 
-- Pawns printed without cut outlines (the second half of the Monster Core Pawn Box, Dawn of Flame).
-- Pages that are a single picture with no text (the second half of the NPC Core Pawn Box).
+- Pages that are a single picture with no text (the second half of the NPC Core Pawn Box); the import summary
+  names them.
 - Terrain collections with rectangular outlines (Dungeon Decor, Traps & Treasures, Tech Terrain).
 
-These import with fewer pawns, or none; the import summary names the PDFs where nothing was found. The
-Monster Core and NPC Core Battle Cards print the creatures those two pawn boxes are missing.
+These import with fewer pawns, or none; the import summary names the PDFs where nothing was found. The NPC
+Core Battle Cards print the creatures that pawn box is missing.
+
+When a new version of Pawn Shop reads PDFs better, importing from Scrollkeeper again reads the PDFs you
+imported before and adds the pawns found anew, keeping your names and tags.
 
 ## Pawn bases
 
