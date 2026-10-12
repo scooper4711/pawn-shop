@@ -22,6 +22,7 @@ import ArtExtractionTestSupport
     @Test func writesTheItemsOfADeckSoldAsPicturesAndKeepsNoCopyOfTheFolder() throws {
         let deck = try product("Pathfinder Weapons & Armor Deck")
         try writeImageDeck(["DAGGER", "LONGSWORD", "WHIP"], in: deck)
+        #expect(PawnLibrary.isImportable(deck.appendingPathComponent("Deck Backs1.jpg")))
         #expect(PawnLibrary.importableFiles([deck.appendingPathComponent("Deck Backs1.jpg")])
                 .map { $0.resolvingSymlinksInPath().path } == [deck.resolvingSymlinksInPath().path])
         let library = try PawnLibrary(folder: libraryFolder)

@@ -52,9 +52,9 @@ struct SheetWindow: View {
             AddCustomPawnView { document.sheet.add($0.id) }
         }
         .dropDestination(for: URL.self) { urls, _ in
-            let pdfs = urls.filter { $0.pathExtension.lowercased() == "pdf" }
-            library.importPDFs(pdfs)
-            return !pdfs.isEmpty
+            let files = urls.filter(PawnLibrary.isImportable)
+            library.importPDFs(files)
+            return !files.isEmpty
         }
         .alert("Import Finished", isPresented: summaryShown) {
             Button("OK") { library.importSummary = nil }

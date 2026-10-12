@@ -59,3 +59,11 @@ extension PawnLibrary {
         digest.map { String(format: "%02x", $0) }.joined()
     }
 }
+
+extension PawnLibrary {
+    /// True for a file or folder an import can read: a PDF, or an item deck sold as pictures, or one of its
+    /// pictures.
+    public static func isImportable(_ url: URL) -> Bool {
+        url.pathExtension.lowercased() == "pdf" || ImageDeck.containing(url) != nil
+    }
+}

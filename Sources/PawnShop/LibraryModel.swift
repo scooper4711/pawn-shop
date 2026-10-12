@@ -68,18 +68,20 @@ final class LibraryModel {
     /// Asks for pawn PDFs and imports them.
     func chooseAndImportPDFs() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.pdf]
+        panel.allowedContentTypes = [.pdf, .jpeg]
+        panel.canChooseDirectories = true
         panel.allowsMultipleSelection = true
-        panel.message = "Choose Paizo pawn, token or Battle Cards PDFs to add to the library."
+        panel.message = "Choose Paizo pawn, token, Battle Cards or item deck PDFs, or the folder of an item deck "
+            + "sold as pictures, to add to the library."
         guard panel.runModal() == .OK else { return }
         importPDFs(panel.urls)
     }
 
-    /// Imports every pawn, token and Battle Cards PDF Scrollkeeper downloaded that isn't in the library yet.
+    /// Imports every pawn, token, Battle Cards and item deck Scrollkeeper downloaded that isn't in the library yet.
     func importFromScrollkeeper() {
-        let files = ScrollkeeperScanner.pawnPDFs()
+        let files = ScrollkeeperScanner.artFiles()
         guard !files.isEmpty else {
-            importSummary = "No pawn, token or Battle Cards PDFs were found in Scrollkeeper's downloads "
+            importSummary = "No pawn, token, Battle Cards or item deck PDFs were found in Scrollkeeper's downloads "
                 + "(\(ScrollkeeperScanner.defaultFolder.path))."
             return
         }
@@ -118,17 +120,17 @@ final class LibraryModel {
 
     static func summary(of reports: [ImportReport], failures: [String]) -> String {
         let added = reports.reduce(0) { $0 + $1.added }
-        let known = reports.reduce(0) { $0 + $1.alreadyKnown }
         let borrowed = reports.reduce(0) { $0 + $1.namedFromOtherProducts }
-        let sharpened = reports.reduce(0) { $0 + $1.sharpened }
         let needingNames = reports.reduce(0) { $0 + $1.needingNames }
-        let empty = reports.filter { !$0.reread && $0.added + $0.alreadyKnown == 0 }.map(\.sourceTitle)
+        let itemArt = reports.reduce(0) { $0 + $1.itemArtAdded }
+        let empty = reports.filter { !$0.reread && $0.added + $0.alreadyKnown + $0.itemArtAdded == 0 }
+            .map(\.sourceTitle)
         let reread = reports.filter(\.reread).count
         let flattened = reports.filter { !$0.unreadablePages.isEmpty }
             .map { "\($0.sourceTitle) (\($0.unreadablePages.count) pages)" }
         var lines = ["Added \(added) pawns from \(reports.count) PDF\(reports.count == 1 ? "" : "s")."]
-        if known > 0 { lines.append("\(known) were already in the library from other products.") }
-        if sharpened > 0 { lines.append("\(sharpened) pawns now use the sharper art from Battle Cards.") }
+        if itemArt > 0 { lines.append("Kept the art of \(itemArt) items for their cards.") }
+        lines += mergingNotes(of: reports)
         if borrowed > 0 {
             lines.append("\(borrowed) pawns with no name printed took the name of the same art elsewhere.")
         }
@@ -146,6 +148,16 @@ final class LibraryModel {
         }
         if !failures.isEmpty { lines.append("Could not import: \(failures.joined(separator: "; ")).") }
         return lines.joined(separator: "\n")
+    }
+
+    /// What the reports say about art the library had already, from other products or sharper.
+    private static func mergingNotes(of reports: [ImportReport]) -> [String] {
+        let known = reports.reduce(0) { $0 + $1.alreadyKnown }
+        let sharpened = reports.reduce(0) { $0 + $1.sharpened }
+        var lines: [String] = []
+        if known > 0 { lines.append("\(known) were already in the library from other products.") }
+        if sharpened > 0 { lines.append("\(sharpened) pawns now use the sharper art from Battle Cards.") }
+        return lines
     }
 
     // MARK: Editing
