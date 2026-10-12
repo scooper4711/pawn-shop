@@ -144,7 +144,7 @@ Players forget the consumables they are given at the table; a printed card for e
   common), the description, with Paizo's action icons for actions, shrunk to fit and then cut short with "…",
   a table of stats in a set order, and
   the source book. The stats are Level, Price, Bulk, Usage and Uses, then for weapons Damage, Hands, Range,
-  Reload and Group, for armor AC, Dex Cap, Strength, Check and Speed, and for shields Hardness, HP and BT;
+  Reload (left out when there is none) and Group, for armor AC, Dex Cap, Strength, Check and Speed, and for shields Hardness, HP and BT;
   empty ones are left out.
 - R8.4 The card's background is UI art from the Rexard packs (parchment in a frame for Pathfinder, a sci-fi
   panel for Starfinder), so cards use no Paizo art when the user owns no item deck. Without that art, cards are
@@ -152,7 +152,8 @@ Players forget the consumables they are given at the table; a printed card for e
 - R8.5 Item decks are imported like Battle Cards (R1.2, R1.14), including decks sold as pictures (a folder of
   JPGs). Their art adds no pawns; when a deck prints an item's art, the item's card shows it faintly behind the
   text. An item finds deck art printed under its own name, or else under its name without its grade ("Healing
-  Potion (Minor)" finds "Healing Potion").
+  Potion (Minor)" finds "Healing Potion"), or under the name it had before the remaster, from the pf2e
+  system's list of renamed items ("Thunderstone" is "Blasting Stone").
 - R8.6 The item list, the Rexard art and the action icon font are built from local copies of the pf2e
   repository and the Rexard packs into `Generated/`, which is not committed, and bundled into the app; without
   it the Items list says how to build it. The item text is used under the ORC and OGL licenses, whose notices

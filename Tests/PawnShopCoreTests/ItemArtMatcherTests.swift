@@ -21,6 +21,16 @@ import ArtExtraction
         #expect(matcher.artwork(for: catalogItem("Longsword", level: 0)) == nil)
     }
 
+    @Test func findsArtUnderItsOldName() {
+        let renames = ["Thunderstone": "Blasting Stone (Lesser)", "Sunrod": "Glow Rod"]
+        let matcher = ItemArtMatcher(artwork: [art("Thunderstone"), art("Sunrod"), art("Glow Rod")],
+                                     renames: renames)
+        #expect(matcher.artwork(for: catalogItem("Blasting Stone (Lesser)", level: 1))?.name == "Thunderstone")
+        #expect(matcher.artwork(for: catalogItem("Blasting Stone (Major)", level: 17))?.name == "Thunderstone")
+        // Art printed under the new name wins over art printed under the old one.
+        #expect(matcher.artwork(for: catalogItem("Glow Rod", level: 1))?.name == "Glow Rod")
+    }
+
     @Test func prefersTheExactGradeOverTheBaseName() {
         let matcher = ItemArtMatcher(artwork: [art("Healing Potion"), art("Healing Potion (Minor)")])
         #expect(matcher.artwork(for: catalogItem("Healing Potion (Minor)", level: 1))?.name

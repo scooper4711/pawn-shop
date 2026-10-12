@@ -113,6 +113,10 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 - Item deck art: Tabletop Kit's `.item` and `.drawnItem` shapes are kept as `ItemArtwork` records
   (`StoredLibrary.itemArt`), a figure on a kept PDF page or a PNG in `Items/`, not as pawns.
   `ItemArtMatcher` finds an item's art by its name, then by its name without parentheses and grade words.
+  Decks printed before the remaster use old names: `ItemImport` reads the renames from the Equipment table of
+  pf2e's Remaster Changes journal (`RenameReader`: linked new items, rows naming several, "(various)" for every
+  grade, removed items left out) into `Items/renames.json`, which `ItemCatalog.renames` loads, and the matcher
+  files art under its new name as well as its own, its own winning.
 - Sheets: `SheetEntry.content` is `.pawn(id)` or `.item(id)`; sheets saved with only a pawn id read as pawns.
   An item entry lays out as a 63 × 88 mm card. `SheetExporter.contents(of:)` resolves each placed strip to a
   `PlacedContent` (a pawn, or an `ItemCardContent` with its matched art) that export and the app's background

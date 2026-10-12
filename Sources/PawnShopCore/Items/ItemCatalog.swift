@@ -25,18 +25,26 @@ public struct ItemCatalog: Sendable {
     /// The levels items have.
     public static let levels = 0...30
 
+    /// The file beside `items.json` with the remaster's renames (see `renames`).
+    public static let renamesFile = "renames.json"
+
     public let items: [CatalogItem]
+    /// Old names of items the remaster renamed, with their new names: item decks printed before it use the old.
+    public let renames: [String: String]
     private let indexes: [String: Int]
 
-    public init(items: [CatalogItem]) {
+    public init(items: [CatalogItem], renames: [String: String] = [:]) {
         self.items = items
+        self.renames = renames
         indexes = Dictionary(items.enumerated().map { ($1.id, $0) }) { first, _ in first }
     }
 
-    /// The catalog in `file`; empty when there is none or it can't be read, as in a build without `Generated`.
+    /// The catalog in `file`, with the renames beside it; empty when there is none or it can't be read, as in a
+    /// build without `Generated`.
     public init(contentsOf file: URL) {
-        let items = (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode([CatalogItem].self, from: $0) }
-        self.init(items: items ?? [])
+        let renamesFile = file.deletingLastPathComponent().appendingPathComponent(Self.renamesFile)
+        self.init(items: Self.decoded([CatalogItem].self, from: file) ?? [],
+                  renames: Self.decoded([String: String].self, from: renamesFile) ?? [:])
     }
 
     /// The catalog bundled with the app, or else an empty one.
@@ -47,6 +55,12 @@ public struct ItemCatalog: Sendable {
 
     public func item(id: String) -> CatalogItem? { indexes[id].map { items[$0] } }
 
+    /// Finds the art the library's item decks print for these items, by their names or their names before the
+    /// remaster.
+    public func artMatcher(for library: PawnLibrary) -> ItemArtMatcher {
+        ItemArtMatcher(artwork: library.itemArt, renames: renames)
+    }
+
     /// The items matching `query`, by name, then level.
     public func search(_ query: ItemQuery) -> [CatalogItem] {
         let words = query.text.split(whereSeparator: \.isWhitespace).map(String.init)
@@ -55,6 +69,10 @@ public struct ItemCatalog: Sendable {
                 let order = first.name.localizedStandardCompare(second.name)
                 return order == .orderedSame ? first.level < second.level : order == .orderedAscending
             }
+    }
+
+    private static func decoded<Value: Decodable>(_ type: Value.Type, from file: URL) -> Value? {
+        (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode(type, from: $0) }
     }
 
     private func matches(_ item: CatalogItem, query: ItemQuery, words: [String]) -> Bool {

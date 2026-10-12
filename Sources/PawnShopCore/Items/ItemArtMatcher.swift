@@ -2,7 +2,9 @@ import Foundation
 
 /// Finds the art an imported item deck prints for a catalog item, by name: the same words in any order, so the
 /// deck's "Lesser Acid Flask" is the catalog's "Acid Flask (Lesser)", or else the same words without the grade,
-/// so "Healing Potion (Minor)" finds a deck's "Healing Potion".
+/// so "Healing Potion (Minor)" finds a deck's "Healing Potion". Art a deck names as before the remaster is found
+/// under its new name too: a deck's "Thunderstone" is the catalog's "Blasting Stone (Lesser)", and through the
+/// grade the other blasting stones'.
 public struct ItemArtMatcher: Sendable {
     /// Words naming an item's grade rather than the item.
     static let gradeWords: Set<String> = ["minor", "lesser", "moderate", "greater", "major", "true", "standard"]
@@ -10,9 +12,14 @@ public struct ItemArtMatcher: Sendable {
     private let byWords: [[String]: ItemArtwork]
     private let byBaseWords: [[String]: ItemArtwork]
 
-    public init(artwork: [ItemArtwork]) {
-        byWords = Dictionary(artwork.map { (Self.words(of: $0.name), $0) }) { first, _ in first }
-        byBaseWords = Dictionary(artwork.map { (Self.baseWords(of: $0.name), $0) }) { first, _ in first }
+    /// `renames` maps old names to the remaster's (`ItemCatalog.renames`).
+    public init(artwork: [ItemArtwork], renames: [String: String] = [:]) {
+        let newNames = Dictionary(renames.map { (Self.words(of: $0.key), $0.value) }) { first, _ in first }
+        // Art under its own name comes first, so a renamed one never hides it.
+        let named = artwork.map { ($0.name, $0) }
+            + artwork.compactMap { art in newNames[Self.words(of: art.name)].map { ($0, art) } }
+        byWords = Dictionary(named.map { (Self.words(of: $0.0), $0.1) }) { first, _ in first }
+        byBaseWords = Dictionary(named.map { (Self.baseWords(of: $0.0), $0.1) }) { first, _ in first }
     }
 
     /// The art printed under the item's name, or else under its name without its grade; nil when no deck
@@ -34,9 +41,4 @@ public struct ItemArtMatcher: Sendable {
     private static func baseWords(of name: String) -> [String] {
         words(of: name).filter { !gradeWords.contains($0) }
     }
-}
-
-public extension PawnLibrary {
-    /// Finds the art the library's item decks print for catalog items.
-    var itemArtMatcher: ItemArtMatcher { ItemArtMatcher(artwork: itemArt) }
 }

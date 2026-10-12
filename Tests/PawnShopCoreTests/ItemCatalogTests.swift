@@ -36,10 +36,13 @@ import ArtExtractionTestSupport
         #expect(ItemCatalog(contentsOf: URL(fileURLWithPath: "/nonexistent/items.json")).items.isEmpty)
     }
 
-    @Test func readsTheCatalogItWrote() throws {
-        let file = temporaryFolder().appendingPathComponent("items.json")
+    @Test func readsTheCatalogItWroteWithTheRenamesBesideIt() throws {
+        let folder = temporaryFolder()
+        let file = folder.appendingPathComponent("items.json")
         try JSONEncoder().encode(catalog.items).write(to: file)
-        #expect(ItemCatalog(contentsOf: file).items == catalog.items)
+        #expect(ItemCatalog(contentsOf: file).items == catalog.items && ItemCatalog(contentsOf: file).renames.isEmpty)
+        try JSONEncoder().encode(["Sunrod": "Glow Rod"]).write(to: folder.appendingPathComponent("renames.json"))
+        #expect(ItemCatalog(contentsOf: file).renames == ["Sunrod": "Glow Rod"])
     }
 }
 

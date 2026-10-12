@@ -73,7 +73,8 @@ final class LibraryModel {
 
     /// An item's card, with the art an imported item deck prints for it.
     func card(for item: CatalogItem) -> ItemCardContent {
-        ItemCardContent(item: item, artwork: ItemArtMatcher(artwork: itemArt).artwork(for: item))
+        ItemCardContent(item: item, artwork: ItemArtMatcher(artwork: itemArt, renames: catalog.renames)
+            .artwork(for: item))
     }
 
     func sourceTitle(of pawn: Pawn) -> String { library?.sourceTitle(of: pawn) ?? "" }

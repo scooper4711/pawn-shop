@@ -61,7 +61,7 @@ public struct SheetExporter {
     /// What each strip of a page shows, ready to draw on another thread.
     public func contents(of page: [PlacedStrip]) -> [PlacedContent] {
         let contents = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.content) })
-        let matcher = library.itemArtMatcher
+        let matcher = catalog.artMatcher(for: library)
         return page.map { placed in
             switch contents[placed.entryID] {
             case .item(let itemID):
