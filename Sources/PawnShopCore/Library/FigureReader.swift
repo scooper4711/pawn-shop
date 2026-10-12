@@ -42,6 +42,12 @@ final class FigureReader {
         }
     }
 
+    /// The picture of an item from a PDF deck; nil for one cut out of a deck sold as pictures, which is a PNG.
+    func figure(of artwork: ItemArtwork) -> Figure? {
+        guard case .figure(let face, let imageIndex) = artwork.picture else { return nil }
+        return figure(source: artwork.sourceID, face: face, imageIndex: imageIndex)
+    }
+
     /// Forgets the pages read, which hold on to their PDFs' pictures.
     func forgetPages() {
         pages.removeAll()
