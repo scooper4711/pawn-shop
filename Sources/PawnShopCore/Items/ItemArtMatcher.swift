@@ -21,10 +21,11 @@ public struct ItemArtMatcher: Sendable {
         byWords[Self.words(of: item.name)] ?? byBaseWords[Self.baseWords(of: item.name)]
     }
 
-    /// The name's words, lowercase and without accents or punctuation, sorted.
+    /// The name's words, lowercase and without accents or punctuation, sorted. Apostrophes, straight in the pf2e
+    /// system and curly on the cards, are dropped rather than splitting the word.
     static func words(of name: String) -> [String] {
         name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US"))
-            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: #"['’]"#, with: "", options: .regularExpression)
             .split { !$0.isLetter && !$0.isNumber }
             .map(String.init)
             .sorted()

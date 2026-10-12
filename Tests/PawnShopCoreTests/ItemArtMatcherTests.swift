@@ -5,12 +5,13 @@ import ArtExtraction
 
 /// Finding an item's deck art by its name.
 @Suite struct ItemArtMatcherTests {
-    let artwork = [art("Healing Potion"), art("Lesser Acid Flask"), art("Alchemist's Fire")]
+    let artwork = [art("Healing Potion"), art("Lesser Acid Flask"), art("Alchemist's Fire"), art("Cat’s Eye Elixir")]
 
     @Test func matchesTheSameWordsInAnyOrder() {
         let matcher = ItemArtMatcher(artwork: artwork)
         #expect(matcher.artwork(for: catalogItem("Acid Flask (Lesser)", level: 1))?.name == "Lesser Acid Flask")
         #expect(matcher.artwork(for: catalogItem("alchemists fire", level: 1))?.name == "Alchemist's Fire")
+        #expect(matcher.artwork(for: catalogItem("Cat's Eye Elixir", level: 5))?.name == "Cat’s Eye Elixir")
     }
 
     @Test func fallsBackToTheNameWithoutItsGrade() {
