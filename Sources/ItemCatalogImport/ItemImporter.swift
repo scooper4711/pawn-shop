@@ -6,13 +6,15 @@ import PawnShopCore
 /// What the item import found.
 public struct ItemImportReport: Sendable {
     public var itemCount = 0
+    /// Items the remaster renamed, whose old names item decks may print.
+    public var renameCount = 0
     /// Items per kind, for the report.
     public var kinds: [ItemKind: Int] = [:]
     /// Enricher names that could not be converted, with how many descriptions used each.
     public var unparsedEnrichers: [String: Int] = [:]
 
     public var markdown: String {
-        var lines = ["# Item import", "", "\(itemCount) items.", ""]
+        var lines = ["# Item import", "", "\(itemCount) items, \(renameCount) remaster renames.", ""]
         lines += ItemKind.allCases.map { "- \($0.displayName): \(kinds[$0] ?? 0)" }
         if !unparsedEnrichers.isEmpty {
             lines += ["", "## Enrichers left as written", ""]
@@ -47,7 +49,9 @@ public struct ItemImporter {
         var report = ItemImportReport(itemCount: items.count)
         report.kinds = Dictionary(grouping: items, by: \.kind).mapValues(\.count)
         report.unparsedEnrichers = Dictionary(reader.unparsedEnrichers.map { ($0, 1) }, uniquingKeysWith: +)
-        try write(items, report: report)
+        let renames = RenameReader.renames(in: repository)
+        report.renameCount = renames.count
+        try write(items, renames: renames, report: report)
         return report
     }
 
@@ -71,7 +75,7 @@ public struct ItemImporter {
         file.pathComponents.contains { Self.skippedFolders.contains($0) }
     }
 
-    private func write(_ items: [CatalogItem], report: ItemImportReport) throws {
+    private func write(_ items: [CatalogItem], renames: [String: String], report: ItemImportReport) throws {
         let folder = outputDirectory.appendingPathComponent("Items", isDirectory: true)
         let licenses = folder.appendingPathComponent("Licenses", isDirectory: true)
         try? FileManager.default.removeItem(at: folder)
@@ -79,6 +83,7 @@ public struct ItemImporter {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         try encoder.encode(items).write(to: folder.appendingPathComponent("items.json"), options: .atomic)
+        try encoder.encode(renames).write(to: folder.appendingPathComponent(ItemCatalog.renamesFile), options: .atomic)
         try report.markdown.write(to: folder.appendingPathComponent("import-report.md"), atomically: true,
                                   encoding: .utf8)
         for license in Self.licenses {
