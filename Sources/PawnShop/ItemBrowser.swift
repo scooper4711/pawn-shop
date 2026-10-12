@@ -180,8 +180,8 @@ struct ItemTile: View {
 /// An item's card, rendered in the background.
 struct ItemCardThumbnail: View {
     let card: ItemCardContent
-    /// Pixel height to render; larger for big previews.
-    var pixelHeight = BackgroundRenderer.thumbnailHeight * 2
+    /// Pixel height to render: a tile's, sharp on a Retina display, unless asked for larger, as by the preview.
+    var pixelHeight = BackgroundRenderer.thumbnailHeight
     @Environment(LibraryModel.self) private var library
     @State private var image: CGImage?
 

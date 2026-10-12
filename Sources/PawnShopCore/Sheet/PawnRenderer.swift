@@ -9,8 +9,8 @@ public enum PawnSide: Sendable {
     case front, back
 }
 
-/// Draws pawns from the library: single faces for thumbnails, and folded strips for printing. It keeps the
-/// source PDFs, custom images and token pictures it has opened. It needs only the library's folders, so a
+/// Draws pawns from the library: single faces for thumbnails, and folded strips for printing. It keeps the last
+/// few source PDFs and pictures it has opened (`BoundedCache`). It needs only the library's folders, so a
 /// renderer can be made for a background thread; each renderer must stay on one thread.
 public final class PawnRenderer {
     static let cutLineWidth: CGFloat = 0.3
@@ -22,10 +22,14 @@ public final class PawnRenderer {
     static let nameWidthFraction: CGFloat = 0.92
 
     let folders: LibraryFolders
-    private var documents: [String: CGPDFDocument] = [:]
-    private var images: [String: CGImage] = [:]
-    /// The same PDFs opened with PDFKit, which knows where their text is.
-    private var textDocuments: [String: PDFDocument] = [:]
+    private let documents = BoundedCache<CGPDFDocument>(countLimit: FigureReader.keptDocuments)
+    /// Custom art, tokens' and items' pictures, up to `keptPictureBytes` of them.
+    private let images = BoundedCache<CGImage>(countLimit: 256, totalCostLimit: keptPictureBytes) { image in
+        image.bytesPerRow * image.height
+    }
+    /// The same PDFs opened with PDFKit, which knows where their text is; only tagging reads them.
+    private let textDocuments = BoundedCache<PDFDocument>(countLimit: 4)
+    static let keptPictureBytes = 100 << 20
     /// The creatures of Battle Card pawns.
     private(set) lazy var figures = FigureReader(folders: folders)
     /// The files `make items` builds, which item cards are drawn with (`GeneratedResources`); nil draws them
@@ -268,24 +272,16 @@ public final class PawnRenderer {
     // MARK: Sources
 
     private func document(_ sourceID: String) -> CGPDFDocument? {
-        if let document = documents[sourceID] { return document }
-        let document = CGPDFDocument(folders.sourceFile(id: sourceID) as CFURL)
-        documents[sourceID] = document
-        return document
+        documents.value(for: sourceID) { CGPDFDocument(folders.sourceFile(id: sourceID) as CFURL) }
     }
 
     private func textDocument(_ sourceID: String) -> PDFDocument? {
-        if let document = textDocuments[sourceID] { return document }
-        let document = PDFDocument(url: folders.sourceFile(id: sourceID))
-        textDocuments[sourceID] = document
-        return document
+        textDocuments.value(for: sourceID) { PDFDocument(url: folders.sourceFile(id: sourceID)) }
     }
 
     func image(_ url: URL) -> CGImage? {
-        if let image = images[url.path] { return image }
-        let image = CGImageSourceCreateWithURL(url as CFURL, nil)
-            .flatMap { CGImageSourceCreateImageAtIndex($0, 0, nil) }
-        images[url.path] = image
-        return image
+        images.value(for: url.path) {
+            CGImageSourceCreateWithURL(url as CFURL, nil).flatMap { CGImageSourceCreateImageAtIndex($0, 0, nil) }
+        }
     }
 }

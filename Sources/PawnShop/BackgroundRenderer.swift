@@ -13,6 +13,8 @@ struct PageDrawing: Sendable {
 final class BackgroundRenderer: @unchecked Sendable {
     /// Thumbnail height in pixels: enough for a sharp tile on a Retina display.
     static let thumbnailHeight = 240
+    /// How much the thumbnail cache keeps, in bytes.
+    static let keptThumbnailBytes = 150 << 20
 
     private let queue = DispatchQueue(label: "PawnShop.rendering", qos: .userInitiated)
     private let thumbnails = NSCache<NSString, CGImage>()
@@ -22,7 +24,8 @@ final class BackgroundRenderer: @unchecked Sendable {
 
     init(folders: LibraryFolders) {
         self.folders = folders
-        thumbnails.countLimit = 2000
+        // About 1,000 pawn tiles or 500 card tiles; the system empties it sooner when memory runs short.
+        thumbnails.totalCostLimit = Self.keptThumbnailBytes
     }
 
     /// The thumbnail if it is ready.
@@ -35,7 +38,7 @@ final class BackgroundRenderer: @unchecked Sendable {
         if let image = cachedThumbnail(of: pawn, side: side, height: height) { return image }
         return await onQueue { renderer in
             let image = renderer.thumbnail(of: pawn, side: side, height: height)
-            if let image { self.thumbnails.setObject(image, forKey: self.key(pawn, side, height)) }
+            if let image { self.keep(image, as: self.key(pawn, side, height)) }
             return image
         }
     }
@@ -46,7 +49,7 @@ final class BackgroundRenderer: @unchecked Sendable {
         if let image = thumbnails.object(forKey: key as NSString) { return image }
         return await onQueue { renderer in
             let image = renderer.cardImage(card, height: height)
-            if let image { self.thumbnails.setObject(image, forKey: key as NSString) }
+            if let image { self.keep(image, as: key as NSString) }
             return image
         }
     }
@@ -74,6 +77,10 @@ final class BackgroundRenderer: @unchecked Sendable {
             }
             return context.makeImage()
         }
+    }
+
+    private func keep(_ image: CGImage, as key: NSString) {
+        thumbnails.setObject(image, forKey: key, cost: image.bytesPerRow * image.height)
     }
 
     /// Drops a pawn's thumbnails, after it was removed.
