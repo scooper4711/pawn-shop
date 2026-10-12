@@ -56,6 +56,8 @@ struct PageView: View {
     let selectedEntry: UUID?
     let select: (CGPoint) -> Void
     @Environment(LibraryModel.self) private var library
+    /// Item cards' art opacity, so pages are drawn again when it changes.
+    @AppStorage(ItemCardPreferences.artOpacityKey) private var artOpacity = Double(ItemCard.defaultArtOpacity)
     @State private var image: CGImage?
 
     private var paper: PaperSetup { sheet.settings.paper }
@@ -93,6 +95,7 @@ struct PageView: View {
         let contents = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.content) })
         let strips = page.map { "\(contents[$0.entryID].map { "\($0)" } ?? "-")@\($0.rect)\($0.sideways)" }
         return strips.joined(separator: ";") + "|\(sheet.settings)|\(library.pawns.count)|\(library.itemArt.count)"
+            + "|\(artOpacity)"
     }
 
     private func render() async {

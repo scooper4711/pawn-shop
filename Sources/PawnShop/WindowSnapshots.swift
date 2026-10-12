@@ -28,6 +28,7 @@ enum WindowSnapshots {
         let panels: [(String, AnyView)] = [
             ("library", AnyView(LibraryBrowser(sheet: .constant(sheet), preview: .constant(nil)))),
             ("items", AnyView(ItemBrowser(sheet: .constant(sheet), preview: .constant(nil)))),
+            ("item-settings", AnyView(ItemCardSettingsView())),
             ("inspector", AnyView(SheetInspector(sheet: .constant(sheet), selectedEntry: .constant(nil),
                                                  pageCount: 1))),
             ("review", AnyView(ReviewNamesView().frame(width: 520, height: 560))),

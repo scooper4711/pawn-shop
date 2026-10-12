@@ -183,6 +183,7 @@ struct ItemCardThumbnail: View {
     /// Pixel height to render: a tile's, sharp on a Retina display, unless asked for larger, as by the preview.
     var pixelHeight = BackgroundRenderer.thumbnailHeight
     @Environment(LibraryModel.self) private var library
+    @AppStorage(ItemCardPreferences.artOpacityKey) private var opacity = Double(ItemCard.defaultArtOpacity)
     @State private var image: CGImage?
 
     var body: some View {
@@ -194,7 +195,7 @@ struct ItemCardThumbnail: View {
                     .aspectRatio(ItemCard.size.width / ItemCard.size.height, contentMode: .fit)
             }
         }
-        .task(id: "\(card.item.id)-\(card.artwork?.id.uuidString ?? "")") {
+        .task(id: "\(card.item.id)-\(card.artwork?.id.uuidString ?? "")-\(opacity)") {
             image = await library.backgroundRenderer?.cardImage(of: card, height: pixelHeight)
         }
     }

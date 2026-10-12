@@ -125,7 +125,8 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   `PlacedContent` (a pawn, or an `ItemCardContent` with its matched art) that export and the app's background
   page rendering both draw with `PawnRenderer.draw`. `ItemCardPainter` draws in card points (scaled to any
   size): the Rexard background, nine-sliced so the parchment's torn edge stays a thin border (content is inset
-  13 pt to clear it and the frame), the deck art at 18% alpha, the title on the ribbon (placed so its flat face,
+  13 pt to clear it and the frame), the deck art at `PawnRenderer.itemArtOpacity` (30% by default; the app sets it from the
+  `itemArtOpacity` user default on both its renderers, and tiles and pages are drawn again when it changes), the title on the ribbon (placed so its flat face,
   measured as `ItemCardStyle.titleFace`, holds the name and its folds hang over the card's edges) or the
   Starfinder bar, rarity-colored trait chips, the description (`ItemCardText`: Palatino, 8 pt down to 5.5 pt,
   then cut with "…"), the stats two to a row (a wide one alone), and the source line, centered clear of the
@@ -135,7 +136,10 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 - `DocumentGroup` for `.pawnsheet` (`PawnSheetDocument`, JSON). `LibraryModel` (`@Observable`, main actor) wraps
   the shared library: imports read each PDF off the main thread (`prepareImport`) and commit on the main
   thread, one at a time, with progress and a summary afterwards.
-- `BackgroundRenderer` renders thumbnails (kept in an `NSCache`, keyed by the pawn's id and a hash of its name,
+- Renderers and the figure reader keep only their last few PDFs, pages, figures and pictures (`BoundedCache`:
+  8 PDFs, 24 pages, 24 figures, 100 MB of pictures), since an open PDF holds on to what it decoded: keeping
+  every one took about 1 GB after browsing. Reading a PDF again costs some 20 ms a pawn.
+- `BackgroundRenderer` renders thumbnails (kept in an `NSCache` of at most 150 MB, keyed by the pawn's id and a hash of its name,
   size and art, so a pawn given sharper art is drawn again) and preview pages on one background queue with its
   own `PawnRenderer`.
 - Window: `LibraryBrowser` (search field, filter menu for size, game, product and custom; a lazy grid of

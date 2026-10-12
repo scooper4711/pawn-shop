@@ -64,6 +64,7 @@ final class LibraryModel {
     /// Lays out, draws and exports a sheet; nil when the library couldn't be opened.
     func exporter(for sheet: PawnSheet) -> SheetExporter? {
         guard let library, let renderer else { return nil }
+        renderer.itemArtOpacity = ItemCardPreferences.artOpacity
         var exporter = SheetExporter(sheet: sheet, library: library, renderer: renderer)
         exporter.catalog = catalog
         return exporter
@@ -75,6 +76,15 @@ final class LibraryModel {
     func card(for item: CatalogItem) -> ItemCardContent {
         ItemCardContent(item: item, artwork: ItemArtMatcher(artwork: itemArt, renames: catalog.renames)
             .artwork(for: item))
+    }
+
+    /// A card to show the art setting on: the first item an imported deck has art for, or else the first
+    /// consumable; nil without a catalog.
+    var sampleCard: ItemCardContent? {
+        let matcher = ItemArtMatcher(artwork: itemArt, renames: catalog.renames)
+        let item = catalog.items.first { matcher.artwork(for: $0) != nil }
+            ?? catalog.items.first { $0.kind == .consumable }
+        return item.map(card(for:))
     }
 
     func sourceTitle(of pawn: Pawn) -> String { library?.sourceTitle(of: pawn) ?? "" }

@@ -45,7 +45,8 @@ final class BackgroundRenderer: @unchecked Sendable {
 
     /// An item's card, rendering it first if needed.
     func cardImage(of card: ItemCardContent, height: Int = thumbnailHeight) async -> CGImage? {
-        let key = "item-\(card.item.id)-\(card.artwork?.id.uuidString ?? "plain")-\(height)"
+        let opacity = ItemCardPreferences.artOpacity
+        let key = "item-\(card.item.id)-\(card.artwork?.id.uuidString ?? "plain")-\(opacity)-\(height)"
         if let image = thumbnails.object(forKey: key as NSString) { return image }
         return await onQueue { renderer in
             let image = renderer.cardImage(card, height: height)
@@ -94,6 +95,7 @@ final class BackgroundRenderer: @unchecked Sendable {
         await withCheckedContinuation { continuation in
             queue.async {
                 let renderer = self.renderer ?? PawnRenderer(folders: self.folders)
+                renderer.itemArtOpacity = ItemCardPreferences.artOpacity
                 self.renderer = renderer
                 continuation.resume(returning: work(renderer))
             }
