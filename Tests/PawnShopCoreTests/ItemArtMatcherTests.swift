@@ -39,6 +39,14 @@ import ArtExtraction
                 == "Feather Token, Boat")
     }
 
+    @Test func drawsEverySpellScrollWithTheDecksFirstScroll() {
+        let matcher = ItemArtMatcher(artwork: [art("Scroll", file: "first.png"), art("Scroll", file: "second.png")])
+        for name in ["Scroll of 1st-rank Spell", "Scroll of 2nd-rank Spell", "Scroll of 10th-rank Spell"] {
+            #expect(matcher.artwork(for: catalogItem(name, level: 1))?.picture == .drawn(file: "first.png"))
+        }
+        #expect(matcher.artwork(for: catalogItem("Scroll Belt", level: 1)) == nil)
+    }
+
     @Test func prefersTheExactGradeOverTheBaseName() {
         let matcher = ItemArtMatcher(artwork: [art("Healing Potion"), art("Healing Potion (Minor)")])
         #expect(matcher.artwork(for: catalogItem("Healing Potion (Minor)", level: 1))?.name
