@@ -37,6 +37,8 @@ public final class PawnRenderer {
     public var generatedFolder = GeneratedResources.folder {
         didSet { cardStyles.removeAll() }
     }
+    /// How opaque an item's art is behind its card's text, from 0 (none) to 1.
+    public var itemArtOpacity = ItemCard.defaultArtOpacity
     /// Each game's card style, read from `generatedFolder` once.
     var cardStyles: [Game: ItemCardStyle] = [:]
 

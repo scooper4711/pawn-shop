@@ -27,7 +27,13 @@ import ArtExtractionTestSupport
         let center = (x: plain.width / 2, y: plain.height / 2)
         #expect(pixel(of: plain, x: center.x, y: center.y).prefix(3) == [255, 255, 255])
         let faint = pixel(of: withArt, x: center.x, y: center.y)
-        #expect(faint[0] > 240 && faint[1] > 170 && faint[1] < 240)
+        #expect(faint[0] > 240 && faint[1] > 150 && faint[1] < 220)
+        renderer.itemArtOpacity = 0
+        let none = try #require(renderer.cardImage(ItemCardContent(item: item, artwork: art("Potion")), height: 352))
+        #expect(pixel(of: none, x: center.x, y: center.y).prefix(3) == [255, 255, 255])
+        renderer.itemArtOpacity = 1
+        let solid = try #require(renderer.cardImage(ItemCardContent(item: item, artwork: art("Potion")), height: 352))
+        #expect(pixel(of: solid, x: center.x, y: center.y).prefix(3) == [255, 0, 0])
     }
 
     @Test func drawsWithoutArtWhenTheDeckIsGone() throws {

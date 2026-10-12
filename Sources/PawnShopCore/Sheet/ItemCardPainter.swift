@@ -5,13 +5,14 @@ import Foundation
 /// The size of an item card: Paizo's item decks', 63 × 88 mm.
 public enum ItemCard {
     public static let size = CGSize(width: .millimeters(63), height: .millimeters(88))
+    /// How opaque the item's art is behind the text unless the user chooses otherwise: visible, yet faint enough
+    /// to read over.
+    public static let defaultArtOpacity: CGFloat = 0.3
 }
 
 /// Draws an item's card in card coordinates (`ItemCard.size`, origin at the bottom left): the background, the
 /// item's art faint over it, then the name and level, the traits, the description, the stats and the source.
 struct ItemCardPainter {
-    /// How opaque the item's art is behind the text.
-    static let artAlpha: CGFloat = 0.18
     /// Clears the frame and the parchment's torn edge.
     static let inset: CGFloat = 13
     static let titleHeight: CGFloat = 24
@@ -22,6 +23,8 @@ struct ItemCardPainter {
     let item: CatalogItem
     let style: ItemCardStyle
     let context: CGContext
+    /// How opaque the item's art is behind the text, from 0 (none) to 1.
+    var artOpacity = ItemCard.defaultArtOpacity
 
     /// Draws the card; `drawArt` draws the item's picture as large as fits a rect, or nothing.
     func paint(drawArt: (CGRect) -> Void) {
@@ -30,11 +33,13 @@ struct ItemCardPainter {
         let inner = card.insetBy(dx: Self.inset, dy: Self.inset)
         let title = CGRect(x: inner.minX, y: inner.maxY - Self.titleHeight, width: inner.width,
                            height: Self.titleHeight)
-        context.saveGState()
-        context.setAlpha(Self.artAlpha)
-        drawArt(CGRect(x: inner.minX, y: inner.minY, width: inner.width, height: title.minY - inner.minY)
-            .insetBy(dx: 4, dy: 4))
-        context.restoreGState()
+        if artOpacity > 0 {
+            context.saveGState()
+            context.setAlpha(min(artOpacity, 1))
+            drawArt(CGRect(x: inner.minX, y: inner.minY, width: inner.width, height: title.minY - inner.minY)
+                .insetBy(dx: 4, dy: 4))
+            context.restoreGState()
+        }
         drawTitle(in: title)
         let chipsBottom = drawTraits(below: title.minY - 3, in: inner)
         let source = CGRect(x: inner.minX, y: inner.minY, width: inner.width, height: Self.sourceHeight)

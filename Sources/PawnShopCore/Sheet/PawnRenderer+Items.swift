@@ -49,7 +49,9 @@ extension PawnRenderer {
         context.clip(to: rect)
         context.translateBy(x: rect.minX, y: rect.minY)
         context.scaleBy(x: rect.width / ItemCard.size.width, y: rect.height / ItemCard.size.height)
-        ItemCardPainter(item: card.item, style: cardStyle(for: card.item.game), context: context).paint { area in
+        var painter = ItemCardPainter(item: card.item, style: cardStyle(for: card.item.game), context: context)
+        painter.artOpacity = itemArtOpacity
+        painter.paint { area in
             drawItemArt(card.artwork, in: area, context: context)
         }
         context.restoreGState()
