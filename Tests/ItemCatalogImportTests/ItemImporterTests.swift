@@ -20,7 +20,8 @@ import PawnShopCore
 
     @Test func writesEveryItemSortedWithItsLicensesAndReport() throws {
         let report = try ItemImporter(repository: repository.root, outputDirectory: output).run()
-        #expect(report.itemCount == 5 && report.kinds[.weapon] == 2 && report.markdown.contains("5 items, 0 remaster renames."))
+        #expect(report.itemCount == 5 && report.kinds[.weapon] == 2)
+        #expect(report.markdown.contains("5 items, 0 remaster renames."))
         let catalog = ItemCatalog(contentsOf: output.appendingPathComponent("Items/items.json"))
         #expect(catalog.items.map(\.name)
                 == ["Full Plate", "Healing Potion", "Longsword", "Steel Shield", "Laser Pistol"])
