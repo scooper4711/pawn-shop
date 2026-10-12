@@ -31,6 +31,14 @@ import ArtExtraction
         #expect(matcher.artwork(for: catalogItem("Glow Rod", level: 1))?.name == "Glow Rod")
     }
 
+    @Test func findsArtTheDecksMisname() {
+        let matcher = ItemArtMatcher(artwork: [art("Olefactory Obfuscator"), art("Feather Token, Boat")])
+        #expect(matcher.artwork(for: catalogItem("Olfactory Obfuscator (Lesser)", level: 3))?.name
+                == "Olefactory Obfuscator")
+        #expect(matcher.artwork(for: catalogItem("Marvelous Miniature (Boat)", level: 5))?.name
+                == "Feather Token, Boat")
+    }
+
     @Test func prefersTheExactGradeOverTheBaseName() {
         let matcher = ItemArtMatcher(artwork: [art("Healing Potion"), art("Healing Potion (Minor)")])
         #expect(matcher.artwork(for: catalogItem("Healing Potion (Minor)", level: 1))?.name

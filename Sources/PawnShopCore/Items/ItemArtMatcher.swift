@@ -9,12 +9,18 @@ public struct ItemArtMatcher: Sendable {
     /// Words naming an item's grade rather than the item.
     static let gradeWords: Set<String> = ["minor", "lesser", "moderate", "greater", "major", "true", "standard"]
 
+    /// Names Paizo's decks print differently from the item, with the item's name: a misspelling, and a feather
+    /// token the remaster's list calls "Swan Boat".
+    static let deckMisprints = ["Olefactory Obfuscator": "Olfactory Obfuscator",
+                                "Feather Token, Boat": "Marvelous Miniature (Boat)"]
+
     private let byWords: [[String]: ItemArtwork]
     private let byBaseWords: [[String]: ItemArtwork]
 
-    /// `renames` maps old names to the remaster's (`ItemCatalog.renames`).
+    /// `renames` maps old names to the remaster's (`ItemCatalog.renames`); `deckMisprints` are added to them.
     public init(artwork: [ItemArtwork], renames: [String: String] = [:]) {
-        let newNames = Dictionary(renames.map { (Self.words(of: $0.key), $0.value) }) { first, _ in first }
+        let corrections = Self.deckMisprints.merging(renames) { misprint, _ in misprint }
+        let newNames = Dictionary(corrections.map { (Self.words(of: $0.key), $0.value) }) { first, _ in first }
         // Art under its own name comes first, so a renamed one never hides it.
         let named = artwork.map { ($0.name, $0) }
             + artwork.compactMap { art in newNames[Self.words(of: art.name)].map { ($0, art) } }
