@@ -141,7 +141,8 @@ Players forget the consumables they are given at the table; a printed card for e
   together, and they are packed together (R4.5).
 - R8.3 An item prints as a single-sided card the size of Paizo's item decks (63 × 88 mm), cut like strips
   (R4.6) and with no fold line. Top to bottom: the name with "ITEM n", the traits (rarity first when it isn't
-  common), the description, shrunk to fit and then cut short with "…", a table of stats in a set order, and
+  common), the description, with Paizo's action icons for actions, shrunk to fit and then cut short with "…",
+  a table of stats in a set order, and
   the source book. The stats are Level, Price, Bulk, Usage and Uses, then for weapons Damage, Hands, Range,
   Reload and Group, for armor AC, Dex Cap, Strength, Check and Speed, and for shields Hardness, HP and BT;
   empty ones are left out.
@@ -152,7 +153,7 @@ Players forget the consumables they are given at the table; a printed card for e
   JPGs). Their art adds no pawns; when a deck prints an item's art, the item's card shows it faintly behind the
   text. An item finds deck art printed under its own name, or else under its name without its grade ("Healing
   Potion (Minor)" finds "Healing Potion").
-- R8.6 The item list and the Rexard art are built from local copies of the pf2e
+- R8.6 The item list, the Rexard art and the action icon font are built from local copies of the pf2e
   repository and the Rexard packs into `Generated/`, which is not committed, and bundled into the app; without
   it the Items list says how to build it. The item text is used under the ORC and OGL licenses, whose notices
   ship with it.

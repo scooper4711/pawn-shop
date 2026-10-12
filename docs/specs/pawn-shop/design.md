@@ -92,7 +92,8 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 ## Items (`PawnShopCore/Items`, `ItemImport`)
 - `scripts/import-items.sh` (`make items`) fills the git-ignored `Generated/` from `PF2E_REPO` (default
   `~/git/pf2e`) and `REXARD_PACKS` (default `~/git/rexard-packs`): Tabletop Kit's `CardArtImport` copies the
-  card pieces (`CardArtPieces.manifest`) to `Generated/CardArt`, and the `ItemImport` executable writes
+  card pieces (`CardArtPieces.manifest`) to `Generated/CardArt`, the action icon font is copied to
+  `Generated/Fonts`, and the `ItemImport` executable writes
   `Generated/Items/items.json`, an import report and the ORC and OGL licenses (`Items/Licenses`).
   `build-app.sh` copies `Generated/` into the bundle's resources when it exists; `PAWN_SHOP_GENERATED` points
   a build run from the command line at another copy (`GeneratedResources`).
@@ -101,7 +102,9 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   bestiary-only items. Descriptions lose their tables (stats and variants the card has no room for), have
   `@item` formulas worked out from the item's data, and go through `RulesTextConverter` and back to plain text
   (`StatBlockText.plainText`): `**bold**`, `*italic*`, `---` rules, and ◆ ◆◆ ◆◆◆ ⤾ ◇ for actions, so the app
-  needs neither Tabletop Kit's Bestiary nor a glyph font. Trait, usage and weapon group names come from the
+  doesn't need Tabletop Kit's Bestiary. Cards set those glyphs as Paizo's action icons in the pf2e system's
+  `pathfinder-2e-actions.woff2` (its 1, 2, 3, R and F), which `make items` copies to `Generated/Fonts` and Core
+  Text reads as it is; without it the glyphs stay as text. Trait, usage and weapon group names come from the
   slug maps in `src/scripts/config` (`ConfigLabels`) and the language files. Starfinder prices are in credits
   (the system keeps them as silver pieces). It builds each `CatalogItem`'s stats as ordered label and value
   rows, so the order lives in one place. Output is sorted with sorted keys, so the same input gives the same
@@ -111,9 +114,15 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   (`StoredLibrary.itemArt`), a figure on a kept PDF page or a PNG in `Items/`, not as pawns.
   `ItemArtMatcher` finds an item's art by its name, then by its name without parentheses and grade words.
 - Sheets: `SheetEntry.content` is `.pawn(id)` or `.item(id)`; sheets saved with only a pawn id read as pawns.
-  An item entry lays out as a 63 × 88 mm card, which `PawnRenderer` hands to `ItemCardRenderer`: the Rexard
-  background (or white with a gray frame), the deck art at low alpha, then the name bar, traits, description
-  (Core Text, shrunk to fit), stats table and source line.
+  An item entry lays out as a 63 × 88 mm card. `SheetExporter.contents(of:)` resolves each placed strip to a
+  `PlacedContent` (a pawn, or an `ItemCardContent` with its matched art) that export and the app's background
+  page rendering both draw with `PawnRenderer.draw`. `ItemCardPainter` draws in card points (scaled to any
+  size): the Rexard background, nine-sliced so the parchment's torn edge stays a thin border (content is inset
+  13 pt to clear it and the frame), the deck art at 18% alpha, the title on the ribbon (placed so its flat face,
+  measured as `ItemCardStyle.titleFace`, holds the name and its folds hang over the card's edges) or the
+  Starfinder bar, rarity-colored trait chips, the description (`ItemCardText`: Palatino, 8 pt down to 5.5 pt,
+  then cut with "…"), the stats two to a row (a wide one alone), and the source line, centered clear of the
+  Starfinder corners. Without the pieces a card is white with a gray frame.
 
 ## App (`PawnShop`)
 - `DocumentGroup` for `.pawnsheet` (`PawnSheetDocument`, JSON). `LibraryModel` (`@Observable`, main actor) wraps
@@ -163,12 +172,15 @@ shapes so the pawn and the hat still read at 32 px.
 ## Releases
 - `make` wraps the scripts in `scripts/`: `build-app.sh` (release build, ad-hoc signed, `VERSION` written to
   the bundle, `UNIVERSAL=1` for Apple silicon and Intel, `--install` to move it to /Applications),
-  `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`, with `pawn-bases/` as a Pawn Bases folder, minus its build
+  `import-items.sh` (`make items`, see Items), `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`, with `pawn-bases/` as a Pawn Bases folder, minus its build
   scripts) and `coverage.sh` (fails below 80% line or region coverage
   of `PawnShopCore`, and writes `coverage/sonar-coverage.xml`).
 - GitHub Actions: `ci.yml` lints strictly, runs the coverage gate (tests reading Paizo's PDFs are skipped, as
-  the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds a
-  universal disk image for each pushed `v*` tag and attaches it to the tag's GitHub release.
+  the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` tests each
+  pushed `v*` tag. The disk image needs `Generated/`, which can't be published, so `release-dmg.sh` (`make
+  release-dmg`) builds it on a Mac that has it, for the tag at HEAD, and attaches it to the tag's release.
+- `coverage.sh` measures every test bundle (newer toolchains build one per test target) and gates
+  `PawnShopCore` and `ItemCatalogImport` together.
 - Updates (`PawnShopCore/Updates`): `AppUpdater` asks GitHub's `releases/latest` for the repository, compares
   the tag with the bundle version (`AppVersion`, number by number), and offers the release's `.dmg`. A 404,
   which GitHub answers before the first release, counts as up to date. Builds without a version (0.0.0) skip

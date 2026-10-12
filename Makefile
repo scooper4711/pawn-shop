@@ -1,4 +1,4 @@
-.PHONY: build test lint coverage items app run install dmg icon clean
+.PHONY: build test lint coverage items app run install dmg release-dmg icon clean
 
 build:
 	swift build
@@ -29,6 +29,10 @@ install:
 
 dmg: app
 	scripts/make-dmg.sh
+
+# Builds the universal disk image for the version tag at HEAD and attaches it to its GitHub release.
+release-dmg:
+	scripts/release-dmg.sh
 
 # Redraws Resources/AppIcon.icns from scripts/make-icon.swift.
 icon:
