@@ -131,3 +131,28 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R7.2 The base's size, label and slot curvature, and the slot width, are OpenSCAD Customizer parameters: a
   size dropdown, a label text field, and sliders.
 - R7.3 A label of any length fits its flat spot: one character is full size, longer ones shrink.
+
+## R8 Item cards
+Players forget the consumables they are given at the table; a printed card for each is a reminder to use it.
+- R8.1 The library pane has a Pawns | Items switch. Items lists every Pathfinder and Starfinder item from the
+  pf2e system's equipment packs (consumables, weapons, armor, shields, ammunition, gear, treasure), searchable
+  by name, trait and category, and filtered by game, kind (consumables by default) and level.
+- R8.2 An item is added to a sheet with a number of copies, as a pawn is; one sheet holds pawns and item cards
+  together, and they are packed together (R4.5).
+- R8.3 An item prints as a single-sided card the size of Paizo's item decks (63 × 88 mm), cut like strips
+  (R4.6) and with no fold line. Top to bottom: the name with "ITEM n", the traits (rarity first when it isn't
+  common), the description, shrunk to fit and then cut short with "…", a table of stats in a set order, and
+  the source book. The stats are Level, Price, Bulk, Usage and Uses, then for weapons Damage, Hands, Range,
+  Reload and Group, for armor AC, Dex Cap, Strength, Check and Speed, and for shields Hardness, HP and BT;
+  empty ones are left out.
+- R8.4 The card's background is UI art from the Rexard packs (parchment in a frame for Pathfinder, a sci-fi
+  panel for Starfinder), so cards use no Paizo art when the user owns no item deck. Without that art, cards are
+  drawn on white with a gray frame.
+- R8.5 Item decks are imported like Battle Cards (R1.2, R1.14), including decks sold as pictures (a folder of
+  JPGs). Their art adds no pawns; when a deck prints an item's art, the item's card shows it faintly behind the
+  text. An item finds deck art printed under its own name, or else under its name without its grade ("Healing
+  Potion (Minor)" finds "Healing Potion").
+- R8.6 The item list, the Rexard art and the action glyph font are built from local copies of the pf2e
+  repository and the Rexard packs into `Generated/`, which is not committed, and bundled into the app; without
+  it the Items list says how to build it. The item text is used under the ORC and OGL licenses, whose notices
+  ship with it.

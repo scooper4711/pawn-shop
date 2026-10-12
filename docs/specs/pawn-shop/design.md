@@ -89,6 +89,26 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 - `SheetExporter` (sheet, library, renderer) builds the layout items (a missing pawn takes a medium strip),
   the layout, each page's drawing (shared by preview and print), and the PDF at 100% scale.
 
+## Items (`PawnShopCore/Items`, `ItemImport`)
+- `scripts/import-items.sh` (`make items`) fills the git-ignored `Generated/` from `PF2E_REPO` (default
+  `~/git/pf2e`) and `REXARD_PACKS` (default `~/git/rexard-packs`): Tabletop Kit's `CardArtImport` copies the
+  card pieces (`CardArtPieces.manifest`) to `Generated/CardArt`, the action glyph font is copied to
+  `Generated/Fonts`, and the `ItemImport` executable writes `Generated/Items/items.json`, an import report and
+  the pf2e license. `build-app.sh` copies `Generated/` into the bundle's resources when it exists.
+- `ItemImport` reads the `equipment` packs of both games (Tabletop Kit's `PackScanner` and `JSONValue`),
+  leaving out virtual and bestiary-only items, and converts descriptions with `RulesTextConverter`, so damage,
+  checks and links become `RulesText` markup. It builds each `CatalogItem`'s stats as ordered label and value
+  rows, so the order lives in one place. Output is sorted with sorted keys, so the same input gives the same
+  bytes.
+- `ItemCatalog` loads `items.json` from the bundle (empty when missing) and searches and filters it.
+- Item deck art: Tabletop Kit's `.item` and `.drawnItem` shapes are kept as `ItemArtwork` records
+  (`StoredLibrary.itemArt`), a figure on a kept PDF page or a PNG in `Items/`, not as pawns.
+  `ItemArtMatcher` finds an item's art by its name, then by its name without parentheses and grade words.
+- Sheets: `SheetEntry.content` is `.pawn(id)` or `.item(id)`; sheets saved with only a pawn id read as pawns.
+  An item entry lays out as a 63 × 88 mm card, which `PawnRenderer` hands to `ItemCardRenderer`: the Rexard
+  background (or white with a gray frame), the deck art at low alpha, then the name bar, traits, description
+  (Core Text, shrunk to fit), stats table and source line.
+
 ## App (`PawnShop`)
 - `DocumentGroup` for `.pawnsheet` (`PawnSheetDocument`, JSON). `LibraryModel` (`@Observable`, main actor) wraps
   the shared library: imports read each PDF off the main thread (`prepareImport`) and commit on the main
