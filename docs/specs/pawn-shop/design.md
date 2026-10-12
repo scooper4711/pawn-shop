@@ -92,12 +92,18 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 ## Items (`PawnShopCore/Items`, `ItemImport`)
 - `scripts/import-items.sh` (`make items`) fills the git-ignored `Generated/` from `PF2E_REPO` (default
   `~/git/pf2e`) and `REXARD_PACKS` (default `~/git/rexard-packs`): Tabletop Kit's `CardArtImport` copies the
-  card pieces (`CardArtPieces.manifest`) to `Generated/CardArt`, the action glyph font is copied to
-  `Generated/Fonts`, and the `ItemImport` executable writes `Generated/Items/items.json`, an import report and
-  the pf2e license. `build-app.sh` copies `Generated/` into the bundle's resources when it exists.
-- `ItemImport` reads the `equipment` packs of both games (Tabletop Kit's `PackScanner` and `JSONValue`),
-  leaving out virtual and bestiary-only items, and converts descriptions with `RulesTextConverter`, so damage,
-  checks and links become `RulesText` markup. It builds each `CatalogItem`'s stats as ordered label and value
+  card pieces (`CardArtPieces.manifest`) to `Generated/CardArt`, and the `ItemImport` executable writes
+  `Generated/Items/items.json`, an import report and the ORC and OGL licenses (`Items/Licenses`).
+  `build-app.sh` copies `Generated/` into the bundle's resources when it exists; `PAWN_SHOP_GENERATED` points
+  a build run from the command line at another copy (`GeneratedResources`).
+- `ItemImport` (a thin executable over the `ItemCatalogImport` library, which the coverage gate includes) reads
+  the `equipment` packs of both games (Tabletop Kit's `PackScanner` and `JSONValue`), leaving out virtual and
+  bestiary-only items. Descriptions lose their tables (stats and variants the card has no room for), have
+  `@item` formulas worked out from the item's data, and go through `RulesTextConverter` and back to plain text
+  (`StatBlockText.plainText`): `**bold**`, `*italic*`, `---` rules, and ◆ ◆◆ ◆◆◆ ⤾ ◇ for actions, so the app
+  needs neither Tabletop Kit's Bestiary nor a glyph font. Trait, usage and weapon group names come from the
+  slug maps in `src/scripts/config` (`ConfigLabels`) and the language files. Starfinder prices are in credits
+  (the system keeps them as silver pieces). It builds each `CatalogItem`'s stats as ordered label and value
   rows, so the order lives in one place. Output is sorted with sorted keys, so the same input gives the same
   bytes.
 - `ItemCatalog` loads `items.json` from the bundle (empty when missing) and searches and filters it.

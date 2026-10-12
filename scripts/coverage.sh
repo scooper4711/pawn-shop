@@ -1,7 +1,7 @@
 #!/bin/sh
 # Runs the tests with coverage, writes coverage/sonar-coverage.xml for SonarCloud, and fails when
 # line or region coverage of
-# PawnShopCore is below the threshold. Swift's coverage tooling does not
+# PawnShopCore and ItemCatalogImport is below the threshold. Swift's coverage tooling does not
 # report branch coverage; region coverage is the closest measure.
 set -eu
 
@@ -41,10 +41,11 @@ xcrun llvm-cov export -format=lcov -instr-profile "$PROFILE" "$BINARY" | awk -v 
 import json
 import sys
 
+TARGETS = ["PawnShopCore", "ItemCatalogImport"]
 report_path, threshold, mode = sys.argv[1], float(sys.argv[2]), sys.argv[3]
 files = [
     entry for entry in json.load(open(report_path))["data"][0]["files"]
-    if "/Sources/PawnShopCore/" in entry["filename"]
+    if any(f"/Sources/{target}/" in entry["filename"] for target in TARGETS)
 ]
 
 
@@ -56,11 +57,11 @@ def percent(kind):
 
 if mode == "--files":
     for entry in sorted(files, key=lambda entry: entry["summary"]["regions"]["percent"]):
-        name = entry["filename"].split("/Sources/PawnShopCore/")[1]
+        name = entry["filename"].split("/Sources/")[1]
         summary = entry["summary"]
         print(f"{summary['lines']['percent']:6.1f}% lines {summary['regions']['percent']:6.1f}% regions  {name}")
 
 lines, regions = percent("lines"), percent("regions")
-print(f"PawnShopCore coverage: {lines:.1f}% lines, {regions:.1f}% regions (threshold {threshold:.0f}%)")
+print(f"PawnShopCore and ItemCatalogImport coverage: {lines:.1f}% lines, {regions:.1f}% regions (threshold {threshold:.0f}%)")
 sys.exit(0 if lines >= threshold and regions >= threshold else 1)
 PYTHON

@@ -152,7 +152,7 @@ Players forget the consumables they are given at the table; a printed card for e
   JPGs). Their art adds no pawns; when a deck prints an item's art, the item's card shows it faintly behind the
   text. An item finds deck art printed under its own name, or else under its name without its grade ("Healing
   Potion (Minor)" finds "Healing Potion").
-- R8.6 The item list, the Rexard art and the action glyph font are built from local copies of the pf2e
+- R8.6 The item list and the Rexard art are built from local copies of the pf2e
   repository and the Rexard packs into `Generated/`, which is not committed, and bundled into the app; without
   it the Items list says how to build it. The item text is used under the ORC and OGL licenses, whose notices
   ship with it.

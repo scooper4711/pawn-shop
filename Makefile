@@ -1,4 +1,4 @@
-.PHONY: build test lint coverage app run install dmg icon clean
+.PHONY: build test lint coverage items app run install dmg icon clean
 
 build:
 	swift build
@@ -12,6 +12,10 @@ lint:
 # Runs the tests and fails when PawnShopCore's line or region coverage is below 80%.
 coverage:
 	scripts/coverage.sh
+
+# Builds Generated/ (the item catalog and the item cards' art) from ~/git/pf2e and ~/git/rexard-packs.
+items:
+	scripts/import-items.sh
 
 app:
 	scripts/build-app.sh
@@ -31,4 +35,4 @@ icon:
 	scripts/make-icon.sh
 
 clean:
-	rm -rf .build build coverage
+	rm -rf .build build coverage Generated
