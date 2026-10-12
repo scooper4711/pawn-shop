@@ -12,6 +12,9 @@ struct ItemCardStyle {
     var frame: CGImage?
     var corners: [CGImage] = []
     var titleBand: CGImage?
+    /// The part of `titleBand` the title sits on, as fractions of the image from its top left: the flat face of a
+    /// ribbon whose folded ends hang outside it. Nil when the whole image is the band, stretched to fit.
+    var titleFace: CGRect?
     /// The body text's color.
     var ink: CGColor
     /// The title's and the stats labels' color.
@@ -39,6 +42,8 @@ struct ItemCardStyle {
             style.background = parchment
             style.frame = piece("front-frame")
             style.titleBand = piece("name-ribbon")
+            // Measured on Fantasy GUI's text_bg_03: the folds take the ends and the lower half.
+            style.titleFace = CGRect(x: 0.147, y: 0, width: 0.698, height: 0.547)
             return style
         case .starfinder:
             guard let panel = piece("panel") else { return .plain }

@@ -12,7 +12,8 @@ public enum ItemCard {
 struct ItemCardPainter {
     /// How opaque the item's art is behind the text.
     static let artAlpha: CGFloat = 0.18
-    static let inset: CGFloat = 10
+    /// Clears the frame and the parchment's torn edge.
+    static let inset: CGFloat = 13
     static let titleHeight: CGFloat = 24
     static let chipHeight: CGFloat = 9
     static let statRowHeight: CGFloat = 9.5
@@ -50,7 +51,10 @@ struct ItemCardPainter {
     private func drawBackground(in card: CGRect) {
         context.setFillColor(gray: 1, alpha: 1)
         context.fill(card)
-        if let background = style.background { context.draw(background, in: card) }
+        if let background = style.background {
+            // Sliced, so the parchment's torn edge stays a thin border however the card's shape stretches it.
+            context.drawNineSlice(background, in: card, cap: 70, capPoints: 9)
+        }
         if let frame = style.frame {
             context.drawNineSlice(frame, in: card.insetBy(dx: 2, dy: 2), cap: 40, capPoints: 8)
         } else if style.background == nil {
@@ -63,7 +67,7 @@ struct ItemCardPainter {
 
     /// Starfinder's corner pieces, in order top left, top right, bottom left, bottom right.
     private func drawCorners(in card: CGRect) {
-        let side: CGFloat = 26
+        let side: CGFloat = 18
         let origins = [CGPoint(x: card.minX + 3, y: card.maxY - 3 - side), CGPoint(x: card.maxX - 3 - side,
                        y: card.maxY - 3 - side), CGPoint(x: card.minX + 3, y: card.minY + 3),
                        CGPoint(x: card.maxX - 3 - side, y: card.minY + 3)]
@@ -75,7 +79,9 @@ struct ItemCardPainter {
     }
 
     private func drawTitle(in rect: CGRect) {
-        if let band = style.titleBand {
+        if let band = style.titleBand, let face = style.titleFace {
+            context.draw(band, in: Self.bandRect(placingFace: face, over: rect))
+        } else if let band = style.titleBand {
             context.drawNineSlice(band, in: rect.insetBy(dx: -4, dy: 0), cap: band.height / 3, capPoints: 8)
         } else {
             context.setFillColor(style.titleFill)
@@ -93,6 +99,13 @@ struct ItemCardPainter {
             let line = Self.line(text, font: ItemCardFonts.body(size: size, emphasis: .bold), color: style.titleInk)
             draw(line, at: CGPoint(x: rect.minX + 6, y: top - leading * (CGFloat(index) + 0.8)))
         }
+    }
+
+    /// Where to draw a band image so that its `face` (fractions of the image from its top left) covers `rect`.
+    static func bandRect(placingFace face: CGRect, over rect: CGRect) -> CGRect {
+        let size = CGSize(width: rect.width / face.width, height: rect.height / face.height)
+        return CGRect(x: rect.minX - face.minX * size.width, y: rect.maxY - (1 - face.minY) * size.height,
+                      width: size.width, height: size.height)
     }
 
     /// The name on one line, or two, from 10 points down to 6.
@@ -167,7 +180,8 @@ struct ItemCardPainter {
     private func drawSource(in rect: CGRect) {
         let line = Self.line(item.source, font: ItemCardFonts.body(size: 5.5, emphasis: .italic), color: style.ink)
         let width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
-        draw(line, at: CGPoint(x: rect.maxX - width, y: rect.minY + 1.5))
+        // Centered, clear of Starfinder's corner pieces.
+        draw(line, at: CGPoint(x: rect.midX - width / 2, y: rect.minY + 1.5))
     }
 
     private func statLine(_ stat: ItemStat) -> CTLine {

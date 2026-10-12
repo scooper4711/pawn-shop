@@ -123,3 +123,12 @@ func solidImage(red: CGFloat, green: CGFloat, blue: CGFloat, size: Int = 60) -> 
     context.fill(CGRect(x: 0, y: 0, width: size, height: size))
     return context.makeImage()!
 }
+
+@Suite struct ItemCardLayoutTests {
+    @Test func placesARibbonsFaceOverTheTitle() {
+        let title = CGRect(x: 13, y: 200, width: 140, height: 20)
+        let face = CGRect(x: 0.25, y: 0, width: 0.5, height: 0.5)
+        let band = ItemCardPainter.bandRect(placingFace: face, over: title)
+        #expect(band == CGRect(x: -57, y: 180, width: 280, height: 40))
+    }
+}
