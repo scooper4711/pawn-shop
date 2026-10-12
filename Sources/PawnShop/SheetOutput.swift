@@ -39,8 +39,7 @@ enum SheetOutput {
 
     /// Writes or prints the sheet as laid out, at 100% scale.
     static func perform(_ kind: OutputKind, sheet: PawnSheet, title: String, library: LibraryModel) {
-        guard let pawnLibrary = library.library, let renderer = library.renderer else { return }
-        let data = SheetExporter(sheet: sheet, library: pawnLibrary, renderer: renderer).pdfData()
+        guard let data = library.exporter(for: sheet)?.pdfData() else { return }
         switch kind {
         case .export: export(data, suggestedName: title)
         case .print: print(data, title: title, paper: sheet.settings.paper)

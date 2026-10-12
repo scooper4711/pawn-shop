@@ -17,6 +17,8 @@ final class LibraryModel {
 
     private(set) var pawns: [Pawn] = []
     private(set) var sources: [PawnSource] = []
+    /// The items' art from imported item decks, which their cards show.
+    private(set) var itemArt: [ItemArtwork] = []
     private(set) var importProgress: ImportProgress?
     /// The outcome of the last import batch, shown until dismissed.
     var importSummary: String?
@@ -25,6 +27,8 @@ final class LibraryModel {
     @ObservationIgnored private(set) var library: PawnLibrary?
     @ObservationIgnored private(set) var renderer: PawnRenderer?
     @ObservationIgnored private(set) var backgroundRenderer: BackgroundRenderer?
+    /// Every Pathfinder and Starfinder item, bundled with the app; empty in a build without `Generated`.
+    @ObservationIgnored let catalog = ItemCatalog.bundled()
 
     private init() {
         do {
@@ -55,6 +59,21 @@ final class LibraryModel {
 
     func pawnsNeedingTags(by model: String, visible: Set<UUID>) -> [Pawn] {
         library?.pawnsNeedingTags(by: model, visible: visible) ?? []
+    }
+
+    /// Lays out, draws and exports a sheet; nil when the library couldn't be opened.
+    func exporter(for sheet: PawnSheet) -> SheetExporter? {
+        guard let library, let renderer else { return nil }
+        var exporter = SheetExporter(sheet: sheet, library: library, renderer: renderer)
+        exporter.catalog = catalog
+        return exporter
+    }
+
+    func searchItems(_ query: ItemQuery) -> [CatalogItem] { catalog.search(query) }
+
+    /// An item's card, with the art an imported item deck prints for it.
+    func card(for item: CatalogItem) -> ItemCardContent {
+        ItemCardContent(item: item, artwork: ItemArtMatcher(artwork: itemArt).artwork(for: item))
     }
 
     func sourceTitle(of pawn: Pawn) -> String { library?.sourceTitle(of: pawn) ?? "" }
@@ -216,6 +235,7 @@ final class LibraryModel {
 
     private func refresh() {
         pawns = library?.pawns ?? []
+        itemArt = library?.itemArt ?? []
         sources = library?.sources.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending } ?? []
     }
 }

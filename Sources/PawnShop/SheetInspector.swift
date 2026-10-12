@@ -11,12 +11,10 @@ struct SheetInspector: View {
     var body: some View {
         VStack(spacing: 0) {
             List(selection: $selectedEntry) {
-                Section("Pawns") {
+                Section("Pawns and Items") {
                     ForEach($sheet.entries) { $entry in
-                        SheetEntryRow(entry: $entry, pawn: library.pawn(id: entry.pawnID)) {
-                            sheet.remove(entry.id)
-                        }
-                        .tag(entry.id)
+                        SheetEntryRow(entry: $entry) { sheet.remove(entry.id) }
+                            .tag(entry.id)
                     }
                 }
             }
@@ -43,18 +41,36 @@ struct SheetInspector: View {
     }
 
     private var summary: String {
-        let copies = sheet.copyCount
-        return "\(copies) pawn\(copies == 1 ? "" : "s") on \(pageCount) page\(pageCount == 1 ? "" : "s")"
+        let cards = sheet.entries.filter { $0.itemID != nil }.reduce(0) { $0 + $1.count }
+        let pawns = sheet.copyCount - cards
+        var parts = ["\(pawns) pawn\(pawns == 1 ? "" : "s")"]
+        if cards > 0 { parts.append("\(cards) item card\(cards == 1 ? "" : "s")") }
+        return "\(parts.joined(separator: " and ")) on \(pageCount) page\(pageCount == 1 ? "" : "s")"
     }
 }
 
+/// A pawn or item card on the sheet, with its copies.
 struct SheetEntryRow: View {
     @Binding var entry: SheetEntry
-    let pawn: Pawn?
     let remove: () -> Void
+    @Environment(LibraryModel.self) private var library
 
     var body: some View {
         HStack {
+            label
+            Spacer()
+            Stepper("\(entry.count)", value: $entry.count, in: 1...99)
+                .fixedSize()
+            Button(action: remove) { Image(systemName: "minus.circle") }
+                .buttonStyle(.borderless)
+                .help("Remove from the sheet")
+        }
+    }
+
+    @ViewBuilder private var label: some View {
+        switch entry.content {
+        case .pawn(let pawnID):
+            let pawn = library.pawn(id: pawnID)
             if let pawn {
                 PawnThumbnail(pawn: pawn).frame(width: 28, height: 40)
             }
@@ -62,12 +78,15 @@ struct SheetEntryRow: View {
                 Text(pawn?.name ?? "Missing pawn").lineLimit(1)
                 Text(pawn?.size.displayName ?? "").font(.caption).foregroundStyle(.secondary)
             }
-            Spacer()
-            Stepper("\(entry.count)", value: $entry.count, in: 1...99)
-                .fixedSize()
-            Button(action: remove) { Image(systemName: "minus.circle") }
-                .buttonStyle(.borderless)
-                .help("Remove from the sheet")
+        case .item(let itemID):
+            let item = library.catalog.item(id: itemID)
+            if let item {
+                ItemCardThumbnail(card: library.card(for: item)).frame(width: 28, height: 40)
+            }
+            VStack(alignment: .leading) {
+                Text(item?.name ?? "Missing item").lineLimit(1)
+                Text(item.map { "Item card · level \($0.level)" } ?? "").font(.caption).foregroundStyle(.secondary)
+            }
         }
     }
 }

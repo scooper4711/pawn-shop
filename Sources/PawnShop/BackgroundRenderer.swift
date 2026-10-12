@@ -4,8 +4,8 @@ import PawnShopCore
 /// What a sheet page shows, ready to draw on another thread.
 struct PageDrawing: Sendable {
     let strips: [PlacedStrip]
-    /// The pawn for each strip; nil when it is missing from the library.
-    let pawns: [Pawn?]
+    /// What each strip shows (`SheetExporter.contents(of:)`).
+    let contents: [PlacedContent]
     let settings: SheetSettings
 }
 
@@ -40,6 +40,17 @@ final class BackgroundRenderer: @unchecked Sendable {
         }
     }
 
+    /// An item's card, rendering it first if needed.
+    func cardImage(of card: ItemCardContent, height: Int = thumbnailHeight) async -> CGImage? {
+        let key = "item-\(card.item.id)-\(card.artwork?.id.uuidString ?? "plain")-\(height)"
+        if let image = thumbnails.object(forKey: key as NSString) { return image }
+        return await onQueue { renderer in
+            let image = renderer.cardImage(card, height: height)
+            if let image { self.thumbnails.setObject(image, forKey: key as NSString) }
+            return image
+        }
+    }
+
     /// The front's art without its printed words, not kept, for work that looks at every pawn once.
     func artImage(of pawn: Pawn, height: Int) async -> CGImage? {
         await onQueue { $0.artImage(of: pawn, height: height) }
@@ -58,8 +69,8 @@ final class BackgroundRenderer: @unchecked Sendable {
             context.setFillColor(gray: 1, alpha: 1)
             context.fill(CGRect(x: 0, y: 0, width: width, height: height))
             context.scaleBy(x: CGFloat(width) / paper.width, y: CGFloat(height) / paper.height)
-            for (strip, pawn) in zip(page.strips, page.pawns) {
-                renderer.drawStrip(pawn, in: strip, settings: page.settings, context: context)
+            for (strip, content) in zip(page.strips, page.contents) {
+                renderer.draw(content, in: strip, settings: page.settings, context: context)
             }
             return context.makeImage()
         }
