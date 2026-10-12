@@ -64,6 +64,7 @@ import PawnShopCore
         #expect(ItemStatRows.bulk(.number(2)) == "2" && ItemStatRows.bulk(.null).isEmpty)
         #expect(["held-in-one-plus-hands", "held-in-one-or-two-hands", "worn"].map(ItemStatRows.hands)
                 == ["1+", "1 or 2", ""])
+        #expect(ItemStatRows.reload("-").isEmpty && ItemStatRows.reload("1") == "1")
     }
 
     @Test func labelsSlugsFromTheConfigOrElseFromTheirWords() throws {

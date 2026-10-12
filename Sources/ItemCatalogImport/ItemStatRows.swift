@@ -46,7 +46,7 @@ struct ItemStatRows {
             ("Damage", dice > 0 && !die.isEmpty ? "\(dice)\(die) \(type)" : ""),
             ("Hands", Self.hands(system[path: "usage.value"].string)),
             ("Range", range > 0 ? "\(range) ft." : ""),
-            ("Reload", system[path: "reload.value"].string),
+            ("Reload", Self.reload(system[path: "reload.value"].string)),
             ("Group", system["group"].string.isEmpty ? "" : labels.weaponGroup(system["group"].string))
         ]
     }
@@ -79,6 +79,11 @@ struct ItemStatRows {
         if bulk == 0 { return "—" }
         if bulk < 1 { return "L" }
         return value.string
+    }
+
+    /// The reload, or nothing for a weapon that needs none: pf2e writes "-" for thrown weapons and bombs.
+    static func reload(_ value: String) -> String {
+        value == "-" ? "" : value
     }
 
     /// How many hands a weapon is held in: "1", "2" or "1+".
