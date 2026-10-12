@@ -28,6 +28,13 @@ public final class PawnRenderer {
     private var textDocuments: [String: PDFDocument] = [:]
     /// The creatures of Battle Card pawns.
     private(set) lazy var figures = FigureReader(folders: folders)
+    /// The files `make items` builds, which item cards are drawn with (`GeneratedResources`); nil draws them
+    /// plainly.
+    public var generatedFolder = GeneratedResources.folder {
+        didSet { cardStyles.removeAll() }
+    }
+    /// Each game's card style, read from `generatedFolder` once.
+    var cardStyles: [Game: ItemCardStyle] = [:]
 
     public init(folders: LibraryFolders) {
         self.folders = folders
@@ -242,12 +249,12 @@ public final class PawnRenderer {
                        fontSize: rect.height * nameBandFraction * 0.6)
     }
 
-    func drawPlaceholder(in rect: CGRect, context: CGContext) {
+    func drawPlaceholder(in rect: CGRect, label: String = "Missing pawn", context: CGContext) {
         context.setFillColor(gray: 0.9, alpha: 1)
         context.fill(rect)
-        let size = NameLayout.fit("Missing pawn", width: rect.width * Self.nameWidthFraction,
+        let size = NameLayout.fit(label, width: rect.width * Self.nameWidthFraction,
                                   fontSize: min(10, rect.width / 8)).fontSize
-        drawLine("Missing pawn", size: size, at: CGPoint(x: rect.midX, y: rect.midY - size * 0.35), context: context)
+        drawLine(label, size: size, at: CGPoint(x: rect.midX, y: rect.midY - size * 0.35), context: context)
     }
 
     /// One line of text centered on `anchor.x`, with its baseline at `anchor.y`.
@@ -256,20 +263,6 @@ public final class PawnRenderer {
         context.textMatrix = .identity
         context.textPosition = CGPoint(x: anchor.x - width / 2, y: anchor.y)
         CTLineDraw(NameLayout.line(text, size: size), context)
-    }
-
-    // MARK: Cut marks
-
-    private func drawCutMarks(stripSize: CGSize, settings: SheetSettings, context: CGContext) {
-        context.setStrokeColor(gray: Self.cutLineGray, alpha: 1)
-        context.setLineWidth(Self.cutLineWidth)
-        context.stroke(CGRect(origin: .zero, size: stripSize))
-        guard settings.showsFoldLine else { return }
-        context.setLineDash(phase: 0, lengths: Self.foldDash)
-        context.move(to: CGPoint(x: 0, y: stripSize.height / 2))
-        context.addLine(to: CGPoint(x: stripSize.width, y: stripSize.height / 2))
-        context.strokePath()
-        context.setLineDash(phase: 0, lengths: [])
     }
 
     // MARK: Sources

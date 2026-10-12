@@ -1,6 +1,7 @@
 #!/bin/sh
 # Builds Generated/, which the app bundles and the repository leaves out: every Pathfinder and Starfinder item
-# from the pf2e system repository, and the item cards' art from the user's Rexard packs. Neither may be
+# from the pf2e system repository with its action icon font, and the item cards' art from the user's Rexard
+# packs. Neither may be
 # published in the repository: the item text is used under the ORC and OGL licenses (copied alongside it), and
 # the Rexard art only inside the app.
 #
@@ -20,6 +21,10 @@ echo "Copying the cards' art from $REXARD_PACKS..."
 swift build -c release --product CardArtImport
 BIN_PATH="$(swift build -c release --show-bin-path)"
 "$BIN_PATH/CardArtImport" "$REXARD_PACKS" Generated/CardArt
+
+echo "Copying the action icon font..."
+mkdir -p Generated/Fonts
+cp "$PF2E_REPO/static/fonts/pathfinder-2e-actions.woff2" Generated/Fonts/
 
 echo "Importing the items from $PF2E_REPO..."
 swift build -c release --product ItemImport
