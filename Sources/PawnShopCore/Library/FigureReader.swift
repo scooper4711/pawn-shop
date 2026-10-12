@@ -36,9 +36,9 @@ final class FigureReader {
     /// The figure of a pawn just extracted from the imported PDF `sourceID`; nil for tokens.
     func figure(of found: ExtractedPawn, source sourceID: String) -> Figure? {
         switch found.shape {
-        case .card(let index): figure(source: sourceID, face: found.front, imageIndex: index)
+        case .card(let index), .item(let index): figure(source: sourceID, face: found.front, imageIndex: index)
         case .pawn: figure(source: sourceID, face: found.front, imageIndex: nil)
-        case .token: nil
+        case .token, .drawnItem: nil
         }
     }
 

@@ -9,9 +9,10 @@ extension PawnLibrary {
         (source.readerVersion ?? 0) < PawnExtractor.version
     }
 
-    /// True when pawns in the library come from the source.
-    func hasPawns(from source: PawnSource) -> Bool {
+    /// True when pawns or item art in the library come from the source.
+    func hasArt(from source: PawnSource) -> Bool {
         pawns.contains { $0.appearances.contains { $0.sourceID == source.id } }
+            || itemArt.contains { $0.sourceID == source.id }
     }
 
     /// Reads a source again with a newer reader, adding the pawns it finds anew and keeping those it had, with

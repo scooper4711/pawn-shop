@@ -1,4 +1,3 @@
-import CryptoKit
 import ArtExtraction
 import Foundation
 
@@ -34,6 +33,8 @@ public struct ImportReport: Equatable, Sendable {
     public var reread = false
     /// Pages printed as one flattened picture, whose pawns can't be read (zero-based).
     public var unreadablePages: [Int] = []
+    /// Items' pictures from an item deck, kept for their cards (`ItemArtwork`).
+    public var itemArtAdded = 0
 }
 
 public enum PawnLibraryError: Error, Equatable, CustomStringConvertible {
@@ -55,6 +56,8 @@ public final class PawnLibrary {
     public let folder: URL
     public internal(set) var sources: [PawnSource] = []
     public internal(set) var pawns: [Pawn] = []
+    /// The items' pictures from imported item decks.
+    public internal(set) var itemArt: [ItemArtwork] = []
     /// Reads pawns' pictures to compare them while importing.
     private(set) lazy var figures = FigureReader(folders: folders)
     /// Pawn indexes by name (see `nameKey`), while importing; nil until needed.
@@ -71,11 +74,13 @@ public final class PawnLibrary {
         try FileManager.default.createDirectory(at: sourcesFolder, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: customFolder, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: folders.tokens, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: folders.items, withIntermediateDirectories: true)
         let index = folder.appendingPathComponent(Self.indexFile)
         guard FileManager.default.fileExists(atPath: index.path) else { return }
         let stored = try JSONDecoder().decode(StoredLibrary.self, from: Data(contentsOf: index))
         sources = stored.sources
         pawns = stored.pawns
+        itemArt = stored.itemArt
     }
 
     /// Where the library keeps its files; safe to hand to other threads.
@@ -91,20 +96,22 @@ public final class PawnLibrary {
     public func pawn(id: UUID) -> Pawn? { pawns.first { $0.id == id } }
 
     /// True when the PDF at `url` was imported before: recognized by its path and size, or else its contents.
-    /// Either PDF of a two-file deck of Battle Cards stands for the deck. A PDF in which an older reader found
-    /// nothing is not counted, so that it is tried again (see `isWorthRereading`).
+    /// Either PDF of a two-file deck stands for the deck, and any picture of a deck sold as pictures for its
+    /// folder. A PDF in which an older reader found nothing is not counted, so that it is tried again (see
+    /// `isWorthRereading`).
     public func hasImported(_ file: URL) -> Bool {
-        let url = CardDeck.containing(file)?.artFile ?? file
-        let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int) ?? -1
+        let url = Self.libraryFile(for: file)
+        let size = Self.byteCount(of: url) ?? -1
         let imported = sources.filter { !isWorthRereading($0) }
         if imported.contains(where: { $0.originalPath == url.path && $0.byteCount == size }) { return true }
         return (try? Self.digest(of: url)).map { digest in imported.contains { $0.id == digest } } ?? false
     }
 
-    /// The PDFs to import for `urls`: each once, and a two-file deck of Battle Cards as its art PDF.
+    /// The files to import for `urls`: each once, a two-file deck as its art PDF, and a deck sold as pictures as
+    /// its folder.
     public static func importableFiles(_ urls: [URL]) -> [URL] {
         var files: [URL] = []
-        for url in urls.map({ CardDeck.containing($0)?.artFile ?? $0 }) where !files.contains(url) {
+        for url in urls.map(libraryFile(for:)) where !files.contains(url) {
             files.append(url)
         }
         return files
@@ -112,13 +119,11 @@ public final class PawnLibrary {
 
     /// Reads a PDF's pawns. It touches nothing in the library, so it can run off the main thread.
     public static func prepareImport(of url: URL) throws -> PreparedImport {
-        let deck = CardDeck.containing(url)
-        let file = deck?.artFile ?? url
+        let file = libraryFile(for: url)
         let digest = try digest(of: file)
-        let size = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? Int) ?? 0
         let extraction = try PawnExtractor.extract(from: file)
-        return PreparedImport(file: file, title: deck?.title ?? PawnSource.title(fromFileName: url.lastPathComponent),
-                              digest: digest, byteCount: size, extraction: extraction)
+        return PreparedImport(file: file, title: title(of: url), digest: digest, byteCount: byteCount(of: file) ?? 0,
+                              extraction: extraction)
     }
 
     /// Adds a prepared PDF's pawns, merging art the library already has, and saves.
@@ -132,12 +137,13 @@ public final class PawnLibrary {
                 report.wasImported = true
                 return report
             }
-            if hasPawns(from: known) { return try reread(known, as: prepared, into: report) }
+            if hasArt(from: known) { return try reread(known, as: prepared, into: report) }
         }
         sources.filter { ($0.id == prepared.digest || $0.originalPath == prepared.file.path) && isWorthRereading($0) }
             .forEach(forget)
-        // A PDF with no pawns is not kept: nothing would be drawn from it.
-        if !prepared.extraction.pawns.isEmpty { try copySource(prepared) }
+        // A PDF with no pawns is not kept: nothing would be drawn from it. Nor is a deck of pictures, whose
+        // items' pictures are kept on their own.
+        if !prepared.extraction.pawns.isEmpty && !Self.isFolder(prepared.file) { try copySource(prepared) }
         sources.append(PawnSource(id: prepared.digest, title: title, importedAt: Date(),
                                   originalPath: prepared.file.path, byteCount: prepared.byteCount,
                                   pawnsFound: prepared.extraction.pawns.count, readerVersion: PawnExtractor.version))
@@ -244,23 +250,11 @@ public final class PawnLibrary {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         do {
-            let data = try encoder.encode(StoredLibrary(sources: sources, pawns: pawns))
+            let data = try encoder.encode(StoredLibrary(sources: sources, pawns: pawns, itemArt: itemArt))
             try data.write(to: folder.appendingPathComponent(Self.indexFile), options: .atomic)
         } catch {
             throw PawnLibraryError.saveFailed(error.localizedDescription)
         }
-    }
-
-    static func digest(of url: URL) throws -> String {
-        guard let handle = try? FileHandle(forReadingFrom: url) else {
-            throw PawnLibraryError.unreadableFile(url.lastPathComponent)
-        }
-        defer { try? handle.close() }
-        var hash = SHA256()
-        while let chunk = try? handle.read(upToCount: 1 << 20), !chunk.isEmpty {
-            hash.update(data: chunk)
-        }
-        return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
 }
 
@@ -276,13 +270,8 @@ public struct LibraryFolders: Hashable, Sendable {
     public var custom: URL { root.appendingPathComponent("Custom", isDirectory: true) }
     /// Tokens' art drawn alone (see `TokenArt`).
     public var tokens: URL { root.appendingPathComponent("Tokens", isDirectory: true) }
+    /// Items' pictures cut out of decks sold as pictures (see `ItemPicture.drawn`).
+    public var items: URL { root.appendingPathComponent("Items", isDirectory: true) }
 
     public func sourceFile(id: String) -> URL { sources.appendingPathComponent("\(id).pdf") }
-}
-
-/// The library file's contents.
-struct StoredLibrary: Codable {
-    var version = 1
-    var sources: [PawnSource]
-    var pawns: [Pawn]
 }
