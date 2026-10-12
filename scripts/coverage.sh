@@ -6,22 +6,26 @@
 set -eu
 
 THRESHOLD="${COVERAGE_THRESHOLD:-80}"
+# "--files" lists each file's coverage too.
+MODE="${1:-}"
 cd "$(dirname "$0")/.."
 
 swift test --enable-code-coverage --quiet
 
 BIN_PATH="$(swift build --show-bin-path)"
 PROFILE="$BIN_PATH/codecov/default.profdata"
-# The test bundle is named after the package, as is the coverage file SwiftPM reports.
-PACKAGE="$(basename "$(swift test --show-codecov-path)" .json)"
-BINARY="$BIN_PATH/${PACKAGE}PackageTests.xctest/Contents/MacOS/${PACKAGE}PackageTests"
+# Every test bundle: newer toolchains build one per test target rather than one for the package.
+set --
+for bundle in "$BIN_PATH"/*.xctest; do
+    set -- "$@" -object "$bundle/Contents/MacOS/$(basename "$bundle" .xctest)"
+done
 
-xcrun llvm-cov export -summary-only -instr-profile "$PROFILE" "$BINARY" > "$BIN_PATH/coverage.json"
+xcrun llvm-cov export -summary-only -instr-profile "$PROFILE" "$@" > "$BIN_PATH/coverage.json"
 
 # SonarCloud's generic coverage format, with paths relative to the repository so that the
 # report can be read on another machine than the one that ran the tests.
 mkdir -p coverage
-xcrun llvm-cov export -format=lcov -instr-profile "$PROFILE" "$BINARY" | awk -v root="$PWD/" '
+xcrun llvm-cov export -format=lcov -instr-profile "$PROFILE" "$@" | awk -v root="$PWD/" '
     BEGIN { print "<coverage version=\"1\">" }
     /^SF:/ {
         file = substr($0, 4)
@@ -37,7 +41,7 @@ xcrun llvm-cov export -format=lcov -instr-profile "$PROFILE" "$BINARY" | awk -v 
     END { print "</coverage>" }
 ' > coverage/sonar-coverage.xml
 
-/usr/bin/python3 - "$BIN_PATH/coverage.json" "$THRESHOLD" "${1:-}" <<'PYTHON'
+/usr/bin/python3 - "$BIN_PATH/coverage.json" "$THRESHOLD" "$MODE" <<'PYTHON'
 import json
 import sys
 
