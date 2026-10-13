@@ -82,6 +82,13 @@ the right.*
 - Tells you when a new version is released, if you like: it checks when it opens (turn that off in Settings)
   and on Pawn Shop › Check for Updates….
 
+## Artwork
+
+The `Artwork/` folder is a private Git submodule ([toolkit-artwork](https://github.com/scooper4711/toolkit-artwork)).
+Clone with `git clone --recursive`, or run `git submodule update --init` after cloning. Its contents are
+licensed and not redistributable. Without access to it, the build still works and falls back to built-in
+artwork.
+
 ## Requirements
 
 macOS 15 or later. You need the pawn PDFs themselves: buy them from [paizo.com](https://paizo.com) and
