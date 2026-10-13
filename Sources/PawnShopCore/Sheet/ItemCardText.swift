@@ -12,9 +12,14 @@ struct ItemCardText {
     /// Marks the paragraph standing for a rule, which `draw` strokes across the text.
     static let ruleKey = NSAttributedString.Key("PawnShopItemCardRule")
 
-    /// The action glyphs and the letters the action font draws them with.
-    static let actionGlyphs: [(String, String)] = [("◆◆◆", "3"), ("◆◆", "2"), ("◆", "1"), ("⤾", "R"), ("↺", "R"),
-                                                   ("◇", "F")]
+    /// The action glyphs and the characters Paizo's Pathfinder-Icons font draws them with: its private-use code
+    /// points, the same as Tabletop Kit's `ActionIcons`, which this module doesn't depend on.
+    static let actionGlyphs: [(String, String)] = [("◆◆◆", "\u{E900}"), ("◆◆", "\u{E901}"), ("◆", "\u{E902}"),
+                                                   ("⤾", "\u{E904}"), ("↺", "\u{E904}"), ("◇", "\u{E903}")]
+    /// The icons' size relative to the text: they fill more of their em than the pf2e action font they replace.
+    static let actionScale: CGFloat = 0.88
+    /// Lowers the icons, as a fraction of the text size, to sit on the line where the pf2e font's did.
+    static let actionBaselineShift: CGFloat = -0.068
 
     let markup: String
     let ink: CGColor
@@ -97,7 +102,9 @@ struct ItemCardText {
     private func actionAttributes(size: CGFloat) -> [NSAttributedString.Key: Any] {
         var attributes = attributes(size: size, emphasis: .plain)
         if let actionFont {
-            attributes[.init(kCTFontAttributeName as String)] = CTFontCreateWithFontDescriptor(actionFont, size, nil)
+            attributes[.init(kCTFontAttributeName as String)] =
+                CTFontCreateWithFontDescriptor(actionFont, size * Self.actionScale, nil)
+            attributes[.init(kCTBaselineOffsetAttributeName as String)] = size * Self.actionBaselineShift
         }
         return attributes
     }
@@ -175,9 +182,12 @@ enum ItemCardFonts {
         }
     }
 
-    /// The pf2e system's action icon font, from a `Fonts` folder in `generated`; nil when it isn't there.
+    /// The action icons' font file, which `make items` copies unaltered from the private `Artwork` submodule.
+    static let actionsFile = "Fonts/Pathfinder-Icons.ttf"
+
+    /// Paizo's Pathfinder-Icons font, from a `Fonts` folder in `generated`; nil when it isn't there.
     static func actions(in generated: URL?) -> CTFontDescriptor? {
-        guard let file = generated?.appendingPathComponent("Fonts/pathfinder-2e-actions.woff2") else { return nil }
+        guard let file = generated?.appendingPathComponent(actionsFile) else { return nil }
         return (CTFontManagerCreateFontDescriptorsFromURL(file as CFURL) as? [CTFontDescriptor])?.first
     }
 

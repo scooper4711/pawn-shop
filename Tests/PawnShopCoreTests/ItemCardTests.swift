@@ -68,10 +68,13 @@ import ArtExtractionTestSupport
         let font = CTFontDescriptorCreateWithNameAndSize("Courier" as CFString, 8)
         let iconic = ItemCardText(markup: markup, ink: CGColor(gray: 0, alpha: 1), actionFont: font)
             .attributed(size: 8)
-        #expect(iconic.string == "Activate 2 Interact\n\u{00A0}\nYou drink it R.")
+        #expect(iconic.string == "Activate \u{E901} Interact\n\u{00A0}\nYou drink it \u{E904}.")
         let glyph = iconic.attribute(.init(kCTFontAttributeName as String), at: 9, effectiveRange: nil)
         // The attribute is always a font.
         #expect(CTFontCopyFamilyName(glyph as! CTFont) as String == "Courier") // swiftlint:disable:this force_cast
+        #expect(CTFontGetSize(glyph as! CTFont) == 8 * ItemCardText.actionScale) // swiftlint:disable:this force_cast
+        let shift = iconic.attribute(.init(kCTBaselineOffsetAttributeName as String), at: 9, effectiveRange: nil)
+        #expect(shift as? CGFloat == 8 * ItemCardText.actionBaselineShift)
     }
 
     @Test func shrinksLongTextAndThenCutsItShort() {

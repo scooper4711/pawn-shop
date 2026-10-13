@@ -217,8 +217,8 @@ from `/Applications/OpenSCAD-2021.01.app`; set `OPENSCAD` to use another copy). 
 Building needs Xcode 16 or later (Swift 6 toolchain). The app is ad-hoc signed.
 
 Item cards need `Generated/`, which `make items` builds and `make app` bundles; it is not in the repository.
-It reads the [pf2e system](https://github.com/foundryvtt/pf2e) from `~/git/pf2e` (`PF2E_REPO`) for the items
-and the action icon font, and the Rexard UI packs from `~/git/rexard-packs` (`REXARD_PACKS`) for the cards'
+It reads the [pf2e system](https://github.com/foundryvtt/pf2e) from `~/git/pf2e` (`PF2E_REPO`) for the items,
+Paizo's Pathfinder-Icons font from the `Artwork` submodule (`ARTWORK`) for the action icons, and the Rexard UI packs from `~/git/rexard-packs` (`REXARD_PACKS`) for the cards'
 parchment, frames and panels, which may be used inside the app but not published. Without it the app builds
 and runs, and the Items list says how to get it. For the same reason, release disk images are built locally
 with `make release-dmg`; GitHub only tests the tag. `PAWN_SHOP_GENERATED` points a build run from the command
@@ -294,10 +294,14 @@ author's own [Tabletop Kit](https://github.com/scooper4711/tabletop-kit).
 The item text on the cards comes from the [pf2e system for Foundry VTT](https://github.com/foundryvtt/pf2e)
 and is used under the ORC License and the Open Game License 1.0a, whose notices ship with the app
 (`Contents/Resources/Generated/Items/Licenses`). The cards' parchment, frames and panels are Rexard game dev
-assets, licensed for use in the app.
+assets, licensed for use in the app. The action icons are Paizo's Pathfinder-Icons font, used under the
+[Paizo Compatibility License](https://paizo.com/licenses/compatibility); it ships inside the app unaltered and is
+not in this repository.
 
 ## Trademarks
 
-Pathfinder, Starfinder and Paizo are trademarks of Paizo Inc. Pawn Shop is an independent fan project. It is not
-published, endorsed, or specifically approved by Paizo. It contains no Paizo art; its item text is game
-content Paizo publishes under the ORC License and the Open Game License.
+Pathfinder and Starfinder are registered trademarks and copyrights of Paizo Inc.
+
+Paizo is a trademark of Paizo Inc. Pawn Shop is an independent fan project. It is not published, endorsed, or
+specifically approved by Paizo. Its only Paizo art is the Pathfinder-Icons font; its item text is game content
+Paizo publishes under the ORC License and the Open Game License.
