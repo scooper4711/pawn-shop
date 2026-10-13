@@ -102,9 +102,11 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   bestiary-only items. Descriptions lose their tables (stats and variants the card has no room for), have
   `@item` formulas worked out from the item's data, and go through `RulesTextConverter` and back to plain text
   (`StatBlockText.plainText`): `**bold**`, `*italic*`, `---` rules, and ◆ ◆◆ ◆◆◆ ⤾ ◇ for actions, so the app
-  doesn't need Tabletop Kit's Bestiary. Cards set those glyphs as Paizo's action icons in the pf2e system's
-  `pathfinder-2e-actions.woff2` (its 1, 2, 3, R and F), which `make items` copies to `Generated/Fonts` and Core
-  Text reads as it is; without it the glyphs stay as text. Trait, usage and weapon group names come from the
+  doesn't need Tabletop Kit's Bestiary. Cards set those glyphs as Paizo's action icons in the Pathfinder-Icons
+  font (Paizo Compatibility License), using its private-use code points U+E900 to U+E904, the same as Tabletop
+  Kit's `ActionIcons`, at 0.88 times the text size and 0.068 of it below the baseline, matching the pf2e action
+  font they replaced. `make items` copies `Pathfinder-Icons.ttf` unaltered from the private `Artwork` submodule
+  to `Generated/Fonts`, which Core Text reads as it is; without it the glyphs stay as text. Trait, usage and weapon group names come from the
   slug maps in `src/scripts/config` (`ConfigLabels`) and the language files. Starfinder prices are in credits
   (the system keeps them as silver pieces). It builds each `CatalogItem`'s stats as ordered label and value
   rows, so the order lives in one place. Output is sorted with sorted keys, so the same input gives the same
