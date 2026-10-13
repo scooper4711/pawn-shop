@@ -24,8 +24,11 @@ enum WindowSnapshots {
         let library = LibraryModel.shared
         var sheet = PawnSheet()
         library.pawns.prefix(3).forEach { sheet.add($0.id, copies: 2) }
+        library.catalog.items.prefix(2).forEach { sheet.add(.item($0.id), copies: 3) }
         let panels: [(String, AnyView)] = [
             ("library", AnyView(LibraryBrowser(sheet: .constant(sheet), preview: .constant(nil)))),
+            ("items", AnyView(ItemBrowser(sheet: .constant(sheet), preview: .constant(nil)))),
+            ("item-settings", AnyView(ItemCardSettingsView())),
             ("inspector", AnyView(SheetInspector(sheet: .constant(sheet), selectedEntry: .constant(nil),
                                                  pageCount: 1))),
             ("review", AnyView(ReviewNamesView().frame(width: 520, height: 560))),

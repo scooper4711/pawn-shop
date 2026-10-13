@@ -7,5 +7,8 @@ DerivedData/
 tmp/
 coverage/
 
+# Built by `make items` from the pf2e repository and the Rexard packs, which may not be published.
+Generated/
+
 # Copyrighted pawn PDFs used for local testing only — never commit.
 TestData/

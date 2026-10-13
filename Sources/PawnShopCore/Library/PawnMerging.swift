@@ -32,7 +32,9 @@ extension PawnLibrary {
     /// nameless art, as a Battle Card or pawn showing the same painting as one in the library, or as a new pawn.
     func merge(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) throws {
         let appearance = Appearance(sourceID: source.id, copies: found.copies)
-        if found.name.isEmpty {
+        if found.shape.isItem {
+            try mergeItem(found, from: source, into: &report)
+        } else if found.name.isEmpty {
             try mergeNameless(found, from: source, into: &report)
         } else if let index = pawns.firstIndex(where: {
             $0.name == found.name && $0.size == found.size && $0.printsSameArt(as: found)
@@ -106,6 +108,9 @@ extension PawnLibrary {
                                    backPicture: try pictures.back.map(writeTokenPicture)))
         case .card(let imageIndex):
             return .card(CardArt(sourceID: source.id, face: found.front, imageIndex: imageIndex))
+        case .item, .drawnItem:
+            // `merge` keeps item art apart (`mergeItem`), so it never becomes a pawn.
+            throw PawnLibraryError.saveFailed("adding item art \(found.name) as a pawn")
         }
     }
 

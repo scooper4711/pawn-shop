@@ -1,4 +1,4 @@
-.PHONY: build test lint coverage app run install dmg icon clean
+.PHONY: build test lint coverage items app run install dmg release-dmg icon clean
 
 build:
 	swift build
@@ -13,6 +13,10 @@ lint:
 coverage:
 	scripts/coverage.sh
 
+# Builds Generated/ (the item catalog and the item cards' art) from ~/git/pf2e and ~/git/rexard-packs.
+items:
+	scripts/import-items.sh
+
 app:
 	scripts/build-app.sh
 
@@ -26,9 +30,13 @@ install:
 dmg: app
 	scripts/make-dmg.sh
 
+# Builds the universal disk image for the version tag at HEAD and attaches it to its GitHub release.
+release-dmg:
+	scripts/release-dmg.sh
+
 # Redraws Resources/AppIcon.icns from scripts/make-icon.swift.
 icon:
 	scripts/make-icon.sh
 
 clean:
-	rm -rf .build build coverage
+	rm -rf .build build coverage Generated

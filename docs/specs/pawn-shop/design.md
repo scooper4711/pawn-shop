@@ -89,11 +89,57 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 - `SheetExporter` (sheet, library, renderer) builds the layout items (a missing pawn takes a medium strip),
   the layout, each page's drawing (shared by preview and print), and the PDF at 100% scale.
 
+## Items (`PawnShopCore/Items`, `ItemImport`)
+- `scripts/import-items.sh` (`make items`) fills the git-ignored `Generated/` from `PF2E_REPO` (default
+  `~/git/pf2e`) and `REXARD_PACKS` (default `~/git/rexard-packs`): Tabletop Kit's `CardArtImport` copies the
+  card pieces (`CardArtPieces.manifest`) to `Generated/CardArt`, the action icon font is copied to
+  `Generated/Fonts`, and the `ItemImport` executable writes
+  `Generated/Items/items.json`, an import report and the ORC and OGL licenses (`Items/Licenses`).
+  `build-app.sh` copies `Generated/` into the bundle's resources when it exists; `PAWN_SHOP_GENERATED` points
+  a build run from the command line at another copy (`GeneratedResources`).
+- `ItemImport` (a thin executable over the `ItemCatalogImport` library, which the coverage gate includes) reads
+  the `equipment` packs of both games (Tabletop Kit's `PackScanner` and `JSONValue`), leaving out virtual and
+  bestiary-only items. Descriptions lose their tables (stats and variants the card has no room for), have
+  `@item` formulas worked out from the item's data, and go through `RulesTextConverter` and back to plain text
+  (`StatBlockText.plainText`): `**bold**`, `*italic*`, `---` rules, and ◆ ◆◆ ◆◆◆ ⤾ ◇ for actions, so the app
+  doesn't need Tabletop Kit's Bestiary. Cards set those glyphs as Paizo's action icons in the pf2e system's
+  `pathfinder-2e-actions.woff2` (its 1, 2, 3, R and F), which `make items` copies to `Generated/Fonts` and Core
+  Text reads as it is; without it the glyphs stay as text. Trait, usage and weapon group names come from the
+  slug maps in `src/scripts/config` (`ConfigLabels`) and the language files. Starfinder prices are in credits
+  (the system keeps them as silver pieces). It builds each `CatalogItem`'s stats as ordered label and value
+  rows, so the order lives in one place. Output is sorted with sorted keys, so the same input gives the same
+  bytes.
+- `ItemCatalog` loads `items.json` from the bundle (empty when missing) and searches and filters it.
+- Item deck art: Tabletop Kit's `.item` and `.drawnItem` shapes are kept as `ItemArtwork` records
+  (`StoredLibrary.itemArt`), a figure on a kept PDF page or a PNG in `Items/`, not as pawns.
+  `ItemArtMatcher` finds an item's art by its name, then by its name without parentheses and grade words.
+  Decks printed before the remaster use old names: `ItemImport` reads the renames from the Equipment table of
+  pf2e's Remaster Changes journal (`RenameReader`: linked new items, rows naming several, "(various)" for every
+  grade, removed items left out) into `Items/renames.json`, which `ItemCatalog.renames` loads, and the matcher
+  files art under its new name as well as its own, its own winning. `ItemArtMatcher.deckMisprints` adds the
+  names decks print wrongly ("Olefactory Obfuscator", "Feather Token, Boat") the same way, and
+  `ItemArtMatcher.sharedArt` draws every "Scroll of Nth-rank Spell" with the first of the Potions & Talismans
+  deck's five "Scroll" cards (page 50): players get spell cards rather than scroll cards, so one picture does.
+- Sheets: `SheetEntry.content` is `.pawn(id)` or `.item(id)`; sheets saved with only a pawn id read as pawns.
+  An item entry lays out as a 63 × 88 mm card. `SheetExporter.contents(of:)` resolves each placed strip to a
+  `PlacedContent` (a pawn, or an `ItemCardContent` with its matched art) that export and the app's background
+  page rendering both draw with `PawnRenderer.draw`. `ItemCardPainter` draws in card points (scaled to any
+  size): the Rexard background, nine-sliced so the parchment's torn edge stays a thin border (content is inset
+  13 pt to clear it and the frame), the deck art at `PawnRenderer.itemArtOpacity` (40% by default; the app sets it from the
+  `itemArtOpacity` user default on both its renderers, and tiles and pages are drawn again when it changes), the title on the ribbon (placed so its flat face,
+  measured as `ItemCardStyle.titleFace`, holds the name and its folds hang over the card's edges) or the
+  Starfinder bar, rarity-colored trait chips, the description (`ItemCardText`: Palatino, 8 pt down to 5.5 pt,
+  then cut with "…"), the stats two to a row (a wide one alone), and the source line, centered clear of the
+  Starfinder corners. Without the pieces a card is white with a gray frame.
+
 ## App (`PawnShop`)
 - `DocumentGroup` for `.pawnsheet` (`PawnSheetDocument`, JSON). `LibraryModel` (`@Observable`, main actor) wraps
   the shared library: imports read each PDF off the main thread (`prepareImport`) and commit on the main
   thread, one at a time, with progress and a summary afterwards.
-- `BackgroundRenderer` renders thumbnails (kept in an `NSCache`, keyed by the pawn's id and a hash of its name,
+- Renderers and the figure reader keep only their last few PDFs, pages, figures and pictures (`BoundedCache`:
+  8 PDFs, 24 pages, 24 figures, 100 MB of pictures), since an open PDF holds on to what it decoded: keeping
+  every one took about 1 GB after browsing. Reading a PDF again costs some 20 ms a pawn.
+- `BackgroundRenderer` renders thumbnails (kept in an `NSCache` of at most 150 MB, keyed by the pawn's id and a hash of its name,
   size and art, so a pawn given sharper art is drawn again) and preview pages on one background queue with its
   own `PawnRenderer`.
 - Window: `LibraryBrowser` (search field, filter menu for size, game, product and custom; a lazy grid of
@@ -137,12 +183,15 @@ shapes so the pawn and the hat still read at 32 px.
 ## Releases
 - `make` wraps the scripts in `scripts/`: `build-app.sh` (release build, ad-hoc signed, `VERSION` written to
   the bundle, `UNIVERSAL=1` for Apple silicon and Intel, `--install` to move it to /Applications),
-  `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`, with `pawn-bases/` as a Pawn Bases folder, minus its build
+  `import-items.sh` (`make items`, see Items), `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`, with `pawn-bases/` as a Pawn Bases folder, minus its build
   scripts) and `coverage.sh` (fails below 80% line or region coverage
   of `PawnShopCore`, and writes `coverage/sonar-coverage.xml`).
 - GitHub Actions: `ci.yml` lints strictly, runs the coverage gate (tests reading Paizo's PDFs are skipped, as
-  the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds a
-  universal disk image for each pushed `v*` tag and attaches it to the tag's GitHub release.
+  the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` tests each
+  pushed `v*` tag. The disk image needs `Generated/`, which can't be published, so `release-dmg.sh` (`make
+  release-dmg`) builds it on a Mac that has it, for the tag at HEAD, and attaches it to the tag's release.
+- `coverage.sh` measures every test bundle (newer toolchains build one per test target) and gates
+  `PawnShopCore` and `ItemCatalogImport` together.
 - Updates (`PawnShopCore/Updates`): `AppUpdater` asks GitHub's `releases/latest` for the repository, compares
   the tag with the bundle version (`AppVersion`, number by number), and offers the release's `.dmg`. A 404,
   which GitHub answers before the first release, counts as up to date. Builds without a version (0.0.0) skip

@@ -100,17 +100,9 @@ public enum ScrollkeeperScanner {
         URL.applicationSupportDirectory.appendingPathComponent("Scrollkeeper/Files", isDirectory: true)
     }
 
-    /// PDFs under `folder` whose file name mentions pawns or tokens, and decks of Battle Cards (see `CardDeck`),
-    /// each deck once, sorted by name.
-    public static func pawnPDFs(in folder: URL = defaultFolder) -> [URL] {
-        let files = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: nil)?
-            .compactMap { $0 as? URL } ?? []
-        let pdfs = files.filter { url in
-            url.pathExtension.lowercased() == "pdf" && (CardDeck.containing(url) != nil || ["pawn", "token"].contains {
-                url.lastPathComponent.localizedCaseInsensitiveContains($0)
-            })
-        }
-        return PawnLibrary.importableFiles(pdfs)
-            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+    /// PDFs under `folder` whose file name mentions pawns or tokens, decks of Battle Cards and item decks (see
+    /// `CardDeck`), each deck once, and the folders of item decks sold as pictures, sorted by name.
+    public static func artFiles(in folder: URL = defaultFolder) -> [URL] {
+        ProductScanner.artPDFs(in: folder)
     }
 }

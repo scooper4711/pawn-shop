@@ -9,8 +9,8 @@ public enum PawnSide: Sendable {
     case front, back
 }
 
-/// Draws pawns from the library: single faces for thumbnails, and folded strips for printing. It keeps the
-/// source PDFs, custom images and token pictures it has opened. It needs only the library's folders, so a
+/// Draws pawns from the library: single faces for thumbnails, and folded strips for printing. It keeps the last
+/// few source PDFs and pictures it has opened (`BoundedCache`). It needs only the library's folders, so a
 /// renderer can be made for a background thread; each renderer must stay on one thread.
 public final class PawnRenderer {
     static let cutLineWidth: CGFloat = 0.3
@@ -22,12 +22,25 @@ public final class PawnRenderer {
     static let nameWidthFraction: CGFloat = 0.92
 
     let folders: LibraryFolders
-    private var documents: [String: CGPDFDocument] = [:]
-    private var images: [String: CGImage] = [:]
-    /// The same PDFs opened with PDFKit, which knows where their text is.
-    private var textDocuments: [String: PDFDocument] = [:]
+    private let documents = BoundedCache<CGPDFDocument>(countLimit: FigureReader.keptDocuments)
+    /// Custom art, tokens' and items' pictures, up to `keptPictureBytes` of them.
+    private let images = BoundedCache<CGImage>(countLimit: 256, totalCostLimit: keptPictureBytes) { image in
+        image.bytesPerRow * image.height
+    }
+    /// The same PDFs opened with PDFKit, which knows where their text is; only tagging reads them.
+    private let textDocuments = BoundedCache<PDFDocument>(countLimit: 4)
+    static let keptPictureBytes = 100 << 20
     /// The creatures of Battle Card pawns.
     private(set) lazy var figures = FigureReader(folders: folders)
+    /// The files `make items` builds, which item cards are drawn with (`GeneratedResources`); nil draws them
+    /// plainly.
+    public var generatedFolder = GeneratedResources.folder {
+        didSet { cardStyles.removeAll() }
+    }
+    /// How opaque an item's art is behind its card's text, from 0 (none) to 1.
+    public var itemArtOpacity = ItemCard.defaultArtOpacity
+    /// Each game's card style, read from `generatedFolder` once.
+    var cardStyles: [Game: ItemCardStyle] = [:]
 
     public init(folders: LibraryFolders) {
         self.folders = folders
@@ -242,12 +255,12 @@ public final class PawnRenderer {
                        fontSize: rect.height * nameBandFraction * 0.6)
     }
 
-    func drawPlaceholder(in rect: CGRect, context: CGContext) {
+    func drawPlaceholder(in rect: CGRect, label: String = "Missing pawn", context: CGContext) {
         context.setFillColor(gray: 0.9, alpha: 1)
         context.fill(rect)
-        let size = NameLayout.fit("Missing pawn", width: rect.width * Self.nameWidthFraction,
+        let size = NameLayout.fit(label, width: rect.width * Self.nameWidthFraction,
                                   fontSize: min(10, rect.width / 8)).fontSize
-        drawLine("Missing pawn", size: size, at: CGPoint(x: rect.midX, y: rect.midY - size * 0.35), context: context)
+        drawLine(label, size: size, at: CGPoint(x: rect.midX, y: rect.midY - size * 0.35), context: context)
     }
 
     /// One line of text centered on `anchor.x`, with its baseline at `anchor.y`.
@@ -258,41 +271,19 @@ public final class PawnRenderer {
         CTLineDraw(NameLayout.line(text, size: size), context)
     }
 
-    // MARK: Cut marks
-
-    private func drawCutMarks(stripSize: CGSize, settings: SheetSettings, context: CGContext) {
-        context.setStrokeColor(gray: Self.cutLineGray, alpha: 1)
-        context.setLineWidth(Self.cutLineWidth)
-        context.stroke(CGRect(origin: .zero, size: stripSize))
-        guard settings.showsFoldLine else { return }
-        context.setLineDash(phase: 0, lengths: Self.foldDash)
-        context.move(to: CGPoint(x: 0, y: stripSize.height / 2))
-        context.addLine(to: CGPoint(x: stripSize.width, y: stripSize.height / 2))
-        context.strokePath()
-        context.setLineDash(phase: 0, lengths: [])
-    }
-
     // MARK: Sources
 
     private func document(_ sourceID: String) -> CGPDFDocument? {
-        if let document = documents[sourceID] { return document }
-        let document = CGPDFDocument(folders.sourceFile(id: sourceID) as CFURL)
-        documents[sourceID] = document
-        return document
+        documents.value(for: sourceID) { CGPDFDocument(folders.sourceFile(id: sourceID) as CFURL) }
     }
 
     private func textDocument(_ sourceID: String) -> PDFDocument? {
-        if let document = textDocuments[sourceID] { return document }
-        let document = PDFDocument(url: folders.sourceFile(id: sourceID))
-        textDocuments[sourceID] = document
-        return document
+        textDocuments.value(for: sourceID) { PDFDocument(url: folders.sourceFile(id: sourceID)) }
     }
 
     func image(_ url: URL) -> CGImage? {
-        if let image = images[url.path] { return image }
-        let image = CGImageSourceCreateWithURL(url as CFURL, nil)
-            .flatMap { CGImageSourceCreateImageAtIndex($0, 0, nil) }
-        images[url.path] = image
-        return image
+        images.value(for: url.path) {
+            CGImageSourceCreateWithURL(url as CFURL, nil).flatMap { CGImageSourceCreateImageAtIndex($0, 0, nil) }
+        }
     }
 }

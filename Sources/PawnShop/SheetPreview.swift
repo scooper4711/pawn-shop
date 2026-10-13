@@ -42,9 +42,8 @@ struct SheetPreview: View {
     }
 
     private func currentLayout() -> SheetLayout {
-        guard let pawnLibrary = library.library, let renderer = library.renderer else { return SheetLayout(pages: []) }
         _ = library.pawns
-        return SheetExporter(sheet: sheet, library: pawnLibrary, renderer: renderer).layout()
+        return library.exporter(for: sheet)?.layout() ?? SheetLayout(pages: [])
     }
 }
 
@@ -57,6 +56,8 @@ struct PageView: View {
     let selectedEntry: UUID?
     let select: (CGPoint) -> Void
     @Environment(LibraryModel.self) private var library
+    /// Item cards' art opacity, so pages are drawn again when it changes.
+    @AppStorage(ItemCardPreferences.artOpacityKey) private var artOpacity = Double(ItemCard.defaultArtOpacity)
     @State private var image: CGImage?
 
     private var paper: PaperSetup { sheet.settings.paper }
@@ -91,16 +92,15 @@ struct PageView: View {
 
     /// Changes whenever the page would look different.
     private var renderKey: String {
-        let pawnIDs = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.pawnID) })
-        let strips = page.map { "\(pawnIDs[$0.entryID].map(\.uuidString) ?? "-")@\($0.rect)\($0.sideways)" }
-        return strips.joined(separator: ";") + "|\(sheet.settings)|\(library.pawns.count)"
+        let contents = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.content) })
+        let strips = page.map { "\(contents[$0.entryID].map { "\($0)" } ?? "-")@\($0.rect)\($0.sideways)" }
+        return strips.joined(separator: ";") + "|\(sheet.settings)|\(library.pawns.count)|\(library.itemArt.count)"
+            + "|\(artOpacity)"
     }
 
     private func render() async {
-        guard let renderer = library.backgroundRenderer else { return }
-        let pawnIDs = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.pawnID) })
-        let pawns = page.map { pawnIDs[$0.entryID].flatMap(library.pawn(id:)) }
-        image = await renderer.image(of: PageDrawing(strips: page, pawns: pawns, settings: sheet.settings),
-                                  width: Int(Self.maximumWidth * 2))
+        guard let renderer = library.backgroundRenderer, let exporter = library.exporter(for: sheet) else { return }
+        let drawing = PageDrawing(strips: page, contents: exporter.contents(of: page), settings: sheet.settings)
+        image = await renderer.image(of: drawing, width: Int(Self.maximumWidth * 2))
     }
 }

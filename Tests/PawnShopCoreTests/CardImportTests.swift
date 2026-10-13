@@ -19,6 +19,6 @@ import ArtExtractionTestSupport
         try FileManager.default.createDirectory(at: product, withIntermediateDirectories: true)
         let deck = try writeSplitDeck(threeCards, base: "PZO2219 Bestiary 2 Battle Cards", in: product)
         try Data().write(to: product.appendingPathComponent("Readme.txt"))
-        #expect(ScrollkeeperScanner.pawnPDFs(in: folder).map(\.lastPathComponent) == [deck.backs.lastPathComponent])
+        #expect(ScrollkeeperScanner.artFiles(in: folder).map(\.lastPathComponent) == [deck.backs.lastPathComponent])
     }
 }

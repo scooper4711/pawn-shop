@@ -70,20 +70,66 @@ public struct SheetSettings: Codable, Hashable, Sendable {
     }
 }
 
-/// A pawn on a sheet, with how many copies to print.
+/// What a sheet entry prints: a pawn from the library, or an item's card from the catalog.
+public enum SheetContent: Hashable, Sendable {
+    case pawn(UUID)
+    case item(String)
+}
+
+/// A pawn or item card on a sheet, with how many copies to print.
 public struct SheetEntry: Codable, Hashable, Identifiable, Sendable {
     public let id: UUID
-    public var pawnID: UUID
+    public var content: SheetContent
     public var count: Int
 
-    public init(id: UUID = UUID(), pawnID: UUID, count: Int) {
+    public init(id: UUID = UUID(), content: SheetContent, count: Int) {
         self.id = id
-        self.pawnID = pawnID
+        self.content = content
         self.count = count
+    }
+
+    public init(id: UUID = UUID(), pawnID: UUID, count: Int) {
+        self.init(id: id, content: .pawn(pawnID), count: count)
+    }
+
+    /// The pawn the entry prints; nil for an item card.
+    public var pawnID: UUID? {
+        if case .pawn(let id) = content { return id }
+        return nil
+    }
+
+    /// The item whose card the entry prints; nil for a pawn.
+    public var itemID: String? {
+        if case .item(let id) = content { return id }
+        return nil
+    }
+
+    // A pawn is saved under `pawnID`, as before items, so older versions still open sheets of pawns alone.
+    private enum CodingKeys: String, CodingKey { case id, pawnID, itemID, count }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        count = try container.decode(Int.self, forKey: .count)
+        if let itemID = try container.decodeIfPresent(String.self, forKey: .itemID) {
+            content = .item(itemID)
+        } else {
+            content = .pawn(try container.decode(UUID.self, forKey: .pawnID))
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(count, forKey: .count)
+        switch content {
+        case .pawn(let pawnID): try container.encode(pawnID, forKey: .pawnID)
+        case .item(let itemID): try container.encode(itemID, forKey: .itemID)
+        }
     }
 }
 
-/// The pawns chosen for printing: the contents of a `.pawnsheet` document.
+/// The pawns and item cards chosen for printing: the contents of a `.pawnsheet` document.
 public struct PawnSheet: Codable, Hashable, Sendable {
     public var entries: [SheetEntry] = []
     public var settings = SheetSettings()
@@ -97,11 +143,16 @@ public struct PawnSheet: Codable, Hashable, Sendable {
 
     /// Adds copies of a pawn, to its existing entry when it has one.
     public mutating func add(_ pawnID: UUID, copies: Int = 1) {
+        add(.pawn(pawnID), copies: copies)
+    }
+
+    /// Adds copies of a pawn or item card, to its existing entry when it has one.
+    public mutating func add(_ content: SheetContent, copies: Int = 1) {
         guard copies > 0 else { return }
-        if let index = entries.firstIndex(where: { $0.pawnID == pawnID }) {
+        if let index = entries.firstIndex(where: { $0.content == content }) {
             entries[index].count += copies
         } else {
-            entries.append(SheetEntry(pawnID: pawnID, count: copies))
+            entries.append(SheetEntry(content: content, count: copies))
         }
     }
 

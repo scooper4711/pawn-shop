@@ -4,8 +4,8 @@ import PawnShopCore
 /// What a sheet page shows, ready to draw on another thread.
 struct PageDrawing: Sendable {
     let strips: [PlacedStrip]
-    /// The pawn for each strip; nil when it is missing from the library.
-    let pawns: [Pawn?]
+    /// What each strip shows (`SheetExporter.contents(of:)`).
+    let contents: [PlacedContent]
     let settings: SheetSettings
 }
 
@@ -13,6 +13,8 @@ struct PageDrawing: Sendable {
 final class BackgroundRenderer: @unchecked Sendable {
     /// Thumbnail height in pixels: enough for a sharp tile on a Retina display.
     static let thumbnailHeight = 240
+    /// How much the thumbnail cache keeps, in bytes.
+    static let keptThumbnailBytes = 150 << 20
 
     private let queue = DispatchQueue(label: "PawnShop.rendering", qos: .userInitiated)
     private let thumbnails = NSCache<NSString, CGImage>()
@@ -22,7 +24,8 @@ final class BackgroundRenderer: @unchecked Sendable {
 
     init(folders: LibraryFolders) {
         self.folders = folders
-        thumbnails.countLimit = 2000
+        // About 1,000 pawn tiles or 500 card tiles; the system empties it sooner when memory runs short.
+        thumbnails.totalCostLimit = Self.keptThumbnailBytes
     }
 
     /// The thumbnail if it is ready.
@@ -35,7 +38,19 @@ final class BackgroundRenderer: @unchecked Sendable {
         if let image = cachedThumbnail(of: pawn, side: side, height: height) { return image }
         return await onQueue { renderer in
             let image = renderer.thumbnail(of: pawn, side: side, height: height)
-            if let image { self.thumbnails.setObject(image, forKey: self.key(pawn, side, height)) }
+            if let image { self.keep(image, as: self.key(pawn, side, height)) }
+            return image
+        }
+    }
+
+    /// An item's card, rendering it first if needed.
+    func cardImage(of card: ItemCardContent, height: Int = thumbnailHeight) async -> CGImage? {
+        let opacity = ItemCardPreferences.artOpacity
+        let key = "item-\(card.item.id)-\(card.artwork?.id.uuidString ?? "plain")-\(opacity)-\(height)"
+        if let image = thumbnails.object(forKey: key as NSString) { return image }
+        return await onQueue { renderer in
+            let image = renderer.cardImage(card, height: height)
+            if let image { self.keep(image, as: key as NSString) }
             return image
         }
     }
@@ -58,11 +73,15 @@ final class BackgroundRenderer: @unchecked Sendable {
             context.setFillColor(gray: 1, alpha: 1)
             context.fill(CGRect(x: 0, y: 0, width: width, height: height))
             context.scaleBy(x: CGFloat(width) / paper.width, y: CGFloat(height) / paper.height)
-            for (strip, pawn) in zip(page.strips, page.pawns) {
-                renderer.drawStrip(pawn, in: strip, settings: page.settings, context: context)
+            for (strip, content) in zip(page.strips, page.contents) {
+                renderer.draw(content, in: strip, settings: page.settings, context: context)
             }
             return context.makeImage()
         }
+    }
+
+    private func keep(_ image: CGImage, as key: NSString) {
+        thumbnails.setObject(image, forKey: key, cost: image.bytesPerRow * image.height)
     }
 
     /// Drops a pawn's thumbnails, after it was removed.
@@ -76,6 +95,7 @@ final class BackgroundRenderer: @unchecked Sendable {
         await withCheckedContinuation { continuation in
             queue.async {
                 let renderer = self.renderer ?? PawnRenderer(folders: self.folders)
+                renderer.itemArtOpacity = ItemCardPreferences.artOpacity
                 self.renderer = renderer
                 continuation.resume(returning: work(renderer))
             }

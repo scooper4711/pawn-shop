@@ -25,6 +25,11 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/$EXECUTABLE"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+if [[ -d Generated ]]; then
+    ditto Generated "$APP/Contents/Resources/Generated"
+else
+    echo "Warning: Generated/ is missing; run \"make items\" to bundle the item cards." >&2
+fi
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" -c "Set :CFBundleVersion $VERSION" \
     "$APP/Contents/Info.plist"
 # Ad-hoc signature: enough to run locally; Gatekeeper still asks on other Macs.

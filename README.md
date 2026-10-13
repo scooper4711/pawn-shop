@@ -28,6 +28,11 @@ discs. So do Paizo's Battle Cards: if you have a deck of them, with or without t
 becomes a pawn. Where a pawn box prints the same painting, the pawn uses the card's art, which is usually
 several times sharper, and every creature from a card can be found by its traits, such as undead or construct.
 
+It also prints item cards: a reminder to hand players with the potion, elixir or scroll they were given, so
+they remember to use it. Every Pathfinder and Starfinder item is there, with its description and stats, and
+an item deck you bought (Potions & Talismans, Alchemy and the others) adds the item's picture, faintly,
+behind the text.
+
 It is free, and it works only with PDFs you bought: the app contains no Paizo art itself.
 
 ![Seven pawns as Pawn Shop prints them, each a strip with the front below and the back above, to fold at the heads](docs/images/sample-pawns.jpg)
@@ -70,6 +75,10 @@ the right.*
 - Optional room for a base: blank paper below each face's foot, so the base's slot holds that instead of
   hiding the bottom of the name. The art keeps its size and the strip gets taller.
 - Custom pawns from your own images, from small to gargantuan.
+- Item cards for every Pathfinder and Starfinder item, at the size of Paizo's item decks (63 × 88 mm): the
+  name and level, traits, description with the action icons, a table of stats (Level, Price, Bulk, Usage and
+  Uses, then a weapon's, armor's or shield's own) and the source book. The art of an item deck you imported
+  shows faintly behind the text. Cards and pawns share sheets.
 - Tells you when a new version is released, if you like: it checks when it opens (turn that off in Settings)
   and on Pawn Shop › Check for Updates….
 
@@ -114,6 +123,10 @@ After that it opens normally.
   included bases, below each foot, and you can change the amount.
 - **Print:** File › Page Setup… (⇧⌘P) picks the paper, then File › Print… (⌘P) or Export PDF… (⌘E). Print at
   100% scale (Actual Size), so the pawns fit their bases.
+- **Item cards:** switch the library from Pawns to Items at its top. Consumables are listed first; the filter
+  menu picks the game, kind and level. Double-click an item, or set the copies and press Add to Sheet; Space
+  shows the card large. Import item decks like any other PDF (from Scrollkeeper, or Import PDF…, where a deck
+  sold as pictures is chosen as its folder) to add their art to the cards.
 - **Your own art:** Library › Add Custom Pawn… (⌥⌘N): choose, drop or paste an image, name it, pick a size,
   and drag the preview to place the art. The back is the front mirrored. To use a creature's art from a
   scenario or book PDF, open the PDF in [Pluck](https://github.com/scooper4711/pluck) and drag or copy the
@@ -185,7 +198,9 @@ make install  # builds the app and moves it to /Applications
 make test     # runs the unit tests
 make lint     # runs SwiftLint
 make coverage # runs the tests and enforces the coverage threshold
+make items    # builds Generated/: the item list and the item cards' art
 make dmg      # packages the app into a disk image
+make release-dmg # builds the disk image for the tagged version and attaches it to its release
 make icon     # redraws Resources/AppIcon.icns
 ```
 
@@ -193,6 +208,14 @@ make icon     # redraws Resources/AppIcon.icns
 from `/Applications/OpenSCAD-2021.01.app`; set `OPENSCAD` to use another copy). It takes a minute or two.
 
 Building needs Xcode 16 or later (Swift 6 toolchain). The app is ad-hoc signed.
+
+Item cards need `Generated/`, which `make items` builds and `make app` bundles; it is not in the repository.
+It reads the [pf2e system](https://github.com/foundryvtt/pf2e) from `~/git/pf2e` (`PF2E_REPO`) for the items
+and the action icon font, and the Rexard UI packs from `~/git/rexard-packs` (`REXARD_PACKS`) for the cards'
+parchment, frames and panels, which may be used inside the app but not published. Without it the app builds
+and runs, and the Items list says how to get it. For the same reason, release disk images are built locally
+with `make release-dmg`; GitHub only tests the tag. `PAWN_SHOP_GENERATED` points a build run from the command
+line at a `Generated` folder.
 
 Tests that read real pawn PDFs use `TestData/`, which is not committed because the PDFs are copyrighted.
 Copy or link your own pawn PDFs there to run them; they are skipped when the folder is empty.
@@ -205,7 +228,8 @@ open -n --env PAWN_SHOP_LIBRARY="$PWD/tmp/library" --env PAWN_SHOP_SNAPSHOT="$PW
      -a "$PWD/build/Pawn Shop.app"
 ```
 
-The code is in two parts: `Sources/PawnShopCore` holds all the logic and is unit tested (`Extraction` reads
+The code is in three parts: `Sources/ItemCatalogImport` (run as `ItemImport`) builds the item list,
+`Sources/PawnShopCore` holds all the logic and is unit tested (`Extraction` reads
 pawn PDFs, `Library` keeps the library, `Sheet` lays out, draws and exports sheets), and `Sources/PawnShop` is
 the SwiftUI app.
 
@@ -216,6 +240,7 @@ the SwiftUI app.
 | Library, tags | `~/Library/Application Support/Pawn Shop/library.json` |
 | Copies of the imported PDFs | `~/Library/Application Support/Pawn Shop/Sources/` |
 | Tokens' art | `~/Library/Application Support/Pawn Shop/Tokens/` |
+| Item art from decks sold as pictures | `~/Library/Application Support/Pawn Shop/Items/` |
 | Custom pawns' images | `~/Library/Application Support/Pawn Shop/Custom/` |
 | Sheets | wherever you save them, as `.pawnsheet` files |
 
@@ -256,9 +281,16 @@ The pawns in the picture above are custom pawns made from public-domain illustra
 
 ## License
 
-Pawn Shop is released under the [MIT license](LICENSE). It uses no third-party libraries.
+Pawn Shop is released under the [MIT license](LICENSE). It uses no third-party libraries besides the
+author's own [Tabletop Kit](https://github.com/scooper4711/tabletop-kit).
+
+The item text on the cards comes from the [pf2e system for Foundry VTT](https://github.com/foundryvtt/pf2e)
+and is used under the ORC License and the Open Game License 1.0a, whose notices ship with the app
+(`Contents/Resources/Generated/Items/Licenses`). The cards' parchment, frames and panels are Rexard game dev
+assets, licensed for use in the app.
 
 ## Trademarks
 
 Pathfinder, Starfinder and Paizo are trademarks of Paizo Inc. Pawn Shop is an independent fan project. It is not
-published, endorsed, or specifically approved by Paizo, and it contains no Paizo content.
+published, endorsed, or specifically approved by Paizo. It contains no Paizo art; its item text is game
+content Paizo publishes under the ORC License and the Open Game License.

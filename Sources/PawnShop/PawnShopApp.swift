@@ -31,6 +31,9 @@ struct PawnShopApp: App {
                     .tabItem { Label("Updates", systemImage: "arrow.down.circle") }
                 TaggingSettingsView(tagging: .shared)
                     .tabItem { Label("Tagging", systemImage: "tag") }
+                ItemCardSettingsView()
+                    .environment(library)
+                    .tabItem { Label("Item Cards", systemImage: "rectangle.portrait.on.rectangle.portrait") }
             }
         }
     }

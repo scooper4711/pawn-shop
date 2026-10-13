@@ -12,11 +12,27 @@ struct SheetWindow: View {
     @State private var addingCustomPawn = false
     @State private var reviewingNames = false
     @State private var previewedPawn: UUID?
+    @State private var previewedItem: String?
+    /// Whether the library pane lists pawns or items.
+    @AppStorage("libraryShowsItems") private var showsItems = false
 
     var body: some View {
         NavigationSplitView {
-            LibraryBrowser(sheet: $document.sheet, preview: $previewedPawn) { reviewingNames = true }
-                .navigationSplitViewColumnWidth(min: 280, ideal: 360, max: 600)
+            VStack(spacing: 0) {
+                Picker("Library", selection: $showsItems) {
+                    Text("Pawns").tag(false)
+                    Text("Items").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .padding([.horizontal, .top], 8)
+                if showsItems {
+                    ItemBrowser(sheet: $document.sheet, preview: $previewedItem)
+                } else {
+                    LibraryBrowser(sheet: $document.sheet, preview: $previewedPawn) { reviewingNames = true }
+                }
+            }
+            .navigationSplitViewColumnWidth(min: 280, ideal: 360, max: 600)
         } detail: {
             SheetPreview(sheet: $document.sheet, selectedEntry: $selectedEntry)
                 .inspector(isPresented: $showsInspector) {
@@ -37,6 +53,8 @@ struct SheetWindow: View {
         .overlay {
             if let pawn = previewedPawn.flatMap(library.pawn(id:)) {
                 PawnPreview(pawn: pawn) { previewedPawn = nil }
+            } else if let item = previewedItem.flatMap(library.catalog.item(id:)) {
+                ItemPreview(card: library.card(for: item)) { previewedItem = nil }
             }
         }
         .focusedSceneValue(\.sheetActions, actions)
@@ -52,9 +70,9 @@ struct SheetWindow: View {
             AddCustomPawnView { document.sheet.add($0.id) }
         }
         .dropDestination(for: URL.self) { urls, _ in
-            let pdfs = urls.filter { $0.pathExtension.lowercased() == "pdf" }
-            library.importPDFs(pdfs)
-            return !pdfs.isEmpty
+            let files = urls.filter(PawnLibrary.isImportable)
+            library.importPDFs(files)
+            return !files.isEmpty
         }
         .alert("Import Finished", isPresented: summaryShown) {
             Button("OK") { library.importSummary = nil }
@@ -81,9 +99,8 @@ struct SheetWindow: View {
     }
 
     private var pageCount: Int {
-        guard let pawnLibrary = library.library, let renderer = library.renderer else { return 0 }
         _ = library.pawns
-        return SheetExporter(sheet: document.sheet, library: pawnLibrary, renderer: renderer).layout().pages.count
+        return library.exporter(for: document.sheet)?.layout().pages.count ?? 0
     }
 
     private var summaryShown: Binding<Bool> {
