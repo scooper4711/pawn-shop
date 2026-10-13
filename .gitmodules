@@ -1,0 +1,3 @@
+[submodule "Artwork"]
+	path = Artwork
+	url = git@github.com:scooper4711/toolkit-artwork.git
