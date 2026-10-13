@@ -7,7 +7,7 @@ public enum ItemCard {
     public static let size = CGSize(width: .millimeters(63), height: .millimeters(88))
     /// How opaque the item's art is behind the text unless the user chooses otherwise: visible, yet faint enough
     /// to read over.
-    public static let defaultArtOpacity: CGFloat = 0.3
+    public static let defaultArtOpacity: CGFloat = 0.4
 }
 
 /// Draws an item's card in card coordinates (`ItemCard.size`, origin at the bottom left): the background, the

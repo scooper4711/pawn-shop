@@ -151,7 +151,7 @@ Players forget the consumables they are given at the table; a printed card for e
   drawn on white with a gray frame.
 - R8.5 Item decks are imported like Battle Cards (R1.2, R1.14), including decks sold as pictures (a folder of
   JPGs). Their art adds no pawns; when a deck prints an item's art, the item's card shows it behind the text,
-  30% opaque unless set otherwise in Settings › Item Cards (from none to solid, with a card to see it on). An item finds deck art printed under its own name, or else under its name without its grade ("Healing
+  40% opaque unless set otherwise in Settings › Item Cards (from none to solid, with a card to see it on). An item finds deck art printed under its own name, or else under its name without its grade ("Healing
   Potion (Minor)" finds "Healing Potion"), or under the name it had before the remaster, from the pf2e
   system's list of renamed items ("Thunderstone" is "Blasting Stone").
 - R8.6 The item list, the Rexard art and the action icon font are built from local copies of the pf2e
