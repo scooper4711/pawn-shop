@@ -19,6 +19,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Fetch artwork
+        env:
+          ARTWORK_SSH_KEY: ${{ secrets.ARTWORK_SSH_KEY }}
+        run: |
+          if [ -z "$ARTWORK_SSH_KEY" ]; then
+            echo "ARTWORK_SSH_KEY is not set; skipping the private Artwork submodule."
+            exit 0
+          fi
+          printf '%s\n' "$ARTWORK_SSH_KEY" > "$RUNNER_TEMP/artwork_key"
+          chmod 600 "$RUNNER_TEMP/artwork_key"
+          GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/artwork_key -o IdentitiesOnly=yes" \
+            git submodule update --init --depth 1 Artwork
+
       - name: Show toolchain
         run: swift --version
 
