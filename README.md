@@ -36,10 +36,10 @@ its own.
 *Printed strips: fold each at the heads and stand it in a pawn base. These are custom pawns made from art
 Paizo has published on its blog (see [Sample art](#sample-art)); Paizo's pawns print the same way.*
 
-![The Pawn Shop window: the pawn library on the left, a sheet of printed strips in the middle and the sheet's pawns, copies and cut style on the right](docs/images/screenshot.jpg)
+![The Pawn Shop window: item cards in the library on the left, a sheet of seven pawn strips in the middle and the sheet's pawns, copies and cut lines on the right](docs/images/screenshot.jpg)
 
-*The library on the left, the sheet as it will print in the middle, and the sheet's pawns and cut style on
-the right.*
+*The library on the left (here its item cards; the Pawns tab holds the pawns), the sheet as it will print in
+the middle, and the sheet's pawns, copies and cut lines on the right.*
 
 ## Features
 
