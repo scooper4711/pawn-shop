@@ -176,10 +176,11 @@ size, the label and how far the slot curves in its Customizer. See the folder's
 [README](pawn-bases/README.md). The slot is 6 mm deep, which a sheet's Leave room for a base setting matches
 by default, so the whole name stays in view.
 
-## Society Toolkit
+## Tableside Toolkit
 
-Pawn Shop is part of the Society Toolkit, free apps for Pathfinder and Starfinder players and GMs, for the Mac and
-(Turnkeeper and Field Guide) the iPad. Like the toolkits in the game, each one grants a +1 item bonus to game prep.
+Pawn Shop is part of the Tableside Toolkit, free apps for running Pathfinder and Starfinder games in person, for
+the Mac and (Turnkeeper and Field Guide) the iPad. Like any good toolkit, each one grants a +1 item bonus to game
+prep.
 
 - [Scrollkeeper](https://github.com/scooper4711/scrollkeeper) keeps your Paizo library in order and downloads your
   purchases.
