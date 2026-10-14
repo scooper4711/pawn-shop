@@ -33,13 +33,13 @@ its own.
 
 ![Seven pawns as Pawn Shop prints them, each a strip with the front below and the back above, to fold at the heads](docs/images/sample-pawns.jpg)
 
-*Printed strips: fold each at the heads and stand it in a pawn base. These are custom pawns made from
-public-domain illustrations (see [Sample art](#sample-art)); Paizo's pawns print the same way.*
+*Printed strips: fold each at the heads and stand it in a pawn base. These are custom pawns made from art
+Paizo has published on its blog (see [Sample art](#sample-art)); Paizo's pawns print the same way.*
 
-![The Pawn Shop window: the pawn library on the left, a sheet of printed strips in the middle and the sheet's pawns, copies and cut style on the right](docs/images/screenshot.jpg)
+![The Pawn Shop window: item cards in the library on the left, a sheet of seven pawn strips in the middle and the sheet's pawns, copies and cut lines on the right](docs/images/screenshot.jpg)
 
-*The library on the left, the sheet as it will print in the middle, and the sheet's pawns and cut style on
-the right.*
+*The library on the left (here its item cards; the Pawns tab holds the pawns), the sheet as it will print in
+the middle, and the sheet's pawns, copies and cut lines on the right.*
 
 ## Features
 
@@ -267,20 +267,16 @@ transparent about it. You can make up your own mind.
 
 ## Sample art
 
-The pawns in the picture above are custom pawns made from public-domain illustrations on Wikimedia Commons:
+The pawns in the pictures above are custom pawns made from art Paizo has published on its blog, used under
+Paizo's [Community Use Policy](https://paizo.com/licenses/communityuse):
 
-- Merlin, King Arthur and Sir Gawaine: Howard Pyle, *The Story of King Arthur and His Knights* (1903)
-  ([1](https://commons.wikimedia.org/wiki/File:Arthur-Pyle_The_Enchanter_Merlin.JPG),
-  [2](https://commons.wikimedia.org/wiki/File:Arthur-Pyle_King_Arthur_of_Britain.JPG),
-  [3](https://commons.wikimedia.org/wiki/File:Arthur-Pyle_Sir_Gawaine_the_Son_of_Lot,_King_of_Orkney.JPG))
-- Baba Yaga: Ivan Bilibin, 1900
-  ([source](https://commons.wikimedia.org/wiki/File:Bilibin._Baba_Yaga.jpg))
-- Jabberwock: John Tenniel, *Through the Looking-Glass* (1871)
-  ([source](https://commons.wikimedia.org/wiki/File:Jabberwocky.jpg))
-- Cave Troll: John Bauer, *Bland tomtar och troll* (1912), Nationalmuseum, Stockholm
-  ([source](https://commons.wikimedia.org/wiki/File:John_Bauer_-_%22Ho,_What_a_Pipsqueak%5E_Said_the_Troll%22,_Bland_tomtar_och_troll,_1912_-_NMH_118-1982_-_Nationalmuseum.jpg))
-- Welsh Giant: Arthur Rackham, *The Allies' Fairy Book* (1916)
-  ([source](https://commons.wikimedia.org/wiki/File:At_the_dead_time_of_the_night_in_came_the_Welsh_Giant.jpg))
+- Ordwi: Firat Solhan ([Paizo blog](https://paizo.com/blog/fear-in-a-handful-of-rust))
+- Khadon the Mighty: Sandra Posada ([Paizo blog](https://paizo.com/blog/digging-up-some-highhelm-authors))
+- Dhalla Winddancer: Bruno Mello ([Paizo blog](https://paizo.com/blog/november-digital-adventure-previews))
+- Trapmaster Tok: Denis Zhbankov ([Paizo blog](https://paizo.com/blog/november-digital-adventure-previews))
+- Goblin Boss: Gunship Revolution ([Paizo blog](https://paizo.com/blog/meet-the-authors-of-npc-core))
+- Peryton: Firat Solhan ([Paizo blog](https://paizo.com/blog/iconic-encounters-returning-home))
+- Valashinaz: Firat Solhan ([Paizo blog](https://paizo.com/blog/february-digital-adventures-previews))
 
 ## License
 
