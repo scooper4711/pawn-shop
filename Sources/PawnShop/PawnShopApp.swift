@@ -1,3 +1,4 @@
+import AppNotices
 import PawnShopCore
 import SwiftUI
 
@@ -20,6 +21,7 @@ struct PawnShopApp: App {
                 .frame(minWidth: 1100, minHeight: 600)
         }
         .commands {
+            AboutCommands(info: .pawnShop)
             UpdateCommands(updater: .shared)
             SheetFileCommands()
             LibraryCommands(library: library)
