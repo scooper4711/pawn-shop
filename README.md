@@ -8,32 +8,28 @@
 [![Platform](https://img.shields.io/badge/platform-macOS%2015%2B-informational)](#requirements)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-An unofficial Mac app for printing the pawns from your Paizo pawn PDFs, for Pathfinder and Starfinder,
-without duplex printing.
+Do you have pawn PDFs you never print because the double-sided layout is so hard to line up? And when you
+do get it to work, needing six goblins means printing the goblins' page six times, along with the other 29
+pawns on it that you don't want.
 
-Paizo's pawn PDFs put each pawn's back on the next page, mirrored, which rarely lines up when printed on
-both sides, and a single sheet makes a floppy pawn. Needing six goblins means printing the goblins' whole page
-six times, along with every other pawn on it, and wasting a lot of paper. And sometimes there is no pawn for the
-creature you want at all, because it only appears as art in a Pathfinder or Starfinder scenario or a newer book.
+Pawn Shop is an unofficial Mac app for Pathfinder and Starfinder that fixes both. Give it the pawn PDFs you
+own, or import them all from [Scrollkeeper](https://github.com/scooper4711/scrollkeeper). It reads Paizo's
+pawn boxes, Battle Cards and Starfinder Second Edition's round tokens, and builds a library of pawns.
+Search for exactly the ones you want, add as many of each as you need, and they all print together on as few
+sheets as possible.
 
-Pawn Shop collects the pawns from those PDFs into a library and prints only the pawns you choose, as many of
-each as you need, each as one strip on one side of the paper: the front below, the back above it turned upside
-down, head to head. Cut the strip out and fold it at the heads: the pawn is two sheets thick, and a pawn base
-holds both ([printable bases](#pawn-bases) come with the app). For a creature without a pawn, make your own
-from any picture, such as the art from a scenario PDF, which [Pluck](https://github.com/scooper4711/pluck)
-gets out for you.
+The best part: it prints single-sided. Each pawn is one strip, its front below and its back above it upside
+down, head to head. Cut it out and fold it at the heads. It is easier to print, and the folded pawn is two
+sheets thick, so it stands up better. If you have a 3D printer, the [pawn bases](#pawn-bases) that come with
+the app fit folded pawns, with a slightly curved slot that keeps them standing straight.
 
-Paizo's newer round tokens become pawns too, so a token box gives you folding pawns rather than flat
-discs. So do Paizo's Battle Cards: if you have a deck of them, with or without the pawns, each card's creature
-becomes a pawn. Where a pawn box prints the same painting, the pawn uses the card's art, which is usually
-several times sharper, and every creature from a card can be found by its traits, such as undead or construct.
+A creature without a pawn, because it only appears as art in a scenario or a newer book, can have one too:
+make it from any picture, such as the art [Pluck](https://github.com/scooper4711/pluck) gets out of a
+scenario PDF. Pawn Shop also prints item cards to hand players with the potion, elixir or scroll they were
+given, so they remember to use it.
 
-It also prints item cards: a reminder to hand players with the potion, elixir or scroll they were given, so
-they remember to use it. Every Pathfinder and Starfinder item is there, with its description and stats, and
-an item deck you bought (Potions & Talismans, Alchemy and the others) adds the item's picture, faintly,
-behind the text.
-
-It is free, and it works only with PDFs you bought: the app contains no Paizo art itself.
+It is free and open source, and it works only with PDFs you bought: it contains no pawns or creature art of
+its own.
 
 ![Seven pawns as Pawn Shop prints them, each a strip with the front below and the back above, to fold at the heads](docs/images/sample-pawns.jpg)
 
