@@ -124,6 +124,9 @@ is cut out and folded at the heads, giving a two-ply pawn.
   there is one. A switch in Settings turns this off.
 - R6.4 Pawn Shop › Check for Updates… checks at any time and always reports the result. A newer version is
   downloaded to the Downloads folder only when the user agrees.
+- R6.5 Pawn Shop › About Pawn Shop shows the notice Paizo's Community Use Policy requires, the Paizo
+  Compatibility License's trademark line, credits for the item text, the Rexard art and the action icon font, and
+  a link for reaching the author. The README carries the same notices.
 
 ## R7 Pawn bases
 - R7.1 The disk image holds a Pawn Bases folder with ready-to-print STL bases for medium, large, huge and

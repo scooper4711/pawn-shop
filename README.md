@@ -298,10 +298,14 @@ assets, licensed for use in the app. The action icons are Paizo's Pathfinder-Ico
 [Paizo Compatibility License](https://paizo.com/licenses/compatibility); it ships inside the app unaltered and is
 not in this repository.
 
-## Trademarks
+## Paizo notices
+
+Pawn Shop uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy
+([paizo.com/licenses/communityuse](https://paizo.com/licenses/communityuse)). We are expressly prohibited from
+charging you to use or access this content. Pawn Shop is not published, endorsed, or specifically approved by
+Paizo. For more information about Paizo Inc. and Paizo products, visit [paizo.com](https://paizo.com).
 
 Pathfinder and Starfinder are registered trademarks and copyrights of Paizo Inc.
 
-Paizo is a trademark of Paizo Inc. Pawn Shop is an independent fan project. It is not published, endorsed, or
-specifically approved by Paizo. Its only Paizo art is the Pathfinder-Icons font; its item text is game content
-Paizo publishes under the ORC License and the Open Game License.
+The same notices are in the app, under Pawn Shop › About Pawn Shop. To report a problem or ask a question, open
+an [issue](https://github.com/scooper4711/pawn-shop/issues).

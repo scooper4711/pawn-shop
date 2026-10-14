@@ -175,6 +175,8 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   `PAWN_SHOP_SNAPSHOT=<prefix>` draws each window, and the library and inspector panels on their own, to
   PNG files a few seconds after launch (drawing its own views needs no screen-recording access; glass panels
   come out blank in window drawings, hence the separate panels).
+- The About panel is Tabletop Kit's (`AppNotices`): `AboutCommands` replaces the app menu's About item and
+  `AboutInfo.pawnShop` (`About.swift`) fills in the app's name, credits and contact link.
 
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
