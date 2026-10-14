@@ -252,20 +252,6 @@ the SwiftUI app.
 
 The requirements and design are in [`docs/specs/pawn-shop`](docs/specs/pawn-shop).
 
-## Regarding the use of AI
-
-I used AI as a coding assistant while building this. I'm a software engineer with decades of professional
-experience. I could have written every line myself, but AI let me move faster. I drove the architecture and
-design decisions, followed industry best practices for code quality, and made sure everything is
-human-readable and maintainable. The project has SonarCloud quality gates and a full test suite that must pass
-before any release.
-
-Think of it like driving a car instead of walking. I plan the route, decide the stops along the way, and AI
-gets me to the destination faster than I could on foot. But I'm still the one behind the wheel.
-
-If you don't want to use tools written with AI assistance, then I respect that decision. That's why I'm
-transparent about it. You can make up your own mind.
-
 ## Sample art
 
 The pawns in the pictures above are custom pawns made from art Paizo has published on its blog, used under
