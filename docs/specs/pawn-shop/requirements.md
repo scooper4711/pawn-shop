@@ -156,9 +156,10 @@ Players forget the consumables they are given at the table; a printed card for e
   much of the card empty, and otherwise between lines; a Heightened entry is never split. Each card of a set
   says "Card 1 of 3" after the source. Copies are of whole sets: two copies of a three-card spell are six cards,
   each set together.
-- R8.4 The card's background is UI art from the Rexard packs (parchment in a frame for Pathfinder, a sci-fi
-  panel for Starfinder), so cards use no Paizo art when the user owns no item deck. Without that art, cards are
-  drawn on white with a gray frame.
+- R8.4 The card's look comes from UI art in the Rexard packs, so cards use no Paizo art when the user owns no item
+  deck: parchment in a wooden frame under a ribbon for Pathfinder; for Starfinder a light card, pale cyan with a
+  thin cyan frame, the packs' dark corner brackets and a cyan name bar, with dark text, since a dark card prints
+  poorly on an inkjet. Without that art, cards are drawn on white with a gray frame.
 - R8.5 Item decks are imported like Battle Cards (R1.2, R1.14), including decks sold as pictures (a folder of
   JPGs). Their art adds no pawns; when a deck prints an item's art, the item's card shows it behind the text,
   40% opaque unless set otherwise in Settings › Item Cards (from none to solid, with a card to see it on). An item finds deck art printed under its own name, or else under its name without its grade ("Healing

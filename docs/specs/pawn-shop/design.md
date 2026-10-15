@@ -133,8 +133,9 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   An item entry lays out as a 63 × 88 mm card. `SheetExporter.contents(of:)` resolves each placed strip to a
   `PlacedContent` (a pawn, or an `ItemCardContent` with its matched art) that export and the app's background
   page rendering both draw with `PawnRenderer.draw`. `ItemCardPainter` draws in card points (scaled to any
-  size): the Rexard background, nine-sliced so the parchment's torn edge stays a thin border (content is inset
-  13 pt to clear it and the frame), the deck art at `PawnRenderer.itemArtOpacity` (40% by default; the app sets it from the
+  size): the card's `fill`, then the Rexard background, nine-sliced so the parchment's torn edge stays a thin
+  border (content is inset 13 pt to clear it and the frame), or for Starfinder, which has no background image so
+  it prints well on an inkjet, a thin `frameStroke` inside its corner brackets, the deck art at `PawnRenderer.itemArtOpacity` (40% by default; the app sets it from the
   `itemArtOpacity` user default on both its renderers, and tiles and pages are drawn again when it changes), the title on the ribbon (placed so its flat face,
   measured as `ItemCardStyle.titleFace`, holds the name and its folds hang over the card's edges) or the
   Starfinder bar, rarity-colored trait chips, the description (`ItemCardText`, Palatino), the stats two to a row
