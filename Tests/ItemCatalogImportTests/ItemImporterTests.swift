@@ -28,7 +28,7 @@ import PawnShopCore
         #expect(catalog.items.last?.id == "starfinder/LaserPistol" && catalog.items.last?.game == .starfinder)
         let licenses = output.appendingPathComponent("Items/Licenses")
         #expect(try FileManager.default.contentsOfDirectory(atPath: licenses.path).sorted()
-                == ["ORCLicense.md", "OpenGameLicense.md"])
+                == ["ORC License.md", "Open Game License.md"])
     }
 
     @Test func importingTwiceGivesTheSameBytes() throws {

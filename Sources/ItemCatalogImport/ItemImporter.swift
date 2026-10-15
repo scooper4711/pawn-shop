@@ -29,8 +29,9 @@ public struct ItemImportReport: Sendable {
 public struct ItemImporter {
     /// Folders of the equipment packs whose items no player is handed.
     static let skippedFolders: Set<String> = ["virtual-items", "bestiary-items"]
-    /// The licenses of the game text, in the repository's `static/licenses`.
-    static let licenses = ["ORCLicense.md", "OpenGameLicense.md"]
+    /// The licenses of the game text: each file in the repository's `static/licenses`, and the name the About
+    /// panel titles it by.
+    static let licenses = ["ORCLicense.md": "ORC License.md", "OpenGameLicense.md": "Open Game License.md"]
 
     public var repository: URL
     public var outputDirectory: URL
@@ -86,9 +87,9 @@ public struct ItemImporter {
         try encoder.encode(renames).write(to: folder.appendingPathComponent(ItemCatalog.renamesFile), options: .atomic)
         try report.markdown.write(to: folder.appendingPathComponent("import-report.md"), atomically: true,
                                   encoding: .utf8)
-        for license in Self.licenses {
+        for (license, title) in Self.licenses.sorted(by: { $0.key < $1.key }) {
             let source = repository.appendingPathComponent("static/licenses/\(license)")
-            try FileManager.default.copyItem(at: source, to: licenses.appendingPathComponent(license))
+            try FileManager.default.copyItem(at: source, to: licenses.appendingPathComponent(title))
         }
     }
 
