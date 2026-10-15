@@ -19,11 +19,14 @@ public struct SheetExporter {
         self.renderer = renderer
     }
 
-    /// One layout item per entry: a pawn's strip, sized from its outline and the room left for a base, or a card.
+    /// One layout item per entry: a pawn's strip, sized from its outline and the room left for a base, or an
+    /// item's set of cards.
     public func layoutItems() -> [LayoutItem] {
         sheet.entries.map { entry in
             guard case .pawn(let pawnID) = entry.content else {
-                return LayoutItem(entryID: entry.id, stripSize: ItemCard.size, count: entry.count)
+                let cards = entry.itemID.flatMap(catalog.item(id:)).map(renderer.cardCount(for:)) ?? 1
+                return LayoutItem(entryID: entry.id, stripSize: ItemCard.size, count: entry.count,
+                                  cardsPerCopy: cards)
             }
             let upright = library.pawn(id: pawnID).map(renderer.uprightSize(of:)) ?? Self.placeholderSize
             let strip = LayoutItem.stripSize(forPawn: upright, footRoom: sheet.settings.footRoom)
@@ -65,7 +68,9 @@ public struct SheetExporter {
         return page.map { placed in
             switch contents[placed.entryID] {
             case .item(let itemID):
-                .card(catalog.item(id: itemID).map { ItemCardContent(item: $0, artwork: matcher.artwork(for: $0)) })
+                .card(catalog.item(id: itemID).map {
+                    ItemCardContent(item: $0, artwork: matcher.artwork(for: $0), card: placed.card)
+                })
             case .pawn(let pawnID):
                 .pawn(library.pawn(id: pawnID))
             case nil:

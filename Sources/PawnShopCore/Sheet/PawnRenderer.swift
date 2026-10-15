@@ -35,12 +35,19 @@ public final class PawnRenderer {
     /// The files `make items` builds, which item cards are drawn with (`GeneratedResources`); nil draws them
     /// plainly.
     public var generatedFolder = GeneratedResources.folder {
-        didSet { cardStyles.removeAll() }
+        didSet {
+            cardStyles.removeAll()
+            cardPages.removeAll()
+        }
     }
     /// How opaque an item's art is behind its card's text, from 0 (none) to 1.
     public var itemArtOpacity = ItemCard.defaultArtOpacity
+    /// Whether cards print on their Rexard backgrounds, or plainly to save ink (R8.7).
+    public var printsCardBackgrounds = true
     /// Each game's card style, read from `generatedFolder` once.
     var cardStyles: [Game: ItemCardStyle] = [:]
+    /// Each item's cards, laid out once.
+    var cardPages: [String: [ItemCardPage]] = [:]
 
     public init(folders: LibraryFolders) {
         self.folders = folders

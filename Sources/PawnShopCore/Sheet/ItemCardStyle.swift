@@ -56,6 +56,13 @@ struct ItemCardStyle {
         }
     }
 
+    /// The style printed without its Rexard pieces, to save ink: plain colors, keeping the action icon font.
+    var withoutBackground: ItemCardStyle {
+        var style = ItemCardStyle.plain
+        style.actionFont = actionFont
+        return style
+    }
+
     static var plain: ItemCardStyle { ItemCardStyle(ink: gray(0.1), titleInk: gray(0), titleFill: gray(0.88),
                                      chipFill: color(0.37, 0, 0), chipInk: gray(1), ruleColor: gray(0.5)) }
     static var pathfinder: ItemCardStyle { ItemCardStyle(ink: color(0.17, 0.11, 0.05),

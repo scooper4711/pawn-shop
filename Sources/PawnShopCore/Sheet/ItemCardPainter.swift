@@ -10,45 +10,51 @@ public enum ItemCard {
     public static let defaultArtOpacity: CGFloat = 0.4
 }
 
-/// Draws an item's card in card coordinates (`ItemCard.size`, origin at the bottom left): the background, the
-/// item's art faint over it, then the name and level, the traits, the description, the stats and the source.
+/// Draws one card of an item's set in card coordinates (`ItemCard.size`, origin at the bottom left): the
+/// background and the name and level on every card; on the first, the item's art faint over it, the traits and
+/// the stats; then the card's part of the description, and the source with "Card 1 of 2" when there are more.
 struct ItemCardPainter {
-    /// Clears the frame and the parchment's torn edge.
-    static let inset: CGFloat = 13
-    static let titleHeight: CGFloat = 24
-    static let chipHeight: CGFloat = 9
-    static let statRowHeight: CGFloat = 9.5
-    static let sourceHeight: CGFloat = 8
-
     let item: CatalogItem
     let style: ItemCardStyle
     let context: CGContext
+    /// The card's part of the description.
+    var page: ItemCardPage
+    /// Which card of the set this is, from 0, and how many there are.
+    var index = 0
+    var count = 1
     /// How opaque the item's art is behind the text, from 0 (none) to 1.
     var artOpacity = ItemCard.defaultArtOpacity
 
+    init(item: CatalogItem, style: ItemCardStyle, context: CGContext, page: ItemCardPage) {
+        self.item = item
+        self.style = style
+        self.context = context
+        self.page = page
+    }
+
+    private var geometry: ItemCardGeometry { ItemCardGeometry(item: item, actionFont: style.actionFont) }
+    private var isFirstCard: Bool { index == 0 }
+
     /// Draws the card; `drawArt` draws the item's picture as large as fits a rect, or nothing.
     func paint(drawArt: (CGRect) -> Void) {
-        let card = CGRect(origin: .zero, size: ItemCard.size)
-        drawBackground(in: card)
-        let inner = card.insetBy(dx: Self.inset, dy: Self.inset)
-        let title = CGRect(x: inner.minX, y: inner.maxY - Self.titleHeight, width: inner.width,
-                           height: Self.titleHeight)
-        if artOpacity > 0 {
+        let geometry = geometry
+        drawBackground(in: geometry.card)
+        if isFirstCard, artOpacity > 0 {
             context.saveGState()
             context.setAlpha(min(artOpacity, 1))
-            drawArt(CGRect(x: inner.minX, y: inner.minY, width: inner.width, height: title.minY - inner.minY)
-                .insetBy(dx: 4, dy: 4))
+            drawArt(CGRect(x: geometry.inner.minX, y: geometry.inner.minY, width: geometry.inner.width,
+                           height: geometry.title.minY - geometry.inner.minY).insetBy(dx: 4, dy: 4))
             context.restoreGState()
         }
-        drawTitle(in: title)
-        let chipsBottom = drawTraits(below: title.minY - 3, in: inner)
-        let source = CGRect(x: inner.minX, y: inner.minY, width: inner.width, height: Self.sourceHeight)
-        drawSource(in: source)
-        let statsTop = drawStats(above: source.maxY + 2, in: inner)
-        let text = CGRect(x: inner.minX + 1, y: statsTop + 4, width: inner.width - 2,
-                          height: chipsBottom - 4 - (statsTop + 4))
-        ItemCardText(markup: item.description, ink: style.ink, actionFont: style.actionFont)
-            .draw(in: text, ruleColor: style.ruleColor, context: context)
+        drawTitle(in: geometry.title)
+        if isFirstCard {
+            drawTraits(geometry.chips)
+            drawStats(geometry)
+        }
+        drawSource(in: geometry.source)
+        ItemCardText(markup: page.markup, ink: style.ink, actionFont: style.actionFont)
+            .draw(in: geometry.textRect(isFirstCard: isFirstCard), size: page.size, ruleColor: style.ruleColor,
+                  context: context)
     }
 
     // MARK: Background and title
@@ -92,7 +98,7 @@ struct ItemCardPainter {
             context.setFillColor(style.titleFill)
             context.fill(rect)
         }
-        let level = "ITEM \(item.level)"
+        let level = "\(item.kind.cardLabel) \(item.level)"
         let levelLine = Self.line(level, font: ItemCardFonts.body(size: 7.5, emphasis: .bold), color: style.titleInk)
         let levelWidth = CGFloat(CTLineGetTypographicBounds(levelLine, nil, nil, nil))
         draw(levelLine, at: CGPoint(x: rect.maxX - 6 - levelWidth, y: rect.midY - 2.5))
@@ -130,75 +136,42 @@ struct ItemCardPainter {
 
     // MARK: Traits, stats and source
 
-    /// Draws the traits as chips in rows from `top` down; returns the bottom of the last row.
-    private func drawTraits(below top: CGFloat, in inner: CGRect) -> CGFloat {
-        var origin = CGPoint(x: inner.minX, y: top - Self.chipHeight)
-        let font = ItemCardFonts.body(size: 5.5, emphasis: .bold)
-        for trait in item.traits {
-            let line = Self.line(trait.uppercased(), font: font, color: style.chipInk)
-            let width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil)) + 6
-            if origin.x + width > inner.maxX, origin.x > inner.minX {
-                origin = CGPoint(x: inner.minX, y: origin.y - Self.chipHeight - 2)
-            }
+    private func drawTraits(_ chips: [(trait: String, rect: CGRect)]) {
+        let font = ItemCardFonts.body(size: ItemCardGeometry.chipFontSize, emphasis: .bold)
+        for (trait, rect) in chips {
             context.setFillColor(ItemCardStyle.rarityFill(trait) ?? style.chipFill)
-            context.fill(CGRect(x: origin.x, y: origin.y, width: width, height: Self.chipHeight))
-            draw(line, at: CGPoint(x: origin.x + 3, y: origin.y + 2.6))
-            origin.x += width + 2
+            context.fill(rect)
+            draw(Self.line(trait.uppercased(), font: font, color: style.chipInk),
+                 at: CGPoint(x: rect.minX + 3, y: rect.minY + 2.6))
         }
-        return item.traits.isEmpty ? top : origin.y
     }
 
-    /// Draws the stats two to a row, a long one on a row of its own, from `bottom` up; returns the table's top.
-    private func drawStats(above bottom: CGFloat, in inner: CGRect) -> CGFloat {
-        let rows = Self.statRows(item.stats, width: inner.width) { stat in
-            CGFloat(CTLineGetTypographicBounds(statLine(stat), nil, nil, nil))
-        }
-        let top = bottom + Self.statRowHeight * CGFloat(rows.count)
+    /// Draws the stats two to a row, a long one on a row of its own, with a rule between them and the text.
+    private func drawStats(_ geometry: ItemCardGeometry) {
+        let rows = geometry.statRows
+        guard !rows.isEmpty else { return }
+        let area = geometry.statsRect
         for (index, row) in rows.enumerated() {
-            let baseline = top - Self.statRowHeight * CGFloat(index + 1) + 2.5
+            let baseline = area.maxY - ItemCardGeometry.statRowHeight * CGFloat(index + 1) + 2.5
             for (column, stat) in row.enumerated() {
-                draw(statLine(stat), at: CGPoint(x: inner.minX + 1 + inner.width / 2 * CGFloat(column), y: baseline))
+                draw(ItemCardGeometry.statLine(stat, ink: style.ink, actionFont: style.actionFont),
+                     at: CGPoint(x: area.minX + 1 + area.width / 2 * CGFloat(column), y: baseline))
             }
         }
-        if !rows.isEmpty {
-            context.setStrokeColor(style.ruleColor)
-            context.setLineWidth(0.5)
-            context.stroke(CGRect(x: inner.minX, y: top + 2, width: inner.width, height: 0))
-        }
-        return top + 2
+        let ruleY = item.kind.isSpell ? area.minY - 2 : area.maxY + 2
+        context.setStrokeColor(style.ruleColor)
+        context.setLineWidth(0.5)
+        context.stroke(CGRect(x: area.minX, y: ruleY, width: area.width, height: 0))
     }
 
-    /// The stats in rows of two, in order, except that one too wide for half the width takes a whole row.
-    static func statRows(_ stats: [ItemStat], width: CGFloat, measure: (ItemStat) -> CGFloat) -> [[ItemStat]] {
-        var rows: [[ItemStat]] = []
-        for stat in stats {
-            let isWide = measure(stat) > width / 2 - 2
-            if !isWide, let last = rows.last, last.count == 1, measure(last[0]) <= width / 2 - 2 {
-                rows[rows.count - 1].append(stat)
-            } else {
-                rows.append([stat])
-            }
-        }
-        return rows
-    }
-
+    /// The source, and which card of the set this is when there are more: "Pathfinder Player Core · Card 1 of 2".
     private func drawSource(in rect: CGRect) {
-        let line = Self.line(item.source, font: ItemCardFonts.body(size: 5.5, emphasis: .italic), color: style.ink)
+        let text = [item.source, count > 1 ? "Card \(index + 1) of \(count)" : ""].filter { !$0.isEmpty }
+            .joined(separator: " · ")
+        let line = Self.line(text, font: ItemCardFonts.body(size: 5.5, emphasis: .italic), color: style.ink)
         let width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
         // Centered, clear of Starfinder's corner pieces.
         draw(line, at: CGPoint(x: rect.midX - width / 2, y: rect.minY + 1.5))
-    }
-
-    private func statLine(_ stat: ItemStat) -> CTLine {
-        let text = NSMutableAttributedString(string: stat.label + " ", attributes: [
-            .init(kCTFontAttributeName as String): ItemCardFonts.body(size: 6.5, emphasis: .bold),
-            .init(kCTForegroundColorAttributeName as String): style.ink
-        ])
-        text.append(NSAttributedString(string: stat.value, attributes: [
-            .init(kCTFontAttributeName as String): ItemCardFonts.body(size: 6.5, emphasis: .plain),
-            .init(kCTForegroundColorAttributeName as String): style.ink
-        ]))
-        return CTLineCreateWithAttributedString(text)
     }
 
     // MARK: Lines
@@ -210,12 +183,10 @@ struct ItemCardPainter {
     }
 
     private static func line(_ text: String, font: CTFont, color: CGColor) -> CTLine {
-        CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [
-            .init(kCTFontAttributeName as String): font, .init(kCTForegroundColorAttributeName as String): color
-        ]))
+        ItemCardGeometry.line(text, font: font, color: color)
     }
 
     private static func textWidth(_ text: String, font: CTFont) -> CGFloat {
-        CGFloat(CTLineGetTypographicBounds(line(text, font: font, color: CGColor(gray: 0, alpha: 1)), nil, nil, nil))
+        ItemCardGeometry.textWidth(text, font: font)
     }
 }
