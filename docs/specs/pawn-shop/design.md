@@ -111,7 +111,14 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   (the system keeps them as silver pieces). It builds each `CatalogItem`'s stats as ordered label and value
   rows, so the order lives in one place. Output is sorted with sorted keys, so the same input gives the same
   bytes.
-- `ItemCatalog` loads `items.json` from the bundle (empty when missing) and searches and filters it.
+- Spells (R9): `SpellReader` reads the `spells` packs of both games into `CatalogItem`s of kind `spell`,
+  `cantrip`, `focus` or `ritual` (cantrip first, as a focus cantrip is a cantrip), with `traditions` and the
+  stats `SpellStatRows` builds in the books' order. Descriptions go through Tabletop Kit's `RulesTextConverter`
+  with the spell's rank as `@item.level` and `@item.rank` (`FormulaValues.level`), after `DescriptionCleaner`
+  drops links into the effect packs. Spells are written to `items.json` with the items; their ids can't clash,
+  being Foundry document ids. `ItemKind.cardLabel` is "ITEM", "SPELL", "CANTRIP", "FOCUS" or "RITUAL".
+- `ItemCatalog` loads `items.json` from the bundle (empty when missing) and searches and filters it; an
+  `ItemQuery` also filters by tradition.
 - Item deck art: Tabletop Kit's `.item` and `.drawnItem` shapes are kept as `ItemArtwork` records
   (`StoredLibrary.itemArt`), a figure on a kept PDF page or a PNG in `Items/`, not as pawns.
   `ItemArtMatcher` finds an item's art by its name, then by its name without parentheses and grade words.
@@ -130,9 +137,19 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   13 pt to clear it and the frame), the deck art at `PawnRenderer.itemArtOpacity` (40% by default; the app sets it from the
   `itemArtOpacity` user default on both its renderers, and tiles and pages are drawn again when it changes), the title on the ribbon (placed so its flat face,
   measured as `ItemCardStyle.titleFace`, holds the name and its folds hang over the card's edges) or the
-  Starfinder bar, rarity-colored trait chips, the description (`ItemCardText`: Palatino, 8 pt down to 5.5 pt,
-  then cut with "…"), the stats two to a row (a wide one alone), and the source line, centered clear of the
-  Starfinder corners. Without the pieces a card is white with a gray frame.
+  Starfinder bar, rarity-colored trait chips, the description (`ItemCardText`, Palatino), the stats two to a row
+  (a wide one alone; under the traits for spells, above the source for items), and the source line, centered
+  clear of the Starfinder corners. Without the pieces, or with `PawnRenderer.printsCardBackgrounds` off (the
+  `printsCardBackgrounds` user default, R8.7, which `ItemCardStyle.withoutBackground` applies), a card is white
+  with a gray frame.
+- Card sets (R8.3.1): `ItemCardLayout.cards(for:style:)` splits an item's text into `ItemCardPage`s (markup and
+  text size) using the text areas `ItemCardGeometry` measures for a first card and a continuation card. It tries
+  8 pt, then one card at 7.75 to 7.25 pt, then pages at 8 pt, then at 7.75 to 7.25 pt when that saves a card.
+  Paging takes whole paragraphs (a `---` rule is dropped at a break) and moves one to the next card unless more
+  than a third of the card would stay empty; then, and for a paragraph longer than a card, it breaks between
+  lines. A `**Heightened` paragraph always moves whole. `PawnRenderer` keeps each item's pages.
+  `LayoutItem.cardsPerCopy` makes `ShelfPacker` place every card of a copy in turn (`PlacedStrip.card`), and
+  `ItemCardContent.card` says which card of the set to draw.
 
 ## App (`PawnShop`)
 - `DocumentGroup` for `.pawnsheet` (`PawnSheetDocument`, JSON). `LibraryModel` (`@Observable`, main actor) wraps
