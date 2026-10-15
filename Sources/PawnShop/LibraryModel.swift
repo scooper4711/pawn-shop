@@ -64,13 +64,16 @@ final class LibraryModel {
     /// Lays out, draws and exports a sheet; nil when the library couldn't be opened.
     func exporter(for sheet: PawnSheet) -> SheetExporter? {
         guard let library, let renderer else { return nil }
-        renderer.itemArtOpacity = ItemCardPreferences.artOpacity
+        ItemCardPreferences.apply(to: renderer)
         var exporter = SheetExporter(sheet: sheet, library: library, renderer: renderer)
         exporter.catalog = catalog
         return exporter
     }
 
     func searchItems(_ query: ItemQuery) -> [CatalogItem] { catalog.search(query) }
+
+    /// How many cards the item's or spell's text takes (R8.3.1).
+    func cardCount(for item: CatalogItem) -> Int { renderer?.cardCount(for: item) ?? 1 }
 
     /// An item's card, with the art an imported item deck prints for it.
     func card(for item: CatalogItem) -> ItemCardContent {
