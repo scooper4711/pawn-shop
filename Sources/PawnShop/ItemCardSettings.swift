@@ -5,6 +5,13 @@ import SwiftUI
 enum ItemCardPreferences {
     static let artOpacityKey = "itemArtOpacity"
     static let printsBackgroundsKey = "printsCardBackgrounds"
+    static let smallestTextSizeKey = "smallestCardTextSize"
+
+    /// How small a card's text may be set to save a card (R8.3.1).
+    static var smallestTextSize: CGFloat {
+        (UserDefaults.standard.object(forKey: smallestTextSizeKey) as? Double).map { CGFloat($0) }
+            ?? ItemCard.defaultSmallestTextSize
+    }
 
     /// Whether cards print on their Rexard backgrounds (R8.7); on unless turned off.
     static var printsBackgrounds: Bool {
@@ -15,10 +22,11 @@ enum ItemCardPreferences {
     static func apply(to renderer: PawnRenderer) {
         renderer.itemArtOpacity = artOpacity
         renderer.printsCardBackgrounds = printsBackgrounds
+        renderer.smallestCardTextSize = smallestTextSize
     }
 
     /// Changes when a card's look does, for keeping rendered cards apart.
-    static var cacheKey: String { "\(artOpacity)-\(printsBackgrounds)" }
+    static var cacheKey: String { "\(artOpacity)-\(printsBackgrounds)-\(smallestTextSize)" }
 
     /// How opaque an item's art is behind its card's text, from 0 (none) to 1.
     static var artOpacity: CGFloat {
@@ -32,14 +40,32 @@ enum ItemCardPreferences {
 struct ItemCardSettingsView: View {
     @AppStorage(ItemCardPreferences.artOpacityKey) private var opacity = Double(ItemCard.defaultArtOpacity)
     @AppStorage(ItemCardPreferences.printsBackgroundsKey) private var printsBackgrounds = true
+    @AppStorage(ItemCardPreferences.smallestTextSizeKey)
+    private var smallestTextSize = Double(ItemCard.defaultSmallestTextSize)
     @Environment(LibraryModel.self) private var library
+
+    /// The sizes offered, largest first.
+    private static let textSizes = Array(stride(from: Double(ItemCard.smallestTextSizes.upperBound),
+                                                through: Double(ItemCard.smallestTextSizes.lowerBound), by: -0.25))
 
     var body: some View {
         HStack(alignment: .top, spacing: 20) {
             Form {
                 Toggle("Print card backgrounds", isOn: $printsBackgrounds)
-                Text("Item and spell cards print on parchment or a sci-fi panel. Turn this off to print them on "
-                     + "white and save ink.")
+                Text("Pathfinder cards print on parchment in a wooden frame, and Starfinder cards in a cyan frame. "
+                     + "Turn this off to print them on white with a gray frame and save ink.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Divider()
+                Picker("Smallest text size", selection: $smallestTextSize) {
+                    ForEach(Self.textSizes, id: \.self) { size in
+                        Text(size == Double(ItemCard.defaultSmallestTextSize) ? "\(size.formatted()) pt (default)"
+                             : "\(size.formatted()) pt").tag(size)
+                    }
+                }
+                Text("Card text is 7 pt. Text a little too long for its card is set smaller, down to this size, "
+                     + "when that saves a card; smaller sizes mean fewer cards but harder reading.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

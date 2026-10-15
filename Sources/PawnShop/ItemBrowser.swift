@@ -236,7 +236,12 @@ struct ItemCardThumbnail: View {
     @Environment(LibraryModel.self) private var library
     @AppStorage(ItemCardPreferences.artOpacityKey) private var opacity = Double(ItemCard.defaultArtOpacity)
     @AppStorage(ItemCardPreferences.printsBackgroundsKey) private var printsBackgrounds = true
+    @AppStorage(ItemCardPreferences.smallestTextSizeKey)
+    private var smallestTextSize = Double(ItemCard.defaultSmallestTextSize)
     @State private var image: CGImage?
+
+    /// Changes with the card settings, so the card is drawn again.
+    private var looks: String { "\(opacity)-\(printsBackgrounds)-\(smallestTextSize)" }
 
     var body: some View {
         Group {
@@ -247,7 +252,7 @@ struct ItemCardThumbnail: View {
                     .aspectRatio(ItemCard.size.width / ItemCard.size.height, contentMode: .fit)
             }
         }
-        .task(id: "\(card.item.id)-\(card.card)-\(card.artwork?.id.uuidString ?? "")-\(opacity)-\(printsBackgrounds)") {
+        .task(id: "\(card.item.id)-\(card.card)-\(card.artwork?.id.uuidString ?? "")-\(looks)") {
             image = await library.backgroundRenderer?.cardImage(of: card, height: pixelHeight)
         }
     }

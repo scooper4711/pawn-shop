@@ -59,6 +59,8 @@ struct PageView: View {
     /// Item cards' art opacity and backgrounds, so pages are drawn again when they change.
     @AppStorage(ItemCardPreferences.artOpacityKey) private var artOpacity = Double(ItemCard.defaultArtOpacity)
     @AppStorage(ItemCardPreferences.printsBackgroundsKey) private var printsBackgrounds = true
+    @AppStorage(ItemCardPreferences.smallestTextSizeKey)
+    private var smallestTextSize = Double(ItemCard.defaultSmallestTextSize)
     @State private var image: CGImage?
 
     private var paper: PaperSetup { sheet.settings.paper }
@@ -96,7 +98,7 @@ struct PageView: View {
         let contents = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.content) })
         let strips = page.map { "\(contents[$0.entryID].map { "\($0)" } ?? "-")#\($0.card)@\($0.rect)\($0.sideways)" }
         return strips.joined(separator: ";") + "|\(sheet.settings)|\(library.pawns.count)|\(library.itemArt.count)"
-            + "|\(artOpacity)|\(printsBackgrounds)"
+            + "|\(artOpacity)|\(printsBackgrounds)|\(smallestTextSize)"
     }
 
     private func render() async {
