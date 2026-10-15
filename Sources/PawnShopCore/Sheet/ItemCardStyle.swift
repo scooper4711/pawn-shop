@@ -5,8 +5,9 @@ import ImageIO
 
 /// How an item card looks in its game: the Rexard pieces it is drawn with (`Generated/CardArt`), its colors and
 /// the action icon font (`Generated/Fonts`).
-/// Pathfinder cards are parchment in a wooden frame under a ribbon; Starfinder cards a dark panel with cyan
-/// corners under a cyan bar. Without the pieces, a card is white with a gray frame.
+/// Pathfinder cards are parchment in a wooden frame under a ribbon; Starfinder cards are light, pale cyan in a
+/// thin cyan frame with dark corner brackets under a cyan bar, as a dark card prints poorly on an inkjet. Without
+/// the pieces, a card is white with a gray frame.
 struct ItemCardStyle {
     var background: CGImage?
     var frame: CGImage?
@@ -15,6 +16,10 @@ struct ItemCardStyle {
     /// The part of `titleBand` the title sits on, as fractions of the image from its top left: the flat face of a
     /// ribbon whose folded ends hang outside it. Nil when the whole image is the band, stretched to fit.
     var titleFace: CGRect?
+    /// The card's color under everything else.
+    var fill = CGColor(gray: 1, alpha: 1)
+    /// A thin frame drawn in this color, for a card without a frame image.
+    var frameStroke: CGColor?
     /// The body text's color.
     var ink: CGColor
     /// The title's and the stats labels' color.
@@ -46,12 +51,11 @@ struct ItemCardStyle {
             style.titleFace = CGRect(x: 0.147, y: 0, width: 0.698, height: 0.547)
             return style
         case .starfinder:
-            guard let panel = piece("panel") else { return .plain }
+            guard let bar = piece("name-bar") else { return .plain }
             var style = ItemCardStyle.starfinder
-            style.background = panel
+            style.titleBand = bar
             style.corners = ["corner-top-left", "corner-top-right", "corner-bottom-left", "corner-bottom-right"]
                 .compactMap(piece)
-            style.titleBand = piece("name-bar")
             return style
         }
     }
@@ -69,9 +73,14 @@ struct ItemCardStyle {
                                                          titleInk: color(0.17, 0.11, 0.05),
                                           titleFill: color(0.87, 0.78, 0.6), chipFill: color(0.37, 0, 0),
                                           chipInk: gray(1), ruleColor: color(0.45, 0.3, 0.15)) }
-    static var starfinder: ItemCardStyle { ItemCardStyle(ink: color(0.9, 0.95, 0.97), titleInk: color(0.02, 0.1, 0.14),
-                                          titleFill: color(0.3, 0.8, 0.9), chipFill: color(0.3, 0.8, 0.9),
-                                          chipInk: color(0.02, 0.1, 0.14), ruleColor: color(0.3, 0.8, 0.9)) }
+    static var starfinder: ItemCardStyle {
+        var style = ItemCardStyle(ink: color(0.06, 0.13, 0.18), titleInk: color(0.02, 0.1, 0.14),
+                                  titleFill: color(0.3, 0.8, 0.9), chipFill: color(0.3, 0.8, 0.9),
+                                  chipInk: color(0.02, 0.1, 0.14), ruleColor: color(0.15, 0.6, 0.7))
+        style.fill = color(0.94, 0.98, 0.99)
+        style.frameStroke = color(0.3, 0.8, 0.9)
+        return style
+    }
 
     /// A rarity's own chip color, as the books print it; nil for traits.
     static func rarityFill(_ trait: String) -> CGColor? {
