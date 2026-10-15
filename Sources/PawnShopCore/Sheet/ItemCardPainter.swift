@@ -60,7 +60,7 @@ struct ItemCardPainter {
     // MARK: Background and title
 
     private func drawBackground(in card: CGRect) {
-        context.setFillColor(gray: 1, alpha: 1)
+        context.setFillColor(style.fill)
         context.fill(card)
         if let background = style.background {
             // Sliced, so the parchment's torn edge stays a thin border however the card's shape stretches it.
@@ -68,6 +68,10 @@ struct ItemCardPainter {
         }
         if let frame = style.frame {
             context.drawNineSlice(frame, in: card.insetBy(dx: 2, dy: 2), cap: 40, capPoints: 8)
+        } else if let stroke = style.frameStroke {
+            context.setStrokeColor(stroke)
+            context.setLineWidth(1.5)
+            context.stroke(card.insetBy(dx: 8, dy: 8))
         } else if style.background == nil {
             context.setStrokeColor(gray: 0.55, alpha: 1)
             context.setLineWidth(1.5)
