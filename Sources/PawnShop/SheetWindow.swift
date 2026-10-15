@@ -13,23 +13,29 @@ struct SheetWindow: View {
     @State private var reviewingNames = false
     @State private var previewedPawn: UUID?
     @State private var previewedItem: String?
-    /// Whether the library pane lists pawns or items.
-    @AppStorage("libraryShowsItems") private var showsItems = false
+    /// Whether the library pane lists pawns, items or spells.
+    @AppStorage("libraryPane") private var pane = LibraryPane.pawns
 
     var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
-                Picker("Library", selection: $showsItems) {
-                    Text("Pawns").tag(false)
-                    Text("Items").tag(true)
+                Picker("Library", selection: $pane) {
+                    Text("Pawns").tag(LibraryPane.pawns)
+                    Text("Items").tag(LibraryPane.items)
+                    Text("Spells").tag(LibraryPane.spells)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .padding([.horizontal, .top], 8)
-                if showsItems {
-                    ItemBrowser(sheet: $document.sheet, preview: $previewedItem)
-                } else {
+                switch pane {
+                case .pawns:
                     LibraryBrowser(sheet: $document.sheet, preview: $previewedPawn) { reviewingNames = true }
+                case .items:
+                    ItemBrowser(sheet: $document.sheet, preview: $previewedItem, pane: .items)
+                        .id(LibraryPane.items)
+                case .spells:
+                    ItemBrowser(sheet: $document.sheet, preview: $previewedItem, pane: .spells)
+                        .id(LibraryPane.spells)
                 }
             }
             .navigationSplitViewColumnWidth(min: 280, ideal: 360, max: 600)
@@ -129,4 +135,9 @@ struct ImportStatusBanner: View {
             .padding()
         }
     }
+}
+
+/// What the library pane lists.
+enum LibraryPane: String {
+    case pawns, items, spells
 }

@@ -77,28 +77,10 @@ import ArtExtractionTestSupport
         #expect(shift as? CGFloat == 8 * ItemCardText.actionBaselineShift)
     }
 
-    @Test func shrinksLongTextAndThenCutsItShort() {
-        let text = ItemCardText(markup: String(repeating: "Words fill the card. ", count: 200),
-                                ink: CGColor(gray: 0, alpha: 1))
-        let rect = CGRect(x: 0, y: 0, width: 150, height: 120)
-        let frame = text.fittedFrame(in: rect)
-        let visible = CTFrameGetVisibleStringRange(frame)
-        let string = CTFrameGetStringRange(frame)
-        #expect(visible.length == string.length)
-        #expect(string.length < CFAttributedStringGetLength(text.attributed(size: ItemCardText.smallestSize)))
-        let short = ItemCardText(markup: "Short.", ink: CGColor(gray: 0, alpha: 1)).fittedFrame(in: rect)
-        let lines = CTFrameGetLines(short) as? [CTLine] ?? []
-        let run = (CTLineGetGlyphRuns(lines[0]) as? [CTRun] ?? [])[0]
-        let attributes = CTRunGetAttributes(run) as NSDictionary
-        // A run always has a font.
-        let font = attributes[kCTFontAttributeName] as! CTFont // swiftlint:disable:this force_cast
-        #expect(CTFontGetSize(font) == ItemCardText.largestSize)
-    }
-
     @Test func putsTwoStatsToARowUnlessOneIsTooWide() {
         let stats = [ItemStat("Level", "1"), ItemStat("Price", "4 gp"), ItemStat("Usage", "very long"),
                      ItemStat("Bulk", "L")]
-        let rows = ItemCardPainter.statRows(stats, width: 100) { $0.label == "Usage" ? 80 : 20 }
+        let rows = ItemCardGeometry.statRows(stats, width: 100) { $0.label == "Usage" ? 80 : 20 }
         #expect(rows.map { $0.map(\.label) } == [["Level", "Price"], ["Usage"], ["Bulk"]])
     }
 
@@ -133,7 +115,7 @@ func solidImage(red: CGFloat, green: CGFloat, blue: CGFloat, size: Int = 60) -> 
     return context.makeImage()!
 }
 
-@Suite struct ItemCardLayoutTests {
+@Suite struct ItemCardTitleTests {
     @Test func placesARibbonsFaceOverTheTitle() {
         let title = CGRect(x: 13, y: 200, width: 140, height: 20)
         let face = CGRect(x: 0.25, y: 0, width: 0.5, height: 0.5)

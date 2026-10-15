@@ -6,6 +6,7 @@ import PawnShopCore
 /// What the item import found.
 public struct ItemImportReport: Sendable {
     public var itemCount = 0
+    public var spellCount = 0
     /// Items the remaster renamed, whose old names item decks may print.
     public var renameCount = 0
     /// Items per kind, for the report.
@@ -14,7 +15,8 @@ public struct ItemImportReport: Sendable {
     public var unparsedEnrichers: [String: Int] = [:]
 
     public var markdown: String {
-        var lines = ["# Item import", "", "\(itemCount) items, \(renameCount) remaster renames.", ""]
+        var lines = ["# Item import", "",
+                     "\(itemCount) items, \(spellCount) spells, \(renameCount) remaster renames.", ""]
         lines += ItemKind.allCases.map { "- \($0.displayName): \(kinds[$0] ?? 0)" }
         if !unparsedEnrichers.isEmpty {
             lines += ["", "## Enrichers left as written", ""]
@@ -24,7 +26,7 @@ public struct ItemImportReport: Sendable {
     }
 }
 
-/// Imports every Pathfinder and Starfinder item from the pf2e system repository into
+/// Imports every Pathfinder and Starfinder item and spell from the pf2e system repository into
 /// `<output>/Items/items.json`, with an import report and the licenses the item text is used under.
 public struct ItemImporter {
     /// Folders of the equipment packs whose items no player is handed.
@@ -44,28 +46,40 @@ public struct ItemImporter {
     @discardableResult
     public func run() throws -> ItemImportReport {
         let localizer = try Localizer(languageDirectory: repository.appendingPathComponent("static/lang"))
-        var reader = ItemReader(localizer: localizer,
-                                labels: ConfigLabels(repository: repository, localizer: localizer))
+        let labels = ConfigLabels(repository: repository, localizer: localizer)
+        var reader = ItemReader(localizer: localizer, labels: labels)
+        var spellReader = SpellReader(localizer: localizer, labels: labels)
         let items = try readItems(with: &reader)
-        var report = ItemImportReport(itemCount: items.count)
-        report.kinds = Dictionary(grouping: items, by: \.kind).mapValues(\.count)
-        report.unparsedEnrichers = Dictionary(reader.unparsedEnrichers.map { ($0, 1) }, uniquingKeysWith: +)
+        let spells = try readSpells(with: &spellReader)
+        var report = ItemImportReport(itemCount: items.count, spellCount: spells.count)
+        report.kinds = Dictionary(grouping: items + spells, by: \.kind).mapValues(\.count)
+        let unparsed = reader.unparsedEnrichers + spellReader.unparsedEnrichers
+        report.unparsedEnrichers = Dictionary(unparsed.map { ($0, 1) }, uniquingKeysWith: +)
         let renames = RenameReader.renames(in: repository)
         report.renameCount = renames.count
-        try write(items, renames: renames, report: report)
+        try write(items + spells, renames: renames, report: report)
         return report
     }
 
     /// The items of both games, sorted by game, name and id, so the same input gives the same output.
     func readItems(with reader: inout ItemReader) throws -> [CatalogItem] {
+        try read(pack: "equipment") { reader.item(from: $0, game: $1) }
+    }
+
+    /// The spells of both games, in the same order as the items.
+    func readSpells(with reader: inout SpellReader) throws -> [CatalogItem] {
+        try read(pack: "spells") { reader.spell(from: $0, game: $1) }
+    }
+
+    /// The documents of both games' packs in the folder `pack` that `read` turns into cards.
+    private func read(pack name: String,
+                      _ read: (JSONValue, PawnShopCore.Game) -> CatalogItem?) throws -> [CatalogItem] {
         let scanner = PackScanner(repository: repository)
         var items: [CatalogItem] = []
         for game in Bestiary.Game.allCases {
-            for pack in try scanner.packs(of: game, type: "Item") where pack.name == "equipment" {
+            for pack in try scanner.packs(of: game, type: "Item") where pack.name == name {
                 for file in scanner.documentFiles(in: pack) where !isSkipped(file) {
-                    if let item = reader.item(from: try JSONValue(contentsOf: file), game: Self.game(game)) {
-                        items.append(item)
-                    }
+                    if let item = read(try JSONValue(contentsOf: file), Self.game(game)) { items.append(item) }
                 }
             }
         }

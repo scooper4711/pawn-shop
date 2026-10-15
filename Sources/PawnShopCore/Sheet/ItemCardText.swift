@@ -3,12 +3,8 @@ import CoreText
 import Foundation
 
 /// An item's description set in a card's text area: `**bold**`, `*italic*`, `---` as a thin rule, and ◆ ◆◆ ◆◆◆ ⤾
-/// ◇ as the Pathfinder action icons, as large as fits from `largestSize` down to `smallestSize`, and cut short
-/// with "…" when even that is too long.
+/// ◇ as the Pathfinder action icons, at the size `ItemCardLayout` chose for its card.
 struct ItemCardText {
-    static let largestSize: CGFloat = 8
-    static let smallestSize: CGFloat = 5.5
-    static let sizeStep: CGFloat = 0.25
     /// Marks the paragraph standing for a rule, which `draw` strokes across the text.
     static let ruleKey = NSAttributedString.Key("PawnShopItemCardRule")
 
@@ -20,15 +16,21 @@ struct ItemCardText {
     static let actionScale: CGFloat = 0.88
     /// Lowers the icons, as a fraction of the text size, to sit on the line where the pf2e font's did.
     static let actionBaselineShift: CGFloat = -0.068
+    /// The distance from line to line, as a multiple of the text size.
+    static let lineHeight: CGFloat = 1.25
 
     let markup: String
     let ink: CGColor
     /// The action icons' font (see `ItemCardFonts.actions`); nil leaves the glyphs as text.
     var actionFont: CTFontDescriptor?
 
-    /// Draws the text at the top of `rect`, with its rules in `ruleColor`.
-    func draw(in rect: CGRect, ruleColor: CGColor, context: CGContext) {
-        let frame = fittedFrame(in: rect)
+    /// Draws the text at `size` points at the top of `rect`, with its rules in `ruleColor`; text that still
+    /// doesn't fit is cut short with "…".
+    func draw(in rect: CGRect, size: CGFloat, ruleColor: CGColor, context: CGContext) {
+        var text = attributed(size: size)
+        if height(of: text, width: rect.width) > rect.height { text = truncated(text, toFit: rect) }
+        let frame = CTFramesetterCreateFrame(CTFramesetterCreateWithAttributedString(text), CFRange(),
+                                             CGPath(rect: rect, transform: nil), nil)
         context.saveGState()
         context.textMatrix = .identity
         CTFrameDraw(frame, context)
@@ -36,16 +38,9 @@ struct ItemCardText {
         context.restoreGState()
     }
 
-    /// The text at the largest size that fits; at the smallest, cut short to fit.
-    func fittedFrame(in rect: CGRect) -> CTFrame {
-        var size = Self.largestSize
-        while size > Self.smallestSize, !fits(attributed(size: size), in: rect) {
-            size -= Self.sizeStep
-        }
-        var text = attributed(size: max(size, Self.smallestSize))
-        if !fits(text, in: rect) { text = truncated(text, toFit: rect) }
-        let framesetter = CTFramesetterCreateWithAttributedString(text)
-        return CTFramesetterCreateFrame(framesetter, CFRange(), CGPath(rect: rect, transform: nil), nil)
+    /// How tall the text is at `size` points, set `width` wide.
+    func height(size: CGFloat, width: CGFloat) -> CGFloat {
+        height(of: attributed(size: size), width: width)
     }
 
     /// The markup as attributed text at `size` points.
@@ -96,7 +91,7 @@ struct ItemCardText {
     private func attributes(size: CGFloat, emphasis: ItemCardFonts.Emphasis) -> [NSAttributedString.Key: Any] {
         [.init(kCTFontAttributeName as String): ItemCardFonts.body(size: size, emphasis: emphasis),
          .init(kCTForegroundColorAttributeName as String): ink,
-         .init(kCTParagraphStyleAttributeName as String): Self.paragraphStyle(spacing: size * 0.3)]
+         .init(kCTParagraphStyleAttributeName as String): Self.paragraphStyle(size: size)]
     }
 
     private func actionAttributes(size: CGFloat) -> [NSAttributedString.Key: Any] {
@@ -109,12 +104,17 @@ struct ItemCardText {
         return attributes
     }
 
-    private static func paragraphStyle(spacing: CGFloat) -> CTParagraphStyle {
-        var spacing = spacing
-        return withUnsafeBytes(of: &spacing) { bytes in
-            var setting = CTParagraphStyleSetting(spec: .paragraphSpacing, valueSize: MemoryLayout<CGFloat>.size,
-                                                  value: bytes.baseAddress!)
-            return CTParagraphStyleCreate(&setting, 1)
+    /// Lines `lineHeight` times the size apart, and paragraphs 0.3 times it further: set exactly, as Core Text
+    /// otherwise rounds a line's height to whole points and a slightly smaller size saves no room.
+    private static func paragraphStyle(size: CGFloat) -> CTParagraphStyle {
+        var values = [size * 0.3, size * lineHeight, size * lineHeight]
+        let specifiers: [CTParagraphStyleSpecifier] = [.paragraphSpacing, .minimumLineHeight, .maximumLineHeight]
+        return values.withUnsafeMutableBufferPointer { buffer in
+            var settings = specifiers.indices.map { index in
+                CTParagraphStyleSetting(spec: specifiers[index], valueSize: MemoryLayout<CGFloat>.size,
+                                        value: buffer.baseAddress! + index)
+            }
+            return CTParagraphStyleCreate(&settings, settings.count)
         }
     }
 
@@ -124,11 +124,10 @@ struct ItemCardText {
         return attributes
     }
 
-    private func fits(_ text: NSAttributedString, in rect: CGRect) -> Bool {
+    private func height(of text: NSAttributedString, width: CGFloat) -> CGFloat {
         let framesetter = CTFramesetterCreateWithAttributedString(text)
-        let constraints = CGSize(width: rect.width, height: .greatestFiniteMagnitude)
-        let needed = CTFramesetterSuggestFrameSizeWithConstraints(framesetter, CFRange(), nil, constraints, nil)
-        return needed.height <= rect.height
+        let constraints = CGSize(width: width, height: .greatestFiniteMagnitude)
+        return CTFramesetterSuggestFrameSizeWithConstraints(framesetter, CFRange(), nil, constraints, nil).height
     }
 
     /// The text cut at the last word that fits, followed by "…".

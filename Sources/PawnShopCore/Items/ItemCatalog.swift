@@ -10,17 +10,20 @@ public struct ItemQuery: Equatable, Sendable {
     public var kinds: Set<ItemKind> = []
     /// The levels to show.
     public var levels: ClosedRange<Int> = ItemCatalog.levels
+    /// Spell traditions to show; empty shows every spell, and every item.
+    public var traditions: Set<String> = []
 
     public init(text: String = "", games: Set<Game> = [], kinds: Set<ItemKind> = [],
-                levels: ClosedRange<Int> = ItemCatalog.levels) {
+                levels: ClosedRange<Int> = ItemCatalog.levels, traditions: Set<String> = []) {
         self.text = text
         self.games = games
         self.kinds = kinds
         self.levels = levels
+        self.traditions = traditions
     }
 }
 
-/// Every Pathfinder and Starfinder item, from `Generated/Items/items.json` (written by `ItemImport`).
+/// Every Pathfinder and Starfinder item and spell, from `Generated/Items/items.json` (written by `ItemImport`).
 public struct ItemCatalog: Sendable {
     /// The levels items have.
     public static let levels = 0...30
@@ -77,7 +80,8 @@ public struct ItemCatalog: Sendable {
 
     private func matches(_ item: CatalogItem, query: ItemQuery, words: [String]) -> Bool {
         guard query.games.isEmpty || query.games.contains(item.game),
-              query.kinds.isEmpty || query.kinds.contains(item.kind), query.levels.contains(item.level)
+              query.kinds.isEmpty || query.kinds.contains(item.kind), query.levels.contains(item.level),
+              query.traditions.isEmpty || !query.traditions.isDisjoint(with: item.traditions)
         else { return false }
         let haystack = item.name + " " + item.source
         let traitWords = item.traits.flatMap { $0.split(whereSeparator: \.isWhitespace) }

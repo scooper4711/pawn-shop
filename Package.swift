@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "PawnShopCore", targets: ["PawnShopCore"])
     ],
     dependencies: [
-        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "0.13.0")
+        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "0.15.0")
     ],
     targets: [
         .target(name: "PawnShopCore", dependencies: [.product(name: "ArtExtraction", package: "tabletop-kit")]),

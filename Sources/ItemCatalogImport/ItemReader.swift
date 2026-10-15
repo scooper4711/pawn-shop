@@ -23,54 +23,37 @@ public struct ItemReader {
         let system = document["system"]
         var item = CatalogItem(id: "\(game.rawValue)/\(document["_id"].string)", game: game, name: name,
                                level: system[path: "level.value"].int, kind: kind)
-        item.traits = traits(system["traits"])
-        let html = DescriptionCleaner(system: system).cleaned(system[path: "description.value"].string)
-        item.description = StatBlockText.plainText(text.convert(html))
+        item.traits = labels.traits(system["traits"])
+        item.description = text.plainDescription(of: system, values: .level(item.level))
         item.stats = ItemStatRows(system: system, game: game, labels: labels).rows(for: kind)
         item.source = system[path: "publication.title"].string
         return item
     }
 
-    /// The kind of an item type; a kit counts as gear.
+    /// The kind of an item type; a kit counts as gear, and anything else, such as a spell, is no item.
     static func kind(of type: String) -> ItemKind? {
-        type == "kit" ? .equipment : ItemKind(rawValue: type)
-    }
-
-    /// The rarity first when it isn't common, then the traits.
-    private func traits(_ traits: JSONValue) -> [String] {
-        let rarity = traits["rarity"].string
-        let rarityLabel = rarity.isEmpty || rarity == "common" ? [] : [ConfigLabels.titleCase(rarity)]
-        return rarityLabel + traits["value"].strings.map(labels.trait)
+        type == "kit" ? .equipment : ItemKind(rawValue: type).flatMap { ItemKind.itemKinds.contains($0) ? $0 : nil }
     }
 }
 
-/// Prepares an item's description HTML for conversion: tables are left out, since they repeat the stats or list
-/// variants the card has no room for, and formulas referring to the item's own data are worked out, so
-/// "1d4+@item.system.damage.dice" prints as "1d4+1".
-struct DescriptionCleaner {
-    /// References to the wielder, which a card can only describe.
-    static let actorReferences = [
-        "@actor.level": "your level",
-        "@actor.abilities.str.mod": "your Strength modifier"
-    ]
-
-    let system: JSONValue
-
-    func cleaned(_ html: String) -> String {
-        var text = html.replacingOccurrences(of: #"<table[\s\S]*?</table>"#, with: "",
-                                             options: [.regularExpression, .caseInsensitive])
-        for (reference, words) in Self.actorReferences {
-            text = text.replacingOccurrences(of: reference, with: words)
-        }
-        return resolvingItemReferences(in: text)
+/// Prepares a description's HTML for conversion: tables are left out, since they repeat the stats or list
+/// variants the card has no room for, and so are links into the effect packs ("Spell Effect: Acid Grip"), which
+/// only apply rules in Foundry.
+enum DescriptionCleaner {
+    static func cleaned(_ html: String) -> String {
+        let effectLink = #"@UUID\[Compendium\.[a-z0-9]+\.[a-z0-9-]*effects[a-z0-9-]*\.[^\]]*\](\{[^}]*\})?"#
+        return html
+            .replacingOccurrences(of: #"<table[\s\S]*?</table>"#, with: "",
+                                  options: [.regularExpression, .caseInsensitive])
+            .replacingOccurrences(of: effectLink, with: "", options: .regularExpression)
     }
+}
 
-    /// "@item.level" is the item's level; "@item.system.<path>" a value of its data.
-    private func resolvingItemReferences(in text: String) -> String {
-        text.replacing(/@item\.((?:system\.)?[A-Za-z.]+[A-Za-z])/) { match in
-            let path = String(match.output.1)
-            let value = path == "level" ? system[path: "level.value"] : system[path: String(path.dropFirst(7))]
-            return value.string.isEmpty ? String(match.output.0) : value.string
-        }
+extension RulesTextConverter {
+    /// A document's description as card text: cleaned, with its formulas worked out from `values` (Tabletop
+    /// Kit's R4.4), and back to plain text with `**bold**`, `*italic*`, `---` and the action glyphs.
+    mutating func plainDescription(of system: JSONValue, values: FormulaValues) -> String {
+        let html = DescriptionCleaner.cleaned(system[path: "description.value"].string)
+        return StatBlockText.plainText(convert(html, values: values)).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

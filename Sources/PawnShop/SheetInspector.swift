@@ -41,10 +41,15 @@ struct SheetInspector: View {
     }
 
     private var summary: String {
-        let cards = sheet.entries.filter { $0.itemID != nil }.reduce(0) { $0 + $1.count }
-        let pawns = sheet.copyCount - cards
+        let copies = sheet.entries.filter { $0.itemID != nil }.reduce(0) { $0 + $1.count }
+        let pawns = sheet.copyCount - copies
+        // Every card of each copy's set (R8.3.1).
+        let cards = sheet.entries.reduce(0) { total, entry in
+            let item = entry.itemID.flatMap(library.catalog.item(id:))
+            return total + (item.map { library.cardCount(for: $0) * entry.count } ?? 0)
+        }
         var parts = ["\(pawns) pawn\(pawns == 1 ? "" : "s")"]
-        if cards > 0 { parts.append("\(cards) item card\(cards == 1 ? "" : "s")") }
+        if cards > 0 { parts.append("\(cards) card\(cards == 1 ? "" : "s")") }
         return "\(parts.joined(separator: " and ")) on \(pageCount) page\(pageCount == 1 ? "" : "s")"
     }
 }
@@ -85,9 +90,16 @@ struct SheetEntryRow: View {
             }
             VStack(alignment: .leading) {
                 Text(item?.name ?? "Missing item").lineLimit(1)
-                Text(item.map { "Item card · level \($0.level)" } ?? "").font(.caption).foregroundStyle(.secondary)
+                Text(item.map(caption) ?? "").font(.caption).foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// "Spell card · rank 2 · 2 cards a copy" or "Item card · level 1".
+    private func caption(_ item: CatalogItem) -> String {
+        let cards = library.cardCount(for: item)
+        return [item.kind.isSpell ? "Spell card · rank \(item.level)" : "Item card · level \(item.level)",
+                cards > 1 ? "\(cards) cards a copy" : nil].compactMap { $0 }.joined(separator: " · ")
     }
 }
 
@@ -134,4 +146,5 @@ struct CutSettingsForm: View {
             return 0
         }, set: { settings.cutStyle = .gaps(CGFloat($0) * pointsPerInch) })
     }
+
 }

@@ -35,6 +35,13 @@ public struct ConfigLabels: Sendable {
         return text.lowercased()
     }
 
+    /// A document's traits as the books print them: the rarity first when it isn't common, then the traits.
+    public func traits(_ traits: JSONValue) -> [String] {
+        let rarity = traits["rarity"].string
+        let rarityLabel = rarity.isEmpty || rarity == "common" ? [] : [Self.titleCase(rarity)]
+        return rarityLabel + traits["value"].strings.map(trait)
+    }
+
     /// "Sword" for `sword`.
     public func weaponGroup(_ slug: String) -> String {
         label("PF2E.WeaponGroup" + Self.pascalCase(slug), slug: slug)

@@ -26,7 +26,8 @@ the app fit folded pawns, with a slightly curved slot that keeps them standing s
 A creature without a pawn, because it only appears as art in a scenario or a newer book, can have one too:
 make it from any picture, such as the art [Pluck](https://github.com/scooper4711/pluck) gets out of a
 scenario PDF. Pawn Shop also prints item cards to hand players with the potion, elixir or scroll they were
-given, so they remember to use it.
+given, so they remember to use it, and spell cards, so they remember what their spells do, whether they come from
+a scroll, a wand or their own repertoire.
 
 It is free and open source, and it works only with PDFs you bought: it contains no pawns or creature art of
 its own.
@@ -76,6 +77,12 @@ right.*
   name and level, traits, description with the action icons, a table of stats (Level, Price, Bulk, Usage and
   Uses, then a weapon's, armor's or shield's own) and the source book. The art of an item deck you imported
   shows faintly behind the text. Cards and pawns share sheets.
+- Spell cards for every Pathfinder and Starfinder spell, cantrip, focus spell and ritual, the same size: the
+  name and rank, traits, the stats as the books print them (Traditions, Cast, Range, Area, Targets, Defense,
+  Duration, and a ritual's cost, casters and checks), and the text with its Heightened entries. Damage is
+  worked out for the spell's rank, so Acid Grip reads "1d6 persistent acid damage".
+- All cards use the same text size, as Paizo's do. One that runs a little long is set slightly smaller; a long
+  item or spell continues on a second or third card, each marked "Card 1 of 2", and copies print whole sets.
 - Tells you when a new version is released, if you like: it checks when it opens (turn that off in Settings)
   and on Pawn Shop › Check for Updates….
 
@@ -131,6 +138,10 @@ After that it opens normally.
   menu picks the game, kind and level. Double-click an item, or set the copies and press Add to Sheet; Space
   shows the card large. Import item decks like any other PDF (from Scrollkeeper, or Import PDF…, where a deck
   sold as pictures is chosen as its folder) to add their art to the cards.
+- **Spell cards:** switch the library to Spells. The filter menu picks the game, kind (spells, cantrips, focus
+  spells, rituals), rank and tradition. Add them like items; a tile says when a spell takes more than one card,
+  and Space shows all of its cards. To save ink, turn off Settings › Item Cards › Print card backgrounds; cards
+  then print on white.
 - **Your own art:** Library › Add Custom Pawn… (⌥⌘N): choose, drop or paste an image, name it, pick a size,
   and drag the preview to place the art. The back is the front mirrored. To use a creature's art from a
   scenario or book PDF, open the PDF in [Pluck](https://github.com/scooper4711/pluck) and drag or copy the
@@ -217,8 +228,9 @@ from `/Applications/OpenSCAD-2021.01.app`; set `OPENSCAD` to use another copy). 
 
 Building needs Xcode 16 or later (Swift 6 toolchain). The app is ad-hoc signed.
 
-Item cards need `Generated/`, which `make items` builds and `make app` bundles; it is not in the repository.
-It reads the [pf2e system](https://github.com/foundryvtt/pf2e) from `~/git/pf2e` (`PF2E_REPO`) for the items,
+Item and spell cards need `Generated/`, which `make items` builds and `make app` bundles; it is not in the
+repository. It reads the [pf2e system](https://github.com/foundryvtt/pf2e) from `~/git/pf2e` (`PF2E_REPO`) for
+the items and spells,
 Paizo's Pathfinder-Icons font from the `Artwork` submodule (`ARTWORK`) for the action icons, and the Rexard UI packs from `~/git/rexard-packs` (`REXARD_PACKS`) for the cards'
 parchment, frames and panels, which may be used inside the app but not published. Without it the app builds
 and runs, and the Items list says how to get it. For the same reason, release disk images are built locally

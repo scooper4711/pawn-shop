@@ -1,14 +1,18 @@
 import CoreGraphics
 import Foundation
 
-/// An item's card as a sheet prints it: the item, and the art an item deck prints for it, if any.
+/// One of an item's cards as a sheet prints it: the item, the art an item deck prints for it, if any, and which
+/// card of its set (R8.3.1) this is.
 public struct ItemCardContent: Sendable {
     public let item: CatalogItem
     public let artwork: ItemArtwork?
+    /// Which card of the item's set, from 0.
+    public var card = 0
 
-    public init(item: CatalogItem, artwork: ItemArtwork?) {
+    public init(item: CatalogItem, artwork: ItemArtwork?, card: Int = 0) {
         self.item = item
         self.artwork = artwork
+        self.card = card
     }
 }
 
@@ -49,7 +53,12 @@ extension PawnRenderer {
         context.clip(to: rect)
         context.translateBy(x: rect.minX, y: rect.minY)
         context.scaleBy(x: rect.width / ItemCard.size.width, y: rect.height / ItemCard.size.height)
-        var painter = ItemCardPainter(item: card.item, style: cardStyle(for: card.item.game), context: context)
+        let pages = cardPages(for: card.item)
+        let index = min(max(card.card, 0), pages.count - 1)
+        var painter = ItemCardPainter(item: card.item, style: cardStyle(for: card.item.game), context: context,
+                                      page: pages[index])
+        painter.index = index
+        painter.count = pages.count
         painter.artOpacity = itemArtOpacity
         painter.paint { area in
             drawItemArt(card.artwork, in: area, context: context)
@@ -85,7 +94,25 @@ extension PawnRenderer {
         }
     }
 
+    /// How many cards the item's text takes (R8.3.1).
+    public func cardCount(for item: CatalogItem) -> Int { cardPages(for: item).count }
+
+    /// The item's cards, each with its part of the text; at least one.
+    func cardPages(for item: CatalogItem) -> [ItemCardPage] {
+        if let pages = cardPages[item.id] { return pages }
+        let laidOut = ItemCardLayout.cards(for: item, actionFont: storedStyle(for: item.game).actionFont)
+        let pages = laidOut.isEmpty ? [ItemCardPage(markup: "", size: ItemCardLayout.standardSize)] : laidOut
+        cardPages[item.id] = pages
+        return pages
+    }
+
+    /// The game's card style, plain when backgrounds aren't printed.
     private func cardStyle(for game: Game) -> ItemCardStyle {
+        let style = storedStyle(for: game)
+        return printsCardBackgrounds ? style : style.withoutBackground
+    }
+
+    private func storedStyle(for game: Game) -> ItemCardStyle {
         if let style = cardStyles[game] { return style }
         let style = ItemCardStyle.style(for: game, generated: generatedFolder)
         cardStyles[game] = style

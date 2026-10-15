@@ -16,16 +16,22 @@ import PawnShopCore
         try repository.addItem(Documents.item("Unarmed", type: "weapon", system: [:]), game: "sf2e",
                                folder: "virtual-items")
         try repository.addItem(Documents.item("Fire Effect", type: "effect", system: [:]))
+        try repository.addSpell(Documents.acidGrip)
+        try repository.addSpell(Documents.shieldCantrip, game: "sf2e")
     }
 
     @Test func writesEveryItemSortedWithItsLicensesAndReport() throws {
         let report = try ItemImporter(repository: repository.root, outputDirectory: output).run()
         #expect(report.itemCount == 5 && report.kinds[.weapon] == 2)
-        #expect(report.markdown.contains("5 items, 0 remaster renames."))
+        #expect(report.spellCount == 2 && report.kinds[.spell] == 1 && report.kinds[.cantrip] == 1)
+        #expect(report.markdown.contains("5 items, 2 spells, 0 remaster renames."))
+        #expect(report.markdown.contains("- Cantrips: 1"))
         let catalog = ItemCatalog(contentsOf: output.appendingPathComponent("Items/items.json"))
         #expect(catalog.items.map(\.name)
-                == ["Full Plate", "Healing Potion", "Longsword", "Steel Shield", "Laser Pistol"])
-        #expect(catalog.items.last?.id == "starfinder/LaserPistol" && catalog.items.last?.game == .starfinder)
+                == ["Full Plate", "Healing Potion", "Longsword", "Steel Shield", "Laser Pistol", "Acid Grip",
+                    "Shield"])
+        #expect(catalog.item(id: "starfinder/Shield")?.kind == .cantrip)
+        #expect(catalog.items[4].id == "starfinder/LaserPistol" && catalog.items[4].game == .starfinder)
         let licenses = output.appendingPathComponent("Items/Licenses")
         #expect(try FileManager.default.contentsOfDirectory(atPath: licenses.path).sorted()
                 == ["ORC License.md", "Open Game License.md"])

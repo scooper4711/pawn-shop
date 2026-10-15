@@ -143,13 +143,19 @@ Players forget the consumables they are given at the table; a printed card for e
   by name, trait and category, and filtered by game, kind (consumables by default) and level.
 - R8.2 An item is added to a sheet with a number of copies, as a pawn is; one sheet holds pawns and item cards
   together, and they are packed together (R4.5).
-- R8.3 An item prints as a single-sided card the size of Paizo's item decks (63 × 88 mm), cut like strips
+- R8.3 An item prints as single-sided cards the size of Paizo's item decks (63 × 88 mm), cut like strips
   (R4.6) and with no fold line. Top to bottom: the name with "ITEM n", the traits (rarity first when it isn't
-  common), the description, with Paizo's action icons for actions, shrunk to fit and then cut short with "…",
-  a table of stats in a set order, and
-  the source book. The stats are Level, Price, Bulk, Usage and Uses, then for weapons Damage, Hands, Range,
-  Reload (left out when there is none) and Group, for armor AC, Dex Cap, Strength, Check and Speed, and for shields Hardness, HP and BT;
-  empty ones are left out.
+  common), the description, with Paizo's action icons for actions, a table of stats in a set order, and the
+  source book. The stats are Level, Price, Bulk, Usage and Uses, then for weapons Damage, Hands, Range, Reload
+  (left out when there is none) and Group, for armor AC, Dex Cap, Strength, Check and Speed, and for shields
+  Hardness, HP and BT; empty ones are left out.
+- R8.3.1 Every card's text is the same size, 7 points, close to Paizo's cards. Text that overruns its card by about
+  a line is set a little smaller instead, down to 6.25 points, for that item's cards. Text that is longer still
+  continues on a second card, or a third: the first card has the traits, stats and art, and every card the title
+  and the text. Cards break between paragraphs, moving a paragraph whole to the next card unless that would leave
+  much of the card empty, and otherwise between lines; a Heightened entry is never split. Each card of a set
+  says "Card 1 of 3" after the source. Copies are of whole sets: two copies of a three-card spell are six cards,
+  each set together.
 - R8.4 The card's background is UI art from the Rexard packs (parchment in a frame for Pathfinder, a sci-fi
   panel for Starfinder), so cards use no Paizo art when the user owns no item deck. Without that art, cards are
   drawn on white with a gray frame.
@@ -162,3 +168,22 @@ Players forget the consumables they are given at the table; a printed card for e
   repository and the Rexard packs into `Generated/`, which is not committed, and bundled into the app; without
   it the Items list says how to build it. The item text is used under the ORC and OGL licenses, whose notices
   ship with it.
+- R8.7 Settings › Item Cards has "Print card backgrounds", on by default. Off, item and spell cards print on
+  white with a gray frame and a plain title bar, without the Rexard parchment, panel, ribbon and frame, to save
+  ink; the art behind the text (R8.5) is unaffected.
+
+## R9 Spell cards
+Players forget what their spells do, and scrolls and wands carry spells too; a card for each spell is a
+reminder at the table, whatever holds the spell.
+- R9.1 The library pane's switch is Pawns | Items | Spells. Spells lists every Pathfinder and Starfinder spell,
+  cantrip, focus spell and ritual from the pf2e system's spell packs, searchable by name, trait and book, and
+  filtered by game, kind, rank and tradition.
+- R9.2 A spell is added to a sheet with a number of copies, like an item, and prints as item cards do (R8.3.1,
+  R8.4, R8.7), with "SPELL n", "CANTRIP n", "FOCUS n" or "RITUAL n" by the name. Under the traits come its
+  stats as the books print them: Traditions, Cast (with the action icons), Range, Area, Targets, Defense and
+  Duration ("sustained up to 1 minute"), with Cost and Requirements when it has them (a reaction's Trigger opens
+  its text, as pf2e keeps it), and for a ritual Secondary Casters, Primary Check and Secondary Checks; empty ones
+  are left out. Then the text, with its
+  Heightened entries, and the source book.
+- R9.3 A spell prints at its own rank: formulas on its rank are worked out ("1d6", not
+  "floor(@item.level/2)d6"), and links that only apply effects in Foundry are left out.
