@@ -32,7 +32,7 @@ struct ItemStatRows {
         case .weapon: weapon()
         case .armor: armor()
         case .shield: shield()
-        case .consumable, .ammo, .equipment, .treasure, .backpack: []
+        default: []
         }
     }
 
