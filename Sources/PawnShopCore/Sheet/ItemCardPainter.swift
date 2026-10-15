@@ -8,6 +8,9 @@ public enum ItemCard {
     /// How opaque the item's art is behind the text unless the user chooses otherwise: visible, yet faint enough
     /// to read over.
     public static let defaultArtOpacity: CGFloat = 0.4
+    /// How small a card's text may be set unless the user chooses otherwise, and the choices (R8.3.1).
+    public static var defaultSmallestTextSize: CGFloat { ItemCardLayout.defaultSmallestSize }
+    public static var smallestTextSizes: ClosedRange<CGFloat> { ItemCardLayout.smallestSizes }
 }
 
 /// Draws one card of an item's set in card coordinates (`ItemCard.size`, origin at the bottom left): the

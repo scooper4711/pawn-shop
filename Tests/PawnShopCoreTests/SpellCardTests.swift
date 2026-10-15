@@ -76,6 +76,19 @@ import ArtExtractionTestSupport
         #expect(pixel(of: image, x: image.width / 2, y: image.height - 80).prefix(3) == [255, 255, 255])
     }
 
+    @Test func aSmallerSmallestSizeLaysCardsOutAgain() throws {
+        let library = try PawnLibrary(folder: temporaryFolder())
+        let renderer = PawnRenderer(library: library)
+        renderer.generatedFolder = nil
+        let spell = longSpell()
+        #expect(renderer.smallestCardTextSize == ItemCard.defaultSmallestTextSize)
+        let roomy = renderer.cardPages(for: spell)
+        renderer.smallestCardTextSize = 5.5
+        let tight = renderer.cardPages(for: spell)
+        #expect(tight.count <= roomy.count && tight.allSatisfy { $0.size >= 5.5 })
+        #expect(renderer.cardPages[spell.id] == tight)
+    }
+
     @Test func aCardOutsideTheSetDrawsTheLastOne() throws {
         let library = try PawnLibrary(folder: temporaryFolder())
         let renderer = PawnRenderer(library: library)

@@ -13,14 +13,26 @@ public struct ItemCardPage: Hashable, Sendable {
 /// smaller when that is all it takes, or else continued over more cards.
 enum ItemCardLayout {
     static let standardSize: CGFloat = 7
-    /// Sizes to try, after the standard one, for text that nearly fits.
-    static let smallerSizes: [CGFloat] = [6.75, 6.5, 6.25]
+    /// How far text may shrink unless the user chooses otherwise.
+    static let defaultSmallestSize: CGFloat = 6.25
+    /// The smallest sizes a user may choose.
+    static let smallestSizes: ClosedRange<CGFloat> = 5.5...6.5
+    static let sizeStep: CGFloat = 0.25
+
+    /// Sizes to try, after the standard one, for text that nearly fits: a quarter point at a time down to
+    /// `smallest`.
+    static func smallerSizes(downTo smallest: CGFloat) -> [CGFloat] {
+        let floor = min(max(smallest, smallestSizes.lowerBound), standardSize)
+        return Array(stride(from: standardSize - sizeStep, through: floor, by: -sizeStep))
+    }
     /// A paragraph that doesn't fit moves whole to the next card unless more of the card than this would stay
     /// empty; then it is split between lines.
     static let emptyShareToSplit: CGFloat = 1.0 / 3
 
-    /// The item's cards, in order.
-    static func cards(for item: CatalogItem, actionFont: CTFontDescriptor?) -> [ItemCardPage] {
+    /// The item's cards, in order, with text no smaller than `smallestSize`.
+    static func cards(for item: CatalogItem, actionFont: CTFontDescriptor?,
+                      smallestSize: CGFloat = defaultSmallestSize) -> [ItemCardPage] {
+        let smallerSizes = smallerSizes(downTo: smallestSize)
         let geometry = ItemCardGeometry(item: item, actionFont: actionFont)
         let pager = CardPager(first: geometry.textRect(isFirstCard: true),
                               next: geometry.textRect(isFirstCard: false), actionFont: actionFont)

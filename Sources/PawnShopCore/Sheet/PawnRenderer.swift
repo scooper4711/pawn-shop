@@ -44,6 +44,10 @@ public final class PawnRenderer {
     public var itemArtOpacity = ItemCard.defaultArtOpacity
     /// Whether cards print on their Rexard backgrounds, or plainly to save ink (R8.7).
     public var printsCardBackgrounds = true
+    /// How small a card's text may be set to save a card (R8.3.1).
+    public var smallestCardTextSize = ItemCard.defaultSmallestTextSize {
+        didSet { if smallestCardTextSize != oldValue { cardPages.removeAll() } }
+    }
     /// Each game's card style, read from `generatedFolder` once.
     var cardStyles: [Game: ItemCardStyle] = [:]
     /// Each item's cards, laid out once.

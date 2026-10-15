@@ -100,7 +100,8 @@ extension PawnRenderer {
     /// The item's cards, each with its part of the text; at least one.
     func cardPages(for item: CatalogItem) -> [ItemCardPage] {
         if let pages = cardPages[item.id] { return pages }
-        let laidOut = ItemCardLayout.cards(for: item, actionFont: storedStyle(for: item.game).actionFont)
+        let laidOut = ItemCardLayout.cards(for: item, actionFont: storedStyle(for: item.game).actionFont,
+                                           smallestSize: smallestCardTextSize)
         let pages = laidOut.isEmpty ? [ItemCardPage(markup: "", size: ItemCardLayout.standardSize)] : laidOut
         cardPages[item.id] = pages
         return pages

@@ -27,13 +27,24 @@ import Testing
         let pager = CardPager(first: ItemCardGeometry(item: item).textRect(isFirstCard: true),
                               next: ItemCardGeometry(item: item).textRect(isFirstCard: false), actionFont: nil)
         // The most words that fit a little smaller, which can't all fit at the standard size.
-        let smaller = ItemCardLayout.smallerSizes[1]
+        let smaller = ItemCardLayout.smallerSizes(downTo: 6.25)[1]
         let count = try #require((1...1000).last { pager.fits([words($0)], isFirstCard: true, size: smaller) })
         #expect(count < 1000)
         #expect(!pager.fits([words(count)], isFirstCard: true, size: ItemCardLayout.standardSize))
         let cards = ItemCardLayout.cards(for: spell(words(count)), actionFont: nil)
         #expect(cards.count == 1 && cards[0].size < ItemCardLayout.standardSize
-            && cards[0].size >= ItemCardLayout.smallerSizes.last!)
+            && cards[0].size >= ItemCardLayout.defaultSmallestSize)
+    }
+
+    @Test func shrinksQuarterPointsDownToTheChosenSmallestSize() {
+        #expect(ItemCardLayout.smallerSizes(downTo: 6.25) == [6.75, 6.5, 6.25])
+        #expect(ItemCardLayout.smallerSizes(downTo: 5.5).last == 5.5)
+        #expect(ItemCardLayout.smallerSizes(downTo: 2).last == 5.5)
+        #expect(ItemCardLayout.smallerSizes(downTo: 9).isEmpty)
+        let text = (1...12).map { "**Part \($0)** " + words(30) }.joined(separator: "\n")
+        let roomy = ItemCardLayout.cards(for: spell(text), actionFont: nil, smallestSize: 6.5)
+        let tight = ItemCardLayout.cards(for: spell(text), actionFont: nil, smallestSize: 5.5)
+        #expect(tight.count <= roomy.count && tight.allSatisfy { $0.size >= 5.5 })
     }
 
     @Test func longTextContinuesOnMoreCardsAndKeepsEveryWord() {

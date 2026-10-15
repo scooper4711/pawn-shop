@@ -141,7 +141,8 @@ After that it opens normally.
 - **Spell cards:** switch the library to Spells. The filter menu picks the game, kind (spells, cantrips, focus
   spells, rituals), rank and tradition. Add them like items; a tile says when a spell takes more than one card,
   and Space shows all of its cards. To save ink, turn off Settings › Item Cards › Print card backgrounds; cards
-  then print on white.
+  then print on white. Smallest text size, in the same place, sets how far text may shrink to save a card
+  (6.25 pt unless changed; 5.5 pt fits most spells on one card).
 - **Your own art:** Library › Add Custom Pawn… (⌥⌘N): choose, drop or paste an image, name it, pick a size,
   and drag the preview to place the art. The back is the front mirrored. To use a creature's art from a
   scenario or book PDF, open the PDF in [Pluck](https://github.com/scooper4711/pluck) and drag or copy the

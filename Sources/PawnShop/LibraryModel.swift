@@ -73,7 +73,11 @@ final class LibraryModel {
     func searchItems(_ query: ItemQuery) -> [CatalogItem] { catalog.search(query) }
 
     /// How many cards the item's or spell's text takes (R8.3.1).
-    func cardCount(for item: CatalogItem) -> Int { renderer?.cardCount(for: item) ?? 1 }
+    func cardCount(for item: CatalogItem) -> Int {
+        guard let renderer else { return 1 }
+        ItemCardPreferences.apply(to: renderer)
+        return renderer.cardCount(for: item)
+    }
 
     /// An item's card, with the art an imported item deck prints for it.
     func card(for item: CatalogItem) -> ItemCardContent {
