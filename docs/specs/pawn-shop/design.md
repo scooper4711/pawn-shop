@@ -91,7 +91,7 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 
 ## Items (`PawnShopCore/Items`, `ItemImport`)
 - `scripts/import-items.sh` (`make items`) fills the git-ignored `Generated/` from `PF2E_REPO` (default
-  `~/git/pf2e`) and `REXARD_PACKS` (default `~/git/rexard-packs`): Tabletop Kit's `CardArtImport` copies the
+  the release in `pf2e.release`, fetched into `build/pf2e` by `scripts/fetch-pf2e.sh`, as Field Guide does) and `REXARD_PACKS` (default `~/git/rexard-packs`): Tabletop Kit's `CardArtImport` copies the
   card pieces (`CardArtPieces.manifest`) to `Generated/CardArt`, the action icon font is copied to
   `Generated/Fonts`, and the `ItemImport` executable writes
   `Generated/Items/items.json`, an import report and the ORC and OGL licenses (`Items/Licenses`).
@@ -211,9 +211,11 @@ shapes so the pawn and the hat still read at 32 px.
   scripts) and `coverage.sh` (fails below 80% line or region coverage
   of `PawnShopCore`, and writes `coverage/sonar-coverage.xml`).
 - GitHub Actions: `ci.yml` lints strictly, runs the coverage gate (tests reading Paizo's PDFs are skipped, as
-  the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` tests each
-  pushed `v*` tag. The disk image needs `Generated/`, which can't be published, so `release-dmg.sh` (`make
-  release-dmg`) builds it on a Mac that has it, for the tag at HEAD, and attaches it to the tag's release.
+  the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds each
+  pushed `v*` tag: it fetches the private `Artwork` submodule, imports the items with
+  `REXARD_PACKS=Artwork/rexard`, tests, builds the universal app and attaches its disk image to the tag's
+  release. Run by hand it keeps the image as a workflow artifact. `release-dmg.sh` (`make release-dmg`) does
+  the same on a Mac, for the tag at HEAD, should the GitHub build fail.
 - `coverage.sh` measures every test bundle (newer toolchains build one per test target) and gates
   `PawnShopCore` and `ItemCatalogImport` together.
 - Updates (`PawnShopCore/Updates`): `AppUpdater` asks GitHub's `releases/latest` for the repository, compares

@@ -1,19 +1,26 @@
 name: Release
 
-# Tests each pushed version tag. The disk image is built and attached on a Mac
-# with Generated/ (make items, then make release-dmg), since the item list and
-# the Rexard art it holds are built from local copies that can't be published.
+# Builds the app and attaches a disk image to the GitHub release for a version tag, creating a draft release if
+# none exists yet. Run by hand, it builds the branch and keeps the disk image as a workflow artifact instead, to
+# try the build without releasing. The items come from the pf2e release in pf2e.release, and the cards' art and
+# action icon font from the private Artwork submodule, as a local "REXARD_PACKS=Artwork/rexard make items" does.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  test:
-    name: Test the release
+  dmg:
+    name: Build and attach the disk image
     runs-on: macos-26
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+      # False for a trial build of a branch, run by hand.
+      RELEASING: ${{ startsWith(github.ref, 'refs/tags/') }}
     steps:
       - uses: actions/checkout@v7
 
@@ -21,14 +28,41 @@ jobs:
         env:
           ARTWORK_SSH_KEY: ${{ secrets.ARTWORK_SSH_KEY }}
         run: |
-          if [ -z "$ARTWORK_SSH_KEY" ]; then
-            echo "ARTWORK_SSH_KEY is not set; skipping the private Artwork submodule."
-            exit 0
-          fi
           printf '%s\n' "$ARTWORK_SSH_KEY" > "$RUNNER_TEMP/artwork_key"
           chmod 600 "$RUNNER_TEMP/artwork_key"
           GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/artwork_key -o IdentitiesOnly=yes" \
             git submodule update --init --depth 1 Artwork
 
+      - name: Derive the version from the tag
+        if: env.RELEASING == 'true'
+        run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+
+      - name: Import the items and the cards' art
+        run: REXARD_PACKS=Artwork/rexard scripts/import-items.sh
+
       - name: Test
         run: scripts/coverage.sh
+
+      - name: Build the universal app
+        run: UNIVERSAL=1 scripts/build-app.sh
+
+      - name: Make the disk image
+        run: scripts/make-dmg.sh
+
+      - name: Keep the disk image of a trial build
+        if: env.RELEASING != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: disk-image
+          path: build/Pawn-Shop-*.dmg
+
+      - name: Attach the disk image to the release
+        if: env.RELEASING == 'true'
+        run: |
+          # A release made for a pushed tag normally appears right after the push; give it a moment.
+          for _ in 1 2 3 4 5 6; do
+            gh release view "$TAG" >/dev/null 2>&1 && break
+            sleep 10
+          done
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --draft --title "$TAG" --generate-notes
+          gh release upload "$TAG" "build/Pawn-Shop-$VERSION.dmg" --clobber
