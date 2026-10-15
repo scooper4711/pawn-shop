@@ -47,7 +47,9 @@ import PawnShopCore
         #expect(laser.stats.first { $0.label == "Price" }?.value == "6,500 credits for 10")
         #expect(laser.stats.map(\.label).suffix(4) == ["Damage", "Hands", "Range", "Reload"])
         #expect(laser.stats.suffix(4).map(\.value) == ["2d6 fire", "2", "60 ft.", "1"])
-        #expect(laser.description == "Deals 1d4+2 at 1, plus your level.")
+        // Weapon dice change with runes, so they are named; the level is the item's; a label wins.
+        #expect(laser.description
+            == "Deals 1d4 + the number of weapon damage dice fire and 1d6 cold, plus your level in fire damage.")
     }
 
     @Test func skipsDocumentsThatArentItemsAndCountsKitsAsGear() throws {

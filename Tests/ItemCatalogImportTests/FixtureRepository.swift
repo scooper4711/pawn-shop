@@ -26,6 +26,13 @@ struct FixtureRepository {
         try write(String(bytes: data, encoding: .utf8) ?? "", to: path)
     }
 
+    /// Writes a spell document into a game's spell pack.
+    func addSpell(_ document: [String: Any], game: String = "pf2e") throws {
+        let name = (document["name"] as? String ?? "spell").lowercased().replacingOccurrences(of: " ", with: "-")
+        let data = try JSONSerialization.data(withJSONObject: document)
+        try write(String(bytes: data, encoding: .utf8) ?? "", to: "packs/\(game)/spells/\(name).json")
+    }
+
     func write(_ text: String, to path: String) throws {
         let url = root.appendingPathComponent(path)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -81,6 +88,38 @@ enum Documents {
     static var laser: [String: Any] { item("Laser Pistol", type: "weapon", system: [
         "price": ["value": ["sp": 6500], "per": 10], "usage": ["value": "held-in-two-hands"], "range": 60,
         "reload": ["value": "1"], "damage": ["dice": 2, "die": "d6", "damageType": "fire"],
-        "description": ["value": "<p>Deals 1d4+@item.system.damage.dice at @item.level, plus @actor.level.</p>"]
+        "description": ["value": "<p>Deals @Damage[(1d4+@item.system.damage.dice)[fire]] and "
+            + "@Damage[(@item.level)d6[cold]], plus @Damage[(@actor.level)[fire]]{your level in fire damage}.</p>"]
+    ]) }
+
+    static func spell(_ name: String, system: [String: Any]) -> [String: Any] {
+        var base: [String: Any] = [
+            "level": ["value": 2], "time": ["value": "2"], "range": ["value": "120 feet"], "area": NSNull(),
+            "target": ["value": "1 creature"], "duration": ["sustained": false, "value": ""],
+            "defense": ["save": ["basic": true, "statistic": "reflex"]], "cost": ["value": ""], "requirements": "",
+            "traits": ["rarity": "common", "traditions": ["arcane", "primal"], "value": ["acid", "concentrate"]],
+            "description": ["value": "<p>Text.</p>"], "publication": ["title": "Pathfinder Player Core"]
+        ]
+        base.merge(system) { _, new in new }
+        return ["_id": name.filter(\.isLetter), "name": name, "type": "spell", "system": base]
+    }
+
+    static var acidGrip: [String: Any] { spell("Acid Grip", system: [
+        "description": ["value": "<p>The target takes 2d8 acid damage plus "
+            + "@Damage[floor(@item.level/2)d6[persistent,acid]] damage. "
+            + "@UUID[Compendium.pf2e.spell-effects.Item.Spell Effect: Acid Grip]</p><hr />"
+            + "<p><strong>Heightened (+2)</strong> The damage increases by 2d8.</p>"]
+    ]) }
+
+    static var animateDead: [String: Any] { spell("Animate Dead", system: [
+        "level": ["value": 1], "time": ["value": "1 day"], "defense": NSNull(), "cost": ["value": "black onyx"],
+        "ritual": ["primary": ["check": "Religion (expert)"], "secondary": ["casters": 2, "checks": "Arcana"]],
+        "duration": ["sustained": true, "value": "1 minute"],
+        "traits": ["rarity": "uncommon", "traditions": [], "value": ["concentrate"]]
+    ]) }
+
+    static var shieldCantrip: [String: Any] { spell("Shield", system: [
+        "level": ["value": 1], "time": ["value": "1 or 2"], "defense": NSNull(),
+        "traits": ["rarity": "common", "traditions": ["arcane", "divine"], "value": ["cantrip", "focus"]]
     ]) }
 }
