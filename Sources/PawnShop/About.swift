@@ -1,9 +1,16 @@
 import AppNotices
 import Foundation
+import PawnShopCore
 
 extension AboutInfo {
-    /// Pawn Shop's About panel. The credits match the README's License section.
-    static let pawnShop = AboutInfo(
+    /// Pawn Shop's About panel, with the licenses `make items` copied into `Generated/Items/Licenses`.
+    static var pawnShop: AboutInfo {
+        guard let generated = GeneratedResources.folder else { return pawnShopNotices }
+        return pawnShopNotices.licensed(by: generated.appendingPathComponent("Items/Licenses"))
+    }
+
+    /// The notices and credits, which match the README's License section.
+    private static let pawnShopNotices = AboutInfo(
         appName: "Pawn Shop",
         tagline: "An unofficial, free app that prints just the pawns you need from your pawn PDFs.",
         credits: [
