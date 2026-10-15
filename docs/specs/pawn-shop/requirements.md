@@ -149,8 +149,8 @@ Players forget the consumables they are given at the table; a printed card for e
   source book. The stats are Level, Price, Bulk, Usage and Uses, then for weapons Damage, Hands, Range, Reload
   (left out when there is none) and Group, for armor AC, Dex Cap, Strength, Check and Speed, and for shields
   Hardness, HP and BT; empty ones are left out.
-- R8.3.1 Every card's text is the same size, 8 points, as on Paizo's cards. Text that overruns its card by about a
-  line is set a little smaller instead, down to 7.25 points, for that item's cards. Text that is longer still
+- R8.3.1 Every card's text is the same size, 7 points, close to Paizo's cards. Text that overruns its card by about
+  a line is set a little smaller instead, down to 6.25 points, for that item's cards. Text that is longer still
   continues on a second card, or a third: the first card has the traits, stats and art, and every card the title
   and the text. Cards break between paragraphs, moving a paragraph whole to the next card unless that would leave
   much of the card empty, and otherwise between lines; a Heightened entry is never split. Each card of a set
@@ -181,8 +181,9 @@ reminder at the table, whatever holds the spell.
 - R9.2 A spell is added to a sheet with a number of copies, like an item, and prints as item cards do (R8.3.1,
   R8.4, R8.7), with "SPELL n", "CANTRIP n", "FOCUS n" or "RITUAL n" by the name. Under the traits come its
   stats as the books print them: Traditions, Cast (with the action icons), Range, Area, Targets, Defense and
-  Duration ("sustained up to 1 minute"), with Trigger, Requirements and Cost when it has them, and for a ritual
-  Primary Check, Secondary Checks and Secondary Casters; empty ones are left out. Then the text, with its
+  Duration ("sustained up to 1 minute"), with Cost and Requirements when it has them (a reaction's Trigger opens
+  its text, as pf2e keeps it), and for a ritual Secondary Casters, Primary Check and Secondary Checks; empty ones
+  are left out. Then the text, with its
   Heightened entries, and the source book.
 - R9.3 A spell prints at its own rank: formulas on its rank are worked out ("1d6", not
   "floor(@item.level/2)d6"), and links that only apply effects in Foundry are left out.

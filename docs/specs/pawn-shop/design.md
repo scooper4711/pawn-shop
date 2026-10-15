@@ -144,7 +144,7 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   with a gray frame.
 - Card sets (R8.3.1): `ItemCardLayout.cards(for:style:)` splits an item's text into `ItemCardPage`s (markup and
   text size) using the text areas `ItemCardGeometry` measures for a first card and a continuation card. It tries
-  8 pt, then one card at 7.75 to 7.25 pt, then pages at 8 pt, then at 7.75 to 7.25 pt when that saves a card.
+  7 pt, then one card at 6.75 to 6.25 pt, then pages at 7 pt, then at 6.75 to 6.25 pt when that saves a card.
   Paging takes whole paragraphs (a `---` rule is dropped at a break) and moves one to the next card unless more
   than a third of the card would stay empty; then, and for a paragraph longer than a card, it breaks between
   lines. A `**Heightened` paragraph always moves whole. `PawnRenderer` keeps each item's pages.
