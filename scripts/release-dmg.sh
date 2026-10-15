@@ -1,7 +1,7 @@
 #!/bin/sh
 # Builds the universal disk image for the version tag at HEAD and attaches it to that tag's GitHub release,
-# creating a draft release if there is none. It runs here rather than on GitHub because the app bundles
-# Generated/ (make items), which is built from local copies of the pf2e repository and the Rexard packs.
+# creating a draft release if there is none. GitHub's release workflow does this for every tag; this is the
+# fallback should that build fail. It needs Generated/ (make items).
 set -eu
 
 cd "$(dirname "$0")/.."

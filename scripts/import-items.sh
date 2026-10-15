@@ -5,14 +5,20 @@
 # text is used under the ORC and OGL licenses (copied alongside it), the Rexard art only inside the app, and the
 # font under the Paizo Compatibility License, which forbids altering or redistributing it.
 #
-# PF2E_REPO     the pf2e system repository (default ~/git/pf2e)
+# PF2E_REPO     a pf2e system repository to read instead of the release in pf2e.release, which is fetched
+#               into build/pf2e (scripts/fetch-pf2e.sh); release builds always use that release
 # ARTWORK       the toolkit-artwork checkout (default the Artwork submodule)
 # REXARD_PACKS  the folder holding the user's Rexard UI packs (default ~/git/rexard-packs)
 set -eu
 
 cd "$(dirname "$0")/.."
 
-PF2E_REPO="${PF2E_REPO:-$HOME/git/pf2e}"
+if [ -z "${PF2E_REPO:-}" ]; then
+    scripts/fetch-pf2e.sh build/pf2e
+    PF2E_REPO=build/pf2e
+else
+    echo "Reading $PF2E_REPO; release builds read $(cut -d ' ' -f 2- pf2e.release) instead." >&2
+fi
 REXARD_PACKS="${REXARD_PACKS:-$HOME/git/rexard-packs}"
 ARTWORK="${ARTWORK:-Artwork}"
 

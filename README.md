@@ -220,7 +220,7 @@ make lint     # runs SwiftLint
 make coverage # runs the tests and enforces the coverage threshold
 make items    # builds Generated/: the item list and the item cards' art
 make dmg      # packages the app into a disk image
-make release-dmg # builds the disk image for the tagged version and attaches it to its release
+make release-dmg # builds the tagged version's disk image here and attaches it, if GitHub's build fails
 make icon     # redraws Resources/AppIcon.icns
 ```
 
@@ -230,12 +230,12 @@ from `/Applications/OpenSCAD-2021.01.app`; set `OPENSCAD` to use another copy). 
 Building needs Xcode 16 or later (Swift 6 toolchain). The app is ad-hoc signed.
 
 Item and spell cards need `Generated/`, which `make items` builds and `make app` bundles; it is not in the
-repository. It reads the [pf2e system](https://github.com/foundryvtt/pf2e) from `~/git/pf2e` (`PF2E_REPO`) for
-the items and spells,
+repository. It reads the [pf2e system](https://github.com/foundryvtt/pf2e) release named in `pf2e.release`, fetched into
+`build/pf2e` (or a checkout of your own in `PF2E_REPO`), for the items and spells,
 Paizo's Pathfinder-Icons font from the `Artwork` submodule (`ARTWORK`) for the action icons, and the Rexard UI packs from `~/git/rexard-packs` (`REXARD_PACKS`) for the cards'
 parchment, frames and panels, which may be used inside the app but not published. Without it the app builds
-and runs, and the Items list says how to get it. For the same reason, release disk images are built locally
-with `make release-dmg`; GitHub only tests the tag. `PAWN_SHOP_GENERATED` points a build run from the command
+and runs, and the Items list says how to get it. Release disk images are built on GitHub from the private
+`toolkit-artwork` repository instead (`REXARD_PACKS=Artwork/rexard make items` does the same here). `PAWN_SHOP_GENERATED` points a build run from the command
 line at a `Generated` folder.
 
 Tests that read real pawn PDFs use `TestData/`, which is not committed because the PDFs are copyrighted.
