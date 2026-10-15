@@ -13,7 +13,7 @@ lint:
 coverage:
 	scripts/coverage.sh
 
-# Builds Generated/ (the item catalog and the item cards' art) from ~/git/pf2e and ~/git/rexard-packs.
+# Builds Generated/ (the item catalog and the item cards' art) from pf2e.release and the Rexard packs.
 items:
 	scripts/import-items.sh
 
