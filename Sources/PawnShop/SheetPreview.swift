@@ -12,11 +12,14 @@ struct SheetPreview: View {
         Group {
             if sheet.entries.isEmpty {
                 ContentUnavailableView("Empty Sheet", systemImage: "doc",
-                                       description: Text("Double-click pawns in the library to add them."))
+                                       description: Text("Double-click or drag pawns in the library to add them."))
             } else {
                 pages(layout)
             }
         }
+        // The whole pane, empty or not, takes the library's drags.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
         .focusable()
         .focusEffectDisabled()
         .onDeleteCommand {
