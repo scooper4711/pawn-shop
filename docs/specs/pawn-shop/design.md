@@ -165,10 +165,12 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   size and art, so a pawn given sharper art is drawn again) and preview pages on one background queue with its
   own `PawnRenderer`.
 - Window: `LibraryBrowser` (search field, filter menu for size, game, product and custom; a lazy grid of
-  tiles with name, size and short product title; a click selects at once (the double-click is a simultaneous gesture, so no click waits for it); double-click adds the chosen number of copies; a drag carries the selection (`DraggedContent`) to the sheet preview, which adds one copy of each; context menu
+  tiles with name, size and short product title; a click selects at once (the double-click is a simultaneous gesture, so no click waits for it); double-click adds the chosen number of copies; a drag carries the selection (`DraggedContent`) with the add bar's copies to the sheet preview, which adds that many of each; context menu
   adds 1–6, renames or removes), `SheetPreview` (pages from `SheetExporter.layout()`, each rendered in the
   background; click a strip to select its pawn, Delete removes one copy), and `SheetInspector` (entries with
-  steppers, cut style, gap and fold line, and the page count). PDFs dropped on the window are imported.
+  steppers, cut style, gap and fold line, and the page count). PDFs dropped on the window are imported; that drop
+  takes only file URLs, so the library's drags reach the sheet preview, which takes them over its whole area,
+  empty or not.
 - Menus: Library ▸ Import PDF… (⇧⌘I) and Import from Scrollkeeper; File ▸ Page Setup… (⇧⌘P), Export PDF… (⌘E)
   and Print… (⌘P), routed to the frontmost window through a focused scene value (`SheetActions`).
 - `SheetOutput`: Page Setup stores the chosen paper size and imageable area in the sheet. Export and Print

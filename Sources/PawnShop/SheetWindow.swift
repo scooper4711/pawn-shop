@@ -42,7 +42,7 @@ struct SheetWindow: View {
         } detail: {
             SheetPreview(sheet: $document.sheet, selectedEntry: $selectedEntry)
                 .dropDestination(for: DraggedContent.self) { dropped, _ in
-                    dropped.forEach { document.sheet.add($0.contents) }
+                    dropped.forEach { document.sheet.add($0.contents, copies: $0.copies) }
                     return !dropped.isEmpty
                 }
                 .inspector(isPresented: $showsInspector) {
@@ -79,10 +79,14 @@ struct SheetWindow: View {
         .sheet(isPresented: $addingCustomPawn) {
             AddCustomPawnView { document.sheet.add($0.id) }
         }
-        .dropDestination(for: URL.self) { urls, _ in
-            let files = urls.filter(PawnLibrary.isImportable)
-            library.importPDFs(files)
-            return !files.isEmpty
+        // Only file URLs: a dropDestination for URL would also take the library's drags, as a URL made from their
+        // data, before the sheet preview could.
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            DroppedFiles.load(from: providers) { urls in
+                let files = urls.filter(PawnLibrary.isImportable)
+                if !files.isEmpty { library.importPDFs(files) }
+            }
+            return true
         }
         .alert("Import Finished", isPresented: summaryShown) {
             Button("OK") { library.importSummary = nil }

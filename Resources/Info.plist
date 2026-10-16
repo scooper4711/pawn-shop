@@ -62,7 +62,7 @@
         </dict>
         <dict>
             <key>UTTypeIdentifier</key>
-            <string>com.github.scooper4711.sheetcontent</string>
+            <string>com.github.scooper4711.PawnShop.sheet-content</string>
             <key>UTTypeDescription</key>
             <string>Pawn Shop Library Selection</string>
             <key>UTTypeConformsTo</key>

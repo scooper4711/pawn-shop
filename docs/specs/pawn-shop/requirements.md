@@ -82,7 +82,7 @@ is cut out and folded at the heads, giving a two-ply pawn.
   traits and tags. The arrow keys move the selection and the preview with it; Space, Escape or a click outside
   closes it.
 - R2.10 Clicking a tile selects it immediately. Dragging a tile, or the selection when the tile is part of it,
-  from the library onto the sheet adds one copy of each; this holds for pawns, items and spells.
+  from the library onto the sheet adds the add bar's number of copies of each, as a double-click does; this holds for pawns, items and spells.
 - R2.9 Tagging can be turned off and on again in Settings; it is on by default. Turning it off stops tagging
   after the pawn in hand and keeps it from starting at launch, after imports or from Library ▸ Tag New Pawns;
   turning it back on resumes it. Settings shows how many of the library's pawns are tagged and how many are

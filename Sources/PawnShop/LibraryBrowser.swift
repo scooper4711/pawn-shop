@@ -157,10 +157,11 @@ struct LibraryBrowser: View {
         }
     }
 
-    /// A click selects one pawn; Command-click adds or removes it from the selection.
     private func dragPayload(for id: UUID) -> DraggedContent {
-        DraggedContent.dragging(id, selection: selection, order: library.pawns.map(\.id)) { .pawn($0) }
+        DraggedContent(selection.dragged(id, order: library.pawns.map(\.id)).map { .pawn($0) }, copies: copies)
     }
+
+    /// A click selects one pawn; Command-click adds or removes it from the selection.
 
     private func select(_ id: UUID) {
         cursor = id

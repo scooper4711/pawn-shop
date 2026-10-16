@@ -110,10 +110,11 @@ struct ItemBrowser: View {
         return .handled
     }
 
-    /// A click selects one item; Command-click adds or removes it from the selection.
     private func dragPayload(for id: String) -> DraggedContent {
-        DraggedContent.dragging(id, selection: selection, order: selection.sorted()) { .item($0) }
+        DraggedContent(selection.dragged(id, order: selection.sorted()).map { .item($0) }, copies: copies)
     }
+
+    /// A click selects one item; Command-click adds or removes it from the selection.
 
     private func select(_ id: String) {
         if NSEvent.modifierFlags.contains(.command) {
