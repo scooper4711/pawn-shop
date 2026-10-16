@@ -59,8 +59,8 @@ struct ItemBrowser: View {
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(results) { item in
                     ItemTile(card: library.card(for: item), isSelected: selection.contains(item.id))
-                        .onTapGesture(count: 2) { sheet.add(.item(item.id), copies: copies) }
-                        .onTapGesture { select(item.id) }
+                        .libraryTile(dragging: dragPayload(for: item.id), select: { select(item.id) },
+                                     add: { sheet.add(.item(item.id), copies: copies) })
                         .contextMenu {
                             ForEach([1, 2, 4, 6], id: \.self) { count in
                                 Button("Add \(count) to Sheet") { sheet.add(.item(item.id), copies: count) }
@@ -111,6 +111,10 @@ struct ItemBrowser: View {
     }
 
     /// A click selects one item; Command-click adds or removes it from the selection.
+    private func dragPayload(for id: String) -> DraggedContent {
+        DraggedContent.dragging(id, selection: selection, order: selection.sorted()) { .item($0) }
+    }
+
     private func select(_ id: String) {
         if NSEvent.modifierFlags.contains(.command) {
             if selection.contains(id) { selection.remove(id) } else { selection.insert(id) }

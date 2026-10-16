@@ -41,6 +41,10 @@ struct SheetWindow: View {
             .navigationSplitViewColumnWidth(min: 280, ideal: 360, max: 600)
         } detail: {
             SheetPreview(sheet: $document.sheet, selectedEntry: $selectedEntry)
+                .dropDestination(for: DraggedContent.self) { dropped, _ in
+                    dropped.forEach { document.sheet.add($0.contents) }
+                    return !dropped.isEmpty
+                }
                 .inspector(isPresented: $showsInspector) {
                     SheetInspector(sheet: $document.sheet, selectedEntry: $selectedEntry, pageCount: pageCount)
                         .inspectorColumnWidth(min: 240, ideal: 280)

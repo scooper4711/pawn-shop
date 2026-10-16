@@ -71,7 +71,7 @@ public struct SheetSettings: Codable, Hashable, Sendable {
 }
 
 /// What a sheet entry prints: a pawn from the library, or an item's card from the catalog.
-public enum SheetContent: Hashable, Sendable {
+public enum SheetContent: Hashable, Codable, Sendable {
     case pawn(UUID)
     case item(String)
 }
@@ -154,6 +154,11 @@ public struct PawnSheet: Codable, Hashable, Sendable {
         } else {
             entries.append(SheetEntry(content: content, count: copies))
         }
+    }
+
+    /// Adds copies of each pawn or item card, in order.
+    public mutating func add(_ contents: [SheetContent], copies: Int = 1) {
+        for content in contents { add(content, copies: copies) }
     }
 
     /// Sets an entry's copies; none removes it.

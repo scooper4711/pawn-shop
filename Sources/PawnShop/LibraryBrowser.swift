@@ -59,8 +59,8 @@ struct LibraryBrowser: View {
                     ForEach(results) { pawn in
                         PawnTile(pawn: pawn, productTitle: library.shortSourceTitle(of: pawn),
                                  isSelected: selection.contains(pawn.id))
-                            .onTapGesture(count: 2) { sheet.add(pawn.id, copies: copies) }
-                            .onTapGesture { select(pawn.id) }
+                            .libraryTile(dragging: dragPayload(for: pawn.id), select: { select(pawn.id) },
+                                         add: { sheet.add(pawn.id, copies: copies) })
                             .contextMenu { menu(for: pawn) }
                             .help(help(for: pawn))
                             .onAppear { PawnTaggingModel.shared.show(pawn.id) }
@@ -158,6 +158,10 @@ struct LibraryBrowser: View {
     }
 
     /// A click selects one pawn; Command-click adds or removes it from the selection.
+    private func dragPayload(for id: UUID) -> DraggedContent {
+        DraggedContent.dragging(id, selection: selection, order: library.pawns.map(\.id)) { .pawn($0) }
+    }
+
     private func select(_ id: UUID) {
         cursor = id
         gridFocused = true

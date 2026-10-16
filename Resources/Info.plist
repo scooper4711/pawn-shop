@@ -60,6 +60,16 @@
                 </array>
             </dict>
         </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.github.scooper4711.sheetcontent</string>
+            <key>UTTypeDescription</key>
+            <string>Pawn Shop Library Selection</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+        </dict>
     </array>
 </dict>
 </plist>

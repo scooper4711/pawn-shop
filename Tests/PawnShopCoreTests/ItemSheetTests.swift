@@ -63,3 +63,19 @@ import ArtExtractionTestSupport
         }
     }
 }
+
+@Suite struct SheetContentBatchTests {
+    @Test func addingSeveralContentsMergesWithExistingEntries() {
+        let pawnID = UUID()
+        var sheet = PawnSheet()
+        sheet.add(pawnID)
+        sheet.add([.pawn(pawnID), .item("torch")], copies: 2)
+        #expect(sheet.entries.map(\.count) == [3, 2])
+    }
+
+    @Test func contentSurvivesEncoding() throws {
+        let contents: [SheetContent] = [.pawn(UUID()), .item("torch")]
+        let decoded = try JSONDecoder().decode([SheetContent].self, from: JSONEncoder().encode(contents))
+        #expect(decoded == contents)
+    }
+}
