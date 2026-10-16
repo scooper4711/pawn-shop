@@ -235,8 +235,10 @@ repository. It reads the [pf2e system](https://github.com/foundryvtt/pf2e) relea
 Paizo's Pathfinder-Icons font from the `Artwork` submodule (`ARTWORK`) for the action icons, and the Rexard UI packs from `~/git/rexard-packs` (`REXARD_PACKS`) for the cards'
 parchment, frames and panels, which may be used inside the app but not published. Without it the app builds
 and runs, and the Items list says how to get it. Release disk images are built on GitHub from the private
-`toolkit-artwork` repository instead (`REXARD_PACKS=Artwork/rexard make items` does the same here). `PAWN_SHOP_GENERATED` points a build run from the command
-line at a `Generated` folder.
+`toolkit-artwork` repository instead (`REXARD_PACKS=Artwork/rexard make items` does the same here). Every
+Monday a workflow moves `pf2e.release` to pf2e's newest release; when that changes the imported items (their
+fingerprint in `import.sha256`, which `make items` updates), it also tags the next patch version and builds its
+draft release. `PAWN_SHOP_GENERATED` points a build run from the command line at a `Generated` folder.
 
 Tests that read real pawn PDFs use `TestData/`, which is not committed because the PDFs are copyrighted.
 Copy or link your own pawn PDFs there to run them; they are skipped when the folder is empty.

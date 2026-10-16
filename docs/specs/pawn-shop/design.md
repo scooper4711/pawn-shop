@@ -216,6 +216,11 @@ shapes so the pawn and the hat still read at 32 px.
   `REXARD_PACKS=Artwork/rexard`, tests, builds the universal app and attaches its disk image to the tag's
   release. Run by hand it keeps the image as a workflow artifact. `release-dmg.sh` (`make release-dmg`) does
   the same on a Mac, for the tag at HEAD, should the GitHub build fail.
+- `pf2e-update.yml`, weekly, as in Field Guide: when pf2e has a newer release it switches `pf2e.release`
+  (straight away when the release changes nothing under `packs`, `static` or `src/scripts/config`), imports the
+  items, and when their fingerprint (`scripts/fingerprint.sh`: the JSON files in `Generated/Items`, kept in
+  `import.sha256` by `make items`) changes it commits both through the API, tags the next patch version and calls
+  `release.yml` for it, which leaves a draft release to publish.
 - `coverage.sh` measures every test bundle (newer toolchains build one per test target) and gates
   `PawnShopCore` and `ItemCatalogImport` together.
 - Updates (`PawnShopCore/Updates`): `AppUpdater` asks GitHub's `releases/latest` for the repository, compares

@@ -1,0 +1,117 @@
+name: pf2e update
+
+# Weekly, switches pf2e.release to pf2e's newest release when there is one. When the new release changes the
+# items Pawn Shop imports (their fingerprint in import.sha256) and the app has a release, it also tags the next
+# patch version and builds its disk image into a draft release, ready to publish.
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  # The parts of the pf2e repository the item import reads.
+  PF2E_PATHS: packs static src/scripts/config
+
+jobs:
+  look:
+    name: Look for a newer pf2e release
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      latest: ${{ steps.look.outputs.latest }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compare pf2e's newest release with pf2e.release
+        id: look
+        run: |
+          LATEST="$(scripts/latest-pf2e-release.sh)"
+          if [ "$LATEST" = "$(cat pf2e.release)" ]; then
+            echo "Already on pf2e's newest release: $LATEST"
+            exit 0
+          fi
+          # Only the two commits' file lists are downloaded, not the files.
+          git init --quiet "$RUNNER_TEMP/pf2e"
+          git -C "$RUNNER_TEMP/pf2e" fetch --quiet --depth 1 --filter=blob:none \
+            https://github.com/foundryvtt/pf2e.git "$(cut -d ' ' -f 1 pf2e.release)" "${LATEST%% *}"
+          # shellcheck disable=SC2086 # PF2E_PATHS is a list of paths.
+          CHANGED="$(git -C "$RUNNER_TEMP/pf2e" diff --name-only "$(cut -d ' ' -f 1 pf2e.release)" "${LATEST%% *}" \
+            -- $PF2E_PATHS | wc -l | tr -d ' ')"
+          NAMES="$(echo "$LATEST" | cut -d ' ' -f 2- | sed 's/ / and /')"
+          if [ "$CHANGED" = 0 ]; then
+            echo "$LATEST" > pf2e.release
+            scripts/commit-to-github.sh "chore: Update pf2e to $NAMES" pf2e.release
+            echo "$NAMES changes nothing Pawn Shop imports; switched without a release."
+            exit 0
+          fi
+          echo "$NAMES changes $CHANGED files Pawn Shop imports from."
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+
+  import:
+    name: Import the new release
+    permissions:
+      contents: write
+    needs: look
+    if: needs.look.outputs.latest != ''
+    runs-on: macos-26
+    outputs:
+      tag: ${{ steps.switch.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Fetch artwork
+        env:
+          ARTWORK_SSH_KEY: ${{ secrets.ARTWORK_SSH_KEY }}
+        run: |
+          printf '%s\n' "$ARTWORK_SSH_KEY" > "$RUNNER_TEMP/artwork_key"
+          chmod 600 "$RUNNER_TEMP/artwork_key"
+          GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/artwork_key -o IdentitiesOnly=yes" \
+            git submodule update --init --depth 1 Artwork
+
+      - name: Import the items
+        env:
+          LATEST: ${{ needs.look.outputs.latest }}
+        run: |
+          echo "$LATEST" > pf2e.release
+          REXARD_PACKS=Artwork/rexard scripts/import-items.sh
+
+      - name: Switch, and tag the next version if the items changed
+        id: switch
+        env:
+          LATEST: ${{ needs.look.outputs.latest }}
+        run: |
+          NAMES="$(echo "$LATEST" | cut -d ' ' -f 2- | sed 's/ / and /')"
+          if git diff --quiet import.sha256; then
+            scripts/commit-to-github.sh "chore: Update pf2e to $NAMES" pf2e.release
+            echo "$NAMES leaves Pawn Shop's items as they were; switched without a release."
+            exit 0
+          fi
+          COMMIT="$(scripts/commit-to-github.sh "chore: Update pf2e to $NAMES" pf2e.release import.sha256)"
+          PREVIOUS="$(git tag --list 'v*' --sort=-v:refname | head -1)"
+          if [ -z "$PREVIOUS" ]; then
+            echo "No release yet, so no automatic one; the first release you tag will use $NAMES."
+            exit 0
+          fi
+          VERSION="${PREVIOUS#v}"
+          TAG="v${VERSION%.*}.$(( ${VERSION##*.} + 1 ))"
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$COMMIT" >/dev/null
+          echo "Tagged $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Release
+    permissions:
+      contents: write
+    needs: import
+    if: needs.import.outputs.tag != ''
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.import.outputs.tag }}
+    secrets: inherit
