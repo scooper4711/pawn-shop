@@ -42,3 +42,5 @@ fi
 echo "Importing the items from $PF2E_REPO..."
 swift build -c release --product ItemImport
 "$BIN_PATH/ItemImport" --pf2e "$PF2E_REPO" --out Generated
+# The weekly pf2e update compares this to decide whether a new pf2e release changes anything Pawn Shop shows.
+scripts/fingerprint.sh > import.sha256
