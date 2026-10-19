@@ -104,7 +104,8 @@ library manager for your Paizo purchases, download them.
 Download the disk image from the [releases page](https://github.com/scooper4711/pawn-shop/releases), open
 it and drag Pawn Shop to Applications.
 
-The app is not notarized by Apple, so macOS blocks it the first time:
+Releases are signed with the Developer ID and notarized by Apple, so macOS opens them like any other app. Older
+releases aren't, and macOS blocks them the first time:
 
 1. Open Pawn Shop once. macOS says it cannot be opened; click Done.
 2. Open System Settings › Privacy & Security and scroll down to the message about Pawn Shop.
@@ -227,7 +228,8 @@ make icon     # redraws Resources/AppIcon.icns
 `pawn-bases/build.sh` renders every base and the slot test piece to `pawn-bases/stl/` with OpenSCAD (by default
 from `/Applications/OpenSCAD-2021.01.app`; set `OPENSCAD` to use another copy). It takes a minute or two.
 
-Building needs Xcode 16 or later (Swift 6 toolchain). The app is ad-hoc signed.
+Building needs Xcode 16 or later (Swift 6 toolchain). `scripts/sign-app.sh` signs the app with the Developer ID when
+the keychain holds a Developer ID Application certificate, and ad hoc otherwise.
 
 Item and spell cards need `Generated/`, which `make items` builds and `make app` bundles; it is not in the
 repository. It reads the [pf2e system](https://github.com/foundryvtt/pf2e) release named in `pf2e.release`, fetched into
