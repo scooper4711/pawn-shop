@@ -5,7 +5,7 @@ name: pf2e update
 # patch version and builds its disk image into a draft release, ready to publish.
 on:
   schedule:
-    - cron: '0 9 * * 1'
+    - cron: '37 9 * * 1'
   workflow_dispatch:
 
 permissions:
