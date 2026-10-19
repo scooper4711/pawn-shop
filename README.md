@@ -164,7 +164,7 @@ back on to pick up where it left off. Without Ollama, pawns stay untagged and Li
 vision model, which tags every pawn again:
 
 ```sh
-defaults write com.github.scooper4711.PawnShop TaggingModel <model>
+defaults write io.github.scooper4711.PawnShop TaggingModel <model>
 ```
 
 ## Not handled yet

@@ -5,7 +5,7 @@
     <key>Move</key>
     <array>
         <string>${ApplicationSupport}/Pawn Shop</string>
-        <string>${Library}/Preferences/com.github.scooper4711.PawnShop.plist</string>
+        <string>${Library}/Preferences/io.github.scooper4711.PawnShop.plist</string>
     </array>
 </dict>
 </plist>
