@@ -7,7 +7,7 @@
     <key>CFBundleDisplayName</key>
     <string>Pawn Shop</string>
     <key>CFBundleIdentifier</key>
-    <string>com.github.scooper4711.PawnShop</string>
+    <string>io.github.scooper4711.PawnShop</string>
     <key>CFBundleExecutable</key>
     <string>PawnShop</string>
     <key>CFBundleIconFile</key>
@@ -37,7 +37,7 @@
             <string>Owner</string>
             <key>LSItemContentTypes</key>
             <array>
-                <string>com.github.scooper4711.pawnsheet</string>
+                <string>io.github.scooper4711.pawnsheet</string>
             </array>
         </dict>
     </array>
@@ -45,7 +45,7 @@
     <array>
         <dict>
             <key>UTTypeIdentifier</key>
-            <string>com.github.scooper4711.pawnsheet</string>
+            <string>io.github.scooper4711.pawnsheet</string>
             <key>UTTypeDescription</key>
             <string>Pawn Sheet</string>
             <key>UTTypeConformsTo</key>
@@ -62,7 +62,7 @@
         </dict>
         <dict>
             <key>UTTypeIdentifier</key>
-            <string>com.github.scooper4711.PawnShop.sheet-content</string>
+            <string>io.github.scooper4711.PawnShop.sheet-content</string>
             <key>UTTypeDescription</key>
             <string>Pawn Shop Library Selection</string>
             <key>UTTypeConformsTo</key>

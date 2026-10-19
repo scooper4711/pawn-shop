@@ -4,7 +4,7 @@ import PawnShopCore
 import UniformTypeIdentifiers
 
 extension UTType {
-    static let sheetContent = UTType(exportedAs: "com.github.scooper4711.PawnShop.sheet-content")
+    static let sheetContent = UTType(exportedAs: "io.github.scooper4711.PawnShop.sheet-content")
 }
 
 /// The pawns or item cards dragged from the library to the sheet, with the copies of each the add bar is set to.

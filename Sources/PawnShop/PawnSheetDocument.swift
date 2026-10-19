@@ -3,7 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 extension UTType {
-    static let pawnSheet = UTType(exportedAs: "com.github.scooper4711.pawnsheet", conformingTo: .json)
+    static let pawnSheet = UTType(exportedAs: "io.github.scooper4711.pawnsheet", conformingTo: .json)
 }
 
 /// A `.pawnsheet` file: the pawns chosen for printing and how to print them.
