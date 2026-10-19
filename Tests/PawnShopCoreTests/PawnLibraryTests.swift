@@ -164,6 +164,5 @@ import ArtExtractionTestSupport
         let names = ScrollkeeperScanner.artFiles(in: folder).map(\.lastPathComponent)
         #expect(names == ["Another Pawn Collection.PDF", "Bestiary Pawn Box PDF.pdf", "Core Token Box PDF.pdf"])
         #expect(ScrollkeeperScanner.artFiles(in: folder.appendingPathComponent("Missing")).isEmpty)
-        #expect(ScrollkeeperScanner.defaultFolder.path.hasSuffix("Scrollkeeper/Files"))
     }
 }

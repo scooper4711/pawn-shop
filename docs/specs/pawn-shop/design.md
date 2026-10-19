@@ -58,6 +58,11 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
     filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
 - `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn" or "token", and
   each Battle Cards deck once, as its art PDF (`PawnLibrary.importableFiles`).
+- `ScrollkeeperFolder` finds that folder (R1.2): a folder the user picked, from a security-scoped bookmark in the
+  defaults, accessed until the app quits; otherwise Scrollkeeper's own folder when it can be listed, which is
+  only outside the sandbox. `defaultLocation` is in the user's real home folder (`getpwuid`), as the sandbox
+  gives the app its container instead. When neither is readable, `LibraryModel` shows a folder picker starting
+  there and remembers the choice. Because importing copies the art, the folder is only needed while importing.
 - Importing all 61 PDFs takes about 25 seconds (release build); about 420 pawns merge across products, such as
   Monster Core reusing Bestiary art.
 
@@ -207,6 +212,11 @@ green, with a wizard on it (pointed hat, white beard, blue robe, staff with a gl
 shapes so the pawn and the hat still read at 32 px.
 
 ## Releases
+- App Sandbox (R6.6): `Resources/PawnShop.entitlements` allows network access (GitHub's update check and Ollama on
+  localhost), printing, read-write access to files the user picks, app-scoped bookmarks (Scrollkeeper's folder)
+  and the Downloads folder (updates). `build-app.sh` signs with them and copies
+  `Resources/container-migration.plist` into the bundle, which makes macOS move `Application Support/Pawn Shop`
+  and the preferences into the container on the first sandboxed launch.
 - `make` wraps the scripts in `scripts/`: `build-app.sh` (release build, ad-hoc signed, `VERSION` written to
   the bundle, `UNIVERSAL=1` for Apple silicon and Intel, `--install` to move it to /Applications),
   `import-items.sh` (`make items`, see Items), `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`, with `pawn-bases/` as a Pawn Bases folder, minus its build

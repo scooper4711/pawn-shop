@@ -95,14 +95,9 @@ public extension PawnLibrary {
 
 /// Finds the pawn, token and Battle Cards PDFs Scrollkeeper has downloaded.
 public enum ScrollkeeperScanner {
-    /// `~/Library/Application Support/Scrollkeeper/Files`.
-    public static var defaultFolder: URL {
-        URL.applicationSupportDirectory.appendingPathComponent("Scrollkeeper/Files", isDirectory: true)
-    }
-
     /// PDFs under `folder` whose file name mentions pawns or tokens, decks of Battle Cards and item decks (see
     /// `CardDeck`), each deck once, and the folders of item decks sold as pictures, sorted by name.
-    public static func artFiles(in folder: URL = defaultFolder) -> [URL] {
+    public static func artFiles(in folder: URL) -> [URL] {
         ProductScanner.artPDFs(in: folder)
     }
 }

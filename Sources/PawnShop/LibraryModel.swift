@@ -116,13 +116,32 @@ final class LibraryModel {
 
     /// Imports every pawn, token, Battle Cards and item deck Scrollkeeper downloaded that isn't in the library yet.
     func importFromScrollkeeper() {
-        let files = ScrollkeeperScanner.artFiles()
+        guard let folder = ScrollkeeperFolder().open() ?? chooseScrollkeeperFolder() else { return }
+        let files = ScrollkeeperScanner.artFiles(in: folder)
         guard !files.isEmpty else {
             importSummary = "No pawn, token, Battle Cards or item deck PDFs were found in Scrollkeeper's downloads "
-                + "(\(ScrollkeeperScanner.defaultFolder.path))."
+                + "(\(folder.path))."
             return
         }
         importPDFs(files)
+    }
+
+    /// In the App Sandbox Pawn Shop may only read folders the user picks, so it asks once for Scrollkeeper's.
+    private func chooseScrollkeeperFolder() -> URL? {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.directoryURL = ScrollkeeperFolder.defaultLocation
+        panel.prompt = "Use Folder"
+        panel.message = "Choose Scrollkeeper's downloads folder so Pawn Shop can import from it. "
+            + "You'll only be asked once."
+        guard panel.runModal() == .OK, let folder = panel.url else { return nil }
+        do {
+            try ScrollkeeperFolder().remember(folder)
+        } catch {
+            errorMessage = "Remembering Scrollkeeper's folder failed: \(error.localizedDescription)"
+        }
+        return folder
     }
 
     /// Imports PDFs one at a time, reading each off the main thread.
