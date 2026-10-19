@@ -9,7 +9,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.1 File ▸ Import PDF… and dropping PDFs on a window import them into the library.
 - R1.2 Library ▸ Import from Scrollkeeper… finds every pawn, token and Battle Cards PDF in Scrollkeeper's
   Files folder (`~/Library/Application Support/Scrollkeeper/Files`) that is not yet imported and imports them
-  all.
+  all. The first time, the app asks the user to choose that folder (the App Sandbox only lets it read folders
+  the user picks), starting in it, and remembers the choice.
 - R1.3 Every pawn in the PDF is found from its red cut outline, named from the label printed inside it, and
   sized (small, medium, large, huge) from the outline.
 - R1.4 Each pawn's back is taken from the mirrored position on the following page. When there is none, the
@@ -130,6 +131,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
   Compatibility License's trademark line, credits for the item text, the Rexard art and the action icon font, and
   a link for reaching the author, then the full texts of the Open Game License and the ORC License the item text is
   used under. The README carries the same notices.
+- R6.6 The app runs in the App Sandbox. On its first sandboxed launch the library and the settings move into the
+  app's container; nothing else changes for the user.
 
 ## R7 Pawn bases
 - R7.1 The disk image holds a Pawn Bases folder with ready-to-print STL bases for medium, large, huge and
