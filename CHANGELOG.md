@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-20
+
+### Added
+- Run Pawn Shop in the App Sandbox
+- Remember the Scrollkeeper folder the user picks
+
+### Fixed
+- Switch the bundle ID to io.github.scooper4711.PawnShop
+- Accept drags on the empty sheet and carry copies
+- Select library tiles at once and add drag-to-sheet
+- Bundle the universal binary from where SwiftPM built it
+
+### Changed
+- Run the weekly pf2e update off the hour
+- Specify running in the App Sandbox
+- Specify instant selection and drag-to-add
+- Follow pf2e releases weekly, as Field Guide does
+- Keep a fingerprint of the imported items in import.sha256
+- Build and attach the release disk image on GitHub
+- Import items from the pf2e release pinned in pf2e.release
+
+[1.3.0]: https://github.com/scooper4711/pawn-shop/releases/tag/v1.3.0
+
 ## [1.2.0] - 2026-10-15
 
 ### Added
