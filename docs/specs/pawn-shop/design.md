@@ -217,17 +217,25 @@ shapes so the pawn and the hat still read at 32 px.
   and the Downloads folder (updates). `build-app.sh` signs with them and copies
   `Resources/container-migration.plist` into the bundle, which makes macOS move `Application Support/Pawn Shop`
   and the preferences into the container on the first sandboxed launch.
-- `make` wraps the scripts in `scripts/`: `build-app.sh` (release build, ad-hoc signed, `VERSION` written to
+- `make` wraps the scripts in `scripts/`: `build-app.sh` (release build, signed by `sign-app.sh`, `VERSION` written to
   the bundle, `UNIVERSAL=1` for Apple silicon and Intel, `--install` to move it to /Applications),
   `import-items.sh` (`make items`, see Items), `make-dmg.sh` (`build/Pawn-Shop-<VERSION>.dmg`, with `pawn-bases/` as a Pawn Bases folder, minus its build
   scripts) and `coverage.sh` (fails below 80% line or region coverage
   of `PawnShopCore`, and writes `coverage/sonar-coverage.xml`).
-- GitHub Actions: `ci.yml` lints strictly, runs the coverage gate (tests reading Paizo's PDFs are skipped, as
-  the PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds each
-  pushed `v*` tag: it fetches the private `Artwork` submodule, imports the items with
-  `REXARD_PACKS=Artwork/rexard`, tests, builds the universal app and attaches its disk image to the tag's
-  release. Run by hand it keeps the image as a workflow artifact. `release-dmg.sh` (`make release-dmg`) does
-  the same on a Mac, for the tag at HEAD, should the GitHub build fail.
+- GitHub Actions: `ci.yml` lints strictly, runs the coverage gate (tests reading Paizo's PDFs are skipped, as the
+  PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds each pushed
+  `v*` tag: it fetches the private `Artwork` submodule, imports the items with `REXARD_PACKS=Artwork/rexard`, tests,
+  builds the universal app and attaches its disk image to the tag's release. Run by hand it keeps the image as a
+  workflow artifact. `release-dmg.sh` (`make release-dmg`) does the same on a Mac, for the tag at HEAD, should the
+  GitHub build fail, notarizing it with a notarytool keychain profile.
+- **Signing.** `scripts/sign-app.sh` signs the app with the first Developer ID Application certificate in the
+  keychain, with the hardened runtime and a secure timestamp, or ad hoc when there is none (`SIGNING_IDENTITY`
+  overrides it). On GitHub, `scripts/add-signing-certificate.sh` puts the certificate from the
+  `DEVELOPER_ID_CERTIFICATE` and `DEVELOPER_ID_CERTIFICATE_PASSWORD` secrets into a temporary keychain; without it a
+  release fails and a trial build is signed ad hoc. For a release, `scripts/notarize.sh` signs the disk image, has
+  Apple's notary service check it (the `NOTARY_APPLE_ID`, `NOTARY_TEAM_ID` and `NOTARY_PASSWORD` secrets, or a
+  notarytool keychain profile on a Mac) and staples the ticket to it. The team ID is kept only in the secrets and
+  the keychain.
 - `pf2e-update.yml`, weekly, as in Field Guide: when pf2e has a newer release it switches `pf2e.release`
   (straight away when the release changes nothing under `packs`, `static` or `src/scripts/config`), imports the
   items, and when their fingerprint (`scripts/fingerprint.sh`: the JSON files in `Generated/Items`, kept in

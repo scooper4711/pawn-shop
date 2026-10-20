@@ -35,9 +35,8 @@ else
 fi
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" -c "Set :CFBundleVersion $VERSION" \
     "$APP/Contents/Info.plist"
-# Ad-hoc signature: enough to run locally; Gatekeeper still asks on other Macs. The entitlements turn on the
-# App Sandbox.
-codesign --force --sign - --entitlements Resources/PawnShop.entitlements "$APP"
+# The entitlements turn on the App Sandbox.
+scripts/sign-app.sh "$APP" Resources/PawnShop.entitlements
 echo "Built $APP ($VERSION)"
 
 if [[ "${1:-}" == "--install" ]]; then
