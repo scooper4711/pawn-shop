@@ -2,7 +2,8 @@
 //
 // The body is a squashed sphere, flat on the bottom and top. The paper sits in a slot that curves in a
 // shallow arc, which stiffens plain printer paper so it stays upright. The base's label is raised in a
-// flat spot sliced off the front and back, tilted so it reads from across the table.
+// flat spot sliced off the front and back, tilted so it reads from across the table. The slot settings
+// are engraved in the bottom, so a base that fits well can be printed again.
 //
 // Open this file in OpenSCAD and choose Window › Customizer to set the size, label and curve, or build
 // one base from the command line:
@@ -35,6 +36,8 @@ lead_in_height = 1.0;
 label_relief = 0.8;
 label_embed = 0.2;
 label_font = "Liberation Sans:style=Bold";
+// The slot settings are engraved this deep in the bottom.
+settings_depth = 0.4;
 
 // Every base is this tall, and its slot this deep.
 total_height = 11;
@@ -70,6 +73,9 @@ pawn_width = dims[6] * mm_per_point;
 label_text = str(label);
 // One character is full size; longer labels shrink so they still fit the flat spot.
 label_height = dims[5] * min(1, 1.6 / (len(label_text) + 0.6));
+// The engraved slot settings grow with the base, but never smaller than 3 mm.
+settings_text_height = max(3, dims[0] * 0.08);
+settings_line_pitch = settings_text_height * 1.5;
 
 slot_chord = pawn_width + 2 * slot_overrun;
 slot_sagitta = slot_chord * slot_curvature;
@@ -98,6 +104,7 @@ module pawn_base() {
             labels();
         }
         slot();
+        settings_engraving();
     }
 }
 
@@ -140,6 +147,18 @@ module flat_label() {
                 linear_extrude(label_embed + label_relief)
                     text(label_text, size = label_height, font = label_font,
                          halign = "center", valign = "center");
+}
+
+// The slot width and curve, sunk into the bottom and mirrored so they read with the base turned over.
+module settings_engraving() {
+    lines = [str("W ", slot_width), str("C ", slot_curvature)];
+    translate([0, 0, -1])
+        linear_extrude(settings_depth + 1)
+            mirror([1, 0])
+                for (line = [0 : len(lines) - 1])
+                    translate([0, settings_line_pitch * ((len(lines) - 1) / 2 - line)])
+                        text(lines[line], size = settings_text_height, font = label_font,
+                             halign = "center", valign = "center");
 }
 
 module slot() {
