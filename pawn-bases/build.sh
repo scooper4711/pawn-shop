@@ -1,9 +1,9 @@
 #!/bin/zsh
-# Exports every base (each size, labeled 1–4 and blank) and the slot test piece to stl/, as binary STL.
-# The exports run in parallel, because the rounded body is slow to render.
+# Exports every base (each size, labeled 1–4 and blank) and the slot test piece to stl/, as binary STL, with a
+# development snapshot of OpenSCAD (`openscad` on the PATH, or OPENSCAD), whose Manifold renderer is fast.
 set -euo pipefail
 
-openscad="${OPENSCAD:-/Applications/OpenSCAD-2021.01.app/Contents/MacOS/OpenSCAD}"
+openscad="${OPENSCAD:-$(command -v openscad || echo /Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD)}"
 cd "${0:A:h}"
 mkdir -p stl
 

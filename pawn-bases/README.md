@@ -40,7 +40,9 @@ Open `pawn_base.scad` in [OpenSCAD](https://openscad.org) and choose Window › 
 - **slot_curvature:** how far the slot curves, as a fraction of the pawn's width (0.08 unless you change it).
   More curve holds the paper stiffer.
 
-The Fit tab sets **slot_width**, from the slot test. Press F6 to render, then File › Export › Export as STL.
+The Fit tab sets **slot_width**, from the slot test. The slot width and curvature are engraved in the bottom
+of every base (for example `W 0.55` and `C 0.08`), so you can reprint a base that fits well. Press F6 to
+render, then File › Export › Export as STL.
 The same settings work in other customizers that read OpenSCAD's Customizer comments, such as Thingiverse's.
 
 From the command line:
@@ -49,4 +51,5 @@ From the command line:
 openscad -D 'size="large"' -D 'label="3"' -o pawn-base-large-3.stl pawn_base.scad
 ```
 
-Rendering takes a while, because the rounded body is slow to render.
+OpenSCAD's releases take a while to render the rounded body; a development snapshot, with its Manifold
+renderer, takes about a second. `build.sh` exports every base and the slot test with one.

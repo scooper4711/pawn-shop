@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Rewrites ASCII STL files as binary STL, which is about a fifth of the size.
 
-OpenSCAD 2021.01 exports only ASCII STL.
+OpenSCAD exports ASCII STL unless asked otherwise.
 """
 import struct
 import sys
