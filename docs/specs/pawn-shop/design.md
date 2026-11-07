@@ -66,7 +66,8 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   Scrollkeeper's old folder when it can be listed, which is only outside the sandbox. `defaultLocation` is in the
   user's real home folder (`getpwuid`), as the sandbox gives the app its container instead. When none is
   readable, `LibraryModel` shows a folder picker starting at `suggestedLocation` (the folder the user chose in
-  Scrollkeeper, from its list, else `defaultLocation`) and remembers the choice. Because importing copies the art, the folder is only needed while importing.
+  Scrollkeeper, from its list, else `defaultLocation`) and remembers the choice. When it finds nothing to import it
+  names the folder with tabletop-kit's `FolderName` ("Scrollkeeper · On this Mac"), not its path. Because importing copies the art, the folder is only needed while importing.
 - Importing all 61 PDFs takes about 25 seconds (release build); about 420 pawns merge across products, such as
   Monster Core reusing Bestiary art.
 
