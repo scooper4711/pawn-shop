@@ -8,9 +8,12 @@ is cut out and folded at the heads, giving a two-ply pawn.
 ## R1 Importing pawn PDFs
 - R1.1 File ▸ Import PDF… and dropping PDFs on a window import them into the library.
 - R1.2 Library ▸ Import from Scrollkeeper… finds every pawn, token and Battle Cards PDF in Scrollkeeper's
-  Files folder (`~/Library/Application Support/Scrollkeeper/Files`) that is not yet imported and imports them
-  all. The first time, the app asks the user to choose that folder (the App Sandbox only lets it read folders
-  the user picks), starting in it, and remembers the choice.
+  downloads that is not yet imported and imports them all. A sandboxed Scrollkeeper keeps them in the Tableside
+  Toolkit's shared App Group folder, which Pawn Shop reads without asking (Scrollkeeper's app-handoff
+  requirements 5 and 6). When they are elsewhere (a folder the user chose in Scrollkeeper, or an older
+  Scrollkeeper's `~/Library/Application Support/Scrollkeeper/Files`), the app asks the user to choose the folder
+  the first time (the App Sandbox only lets it read folders the user picks), starting in it, and remembers the
+  choice.
 - R1.3 Every pawn in the PDF is found from its red cut outline, named from the label printed inside it, and
   sized (small, medium, large, huge) from the outline.
 - R1.4 Each pawn's back is taken from the mirrored position on the following page. When there is none, the

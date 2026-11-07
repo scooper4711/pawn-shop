@@ -10,10 +10,13 @@ let package = Package(
         .library(name: "PawnShopCore", targets: ["PawnShopCore"])
     ],
     dependencies: [
-        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "0.15.2")
+        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "0.16.0")
     ],
     targets: [
-        .target(name: "PawnShopCore", dependencies: [.product(name: "ArtExtraction", package: "tabletop-kit")]),
+        .target(name: "PawnShopCore", dependencies: [
+            .product(name: "ArtExtraction", package: "tabletop-kit"),
+            .product(name: "TablesideShared", package: "tabletop-kit")
+        ]),
         .executableTarget(name: "PawnShop", dependencies: [
             "PawnShopCore", .product(name: "AppNotices", package: "tabletop-kit")
         ]),
@@ -23,7 +26,8 @@ let package = Package(
         ]),
         .executableTarget(name: "ItemImport", dependencies: ["ItemCatalogImport"]),
         .testTarget(name: "PawnShopCoreTests", dependencies: [
-            "PawnShopCore", .product(name: "ArtExtractionTestSupport", package: "tabletop-kit")
+            "PawnShopCore", .product(name: "ArtExtractionTestSupport", package: "tabletop-kit"),
+            .product(name: "TablesideShared", package: "tabletop-kit")
         ]),
         .testTarget(name: "ItemCatalogImportTests", dependencies: ["ItemCatalogImport"])
     ]

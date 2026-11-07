@@ -131,7 +131,7 @@ final class LibraryModel {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
-        panel.directoryURL = ScrollkeeperFolder.defaultLocation
+        panel.directoryURL = ScrollkeeperFolder().suggestedLocation
         panel.prompt = "Use Folder"
         panel.message = "Choose Scrollkeeper's downloads folder so Pawn Shop can import from it. "
             + "You'll only be asked once."

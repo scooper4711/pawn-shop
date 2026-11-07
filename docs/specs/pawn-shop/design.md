@@ -58,11 +58,15 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
     filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
 - `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn" or "token", and
   each Battle Cards deck once, as its art PDF (`PawnLibrary.importableFiles`).
-- `ScrollkeeperFolder` finds that folder (R1.2): a folder the user picked, from a security-scoped bookmark in the
-  defaults, accessed until the app quits; otherwise Scrollkeeper's own folder when it can be listed, which is
-  only outside the sandbox. `defaultLocation` is in the user's real home folder (`getpwuid`), as the sandbox
-  gives the app its container instead. When neither is readable, `LibraryModel` shows a folder picker starting
-  there and remembers the choice. Because importing copies the art, the folder is only needed while importing.
+- `ScrollkeeperFolder` finds that folder (R1.2). First the App Group: tabletop-kit's `TablesideShared` gives
+  Scrollkeeper's folder there (`ToolkitGroup.scrollkeeperFolder()`), and its library list
+  (`ScrollkeeperLibrary.read(from:)`) says whether the downloads are in its `Files`
+  (`downloadFolderURL(in:)`); without a list Pawn Shop can read, `Files` is used when it holds anything. Then a
+  folder the user picked, from a security-scoped bookmark in the defaults, accessed until the app quits; then
+  Scrollkeeper's old folder when it can be listed, which is only outside the sandbox. `defaultLocation` is in the
+  user's real home folder (`getpwuid`), as the sandbox gives the app its container instead. When none is
+  readable, `LibraryModel` shows a folder picker starting at `suggestedLocation` (the folder the user chose in
+  Scrollkeeper, from its list, else `defaultLocation`) and remembers the choice. Because importing copies the art, the folder is only needed while importing.
 - Importing all 61 PDFs takes about 25 seconds (release build); about 420 pawns merge across products, such as
   Monster Core reusing Bestiary art.
 
@@ -213,8 +217,10 @@ shapes so the pawn and the hat still read at 32 px.
 
 ## Releases
 - App Sandbox (R6.6): `Resources/PawnShop.entitlements` allows network access (GitHub's update check and Ollama on
-  localhost), printing, read-write access to files the user picks, app-scoped bookmarks (Scrollkeeper's folder)
-  and the Downloads folder (updates). `build-app.sh` signs with them and copies
+  localhost), printing, read-write access to files the user picks, app-scoped bookmarks (Scrollkeeper's folder),
+  the Downloads folder (updates) and the Tableside Toolkit's App Group (`TEAM_ID.io.github.scooper4711.tableside`;
+  `build-app.sh` puts in the team of the Developer ID certificate, or `TEAM_ID`, and leaves the group out of an ad
+  hoc build). `build-app.sh` signs with them and copies
   `Resources/container-migration.plist` into the bundle, which makes macOS move `Application Support/Pawn Shop`
   and the preferences into the container on the first sandboxed launch.
 - `make` wraps the scripts in `scripts/`: `build-app.sh` (release build, signed by `sign-app.sh`, `VERSION` written to
