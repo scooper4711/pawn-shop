@@ -1,6 +1,7 @@
 import AppKit
 import Observation
 import PawnShopCore
+import TablesideShared
 
 /// Progress of a batch of imports.
 struct ImportProgress: Equatable {
@@ -119,8 +120,9 @@ final class LibraryModel {
         guard let folder = ScrollkeeperFolder().open() ?? chooseScrollkeeperFolder() else { return }
         let files = ScrollkeeperScanner.artFiles(in: folder)
         guard !files.isEmpty else {
+            let place = FolderName(url: folder)
             importSummary = "No pawn, token, Battle Cards or item deck PDFs were found in Scrollkeeper's downloads "
-                + "(\(folder.path))."
+                + "(\(place.title) · \(place.location))."
             return
         }
         importPDFs(files)
