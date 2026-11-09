@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Pawn Shop's privacy manifest (scripts/build-app.sh copies it into Contents/Resources), for both channels. No
+     tracking and no data collected. User defaults hold the app's own settings (CA92.1); LibraryFiles reads the
+     size of the library's files through file attributes, which includes the timestamps API (C617.1 for files in
+     the app's container and the user's chosen folders, 3B52.1 for files the user gave it). -->
+<plist version="1.0">
+<dict>
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>C617.1</string>
+                <string>3B52.1</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

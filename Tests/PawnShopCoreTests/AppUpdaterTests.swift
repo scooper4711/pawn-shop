@@ -1,3 +1,4 @@
+#if !APP_STORE
 import Foundation
 import Testing
 import ArtExtractionTestSupport
@@ -191,3 +192,4 @@ final class StubWeb: URLProtocol, @unchecked Sendable {
         #expect(updater.product.name == "Pawn Shop" && updater.state == .idle)
     }
 }
+#endif

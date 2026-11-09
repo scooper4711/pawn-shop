@@ -1,4 +1,4 @@
-.PHONY: build test lint coverage items app run install dmg release-dmg icon clean
+.PHONY: build test lint coverage items app run install dmg release-dmg appstore icon clean
 
 build:
 	swift build
@@ -33,6 +33,11 @@ dmg: app
 # Builds the universal disk image for the version tag at HEAD and attaches it to its GitHub release.
 release-dmg:
 	scripts/release-dmg.sh
+
+# Builds the Mac App Store package, build/appstore/PawnShop.pkg (see scripts/build-app.sh for the variables).
+appstore:
+	swift package resolve
+	CHANNEL=appstore scripts/build-app.sh
 
 # Redraws Resources/AppIcon.icns from scripts/make-icon.swift.
 icon:
