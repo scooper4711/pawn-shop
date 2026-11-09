@@ -34,7 +34,7 @@ dmg: app
 release-dmg:
 	scripts/release-dmg.sh
 
-# Builds the Mac App Store package, build/appstore/PawnShop.pkg (see scripts/build-app.sh for the variables).
+# Builds the Mac App Store package, build/appstore/Pawn Shop.pkg (see scripts/build-app.sh for the variables).
 appstore:
 	swift package resolve
 	CHANNEL=appstore scripts/build-app.sh

@@ -8,7 +8,7 @@
 # TEAM_ID    the team that owns the App Group (default: read from the Developer ID certificate)
 # SIGNING_IDENTITY  passed to scripts/sign-app.sh; "-" signs ad hoc, without the App Group
 # BUILD_NUMBER  CFBundleVersion, which must increase with every App Store upload (default: VERSION)
-# CHANNEL    "appstore" builds the Mac App Store package, build/appstore/PawnShop.pkg, from the same
+# CHANNEL    "appstore" builds the Mac App Store package, build/appstore/Pawn Shop.pkg, from the same
 #            sources, compiled with -DAPP_STORE so the updater is left out; needs TEAM_ID and the variables of
 #            tabletop-kit's scripts/package-appstore.sh (PACKAGER names another copy; TRIAL=1 checks it without them)
 set -euo pipefail

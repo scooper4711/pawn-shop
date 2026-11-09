@@ -4,7 +4,7 @@ Pawn Shop 2.0 is listed on the Mac App Store beside its notarized disk image (ta
 are tabletop-kit's `scripts/package-appstore.sh` (its `appstore-build` spec).
 
 ## R1 The build
-- R1.1 `CHANNEL=appstore scripts/build-app.sh` (or `make appstore`) builds `build/appstore/PawnShop.pkg` from the
+- R1.1 `CHANNEL=appstore scripts/build-app.sh` (or `make appstore`) builds `build/appstore/Pawn Shop.pkg` from the
   same sources as the disk image, compiled with `-DAPP_STORE`.
 - R1.2 That build has no updater: not the Check for Updates command, the launch check, its settings tab, nor the
   code. The build script fails if the binary still names `AppUpdater` or GitHub's API; the disk image build keeps
