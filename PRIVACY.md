@@ -12,7 +12,8 @@ version makes no network requests to the internet.
   make are kept in the app's storage on your Mac and in files you save. They are never uploaded.
 - **Your settings** are saved on your Mac.
 
-Deleting the app deletes the rest.
+Deleting the app from your Mac leaves this behind: macOS keeps an app's saved data in the Containers folder of
+your Library folder until you delete the folder named Pawn Shop there.
 
 ## Tagging with Ollama
 
