@@ -15,9 +15,12 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1.0</string>
+    <string>2.0.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <!-- Only HTTPS to the system, and the local Ollama server, which are exempt, so uploads don't ask. -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>LSMinimumSystemVersion</key>
     <string>15.0</string>
     <key>LSApplicationCategoryType</key>
@@ -25,7 +28,7 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>Not published, endorsed, or specifically approved by Paizo.</string>
+    <string>Copyright © 2026 Stephen Cooper. MIT License.</string>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

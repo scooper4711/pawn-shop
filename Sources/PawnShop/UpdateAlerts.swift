@@ -1,3 +1,4 @@
+#if !APP_STORE
 import AppKit
 import PawnShopCore
 import SwiftUI
@@ -96,3 +97,4 @@ struct UpdateSettingsView: View {
         .frame(width: 420)
     }
 }
+#endif
