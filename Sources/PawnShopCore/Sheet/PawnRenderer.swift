@@ -173,7 +173,7 @@ public final class PawnRenderer {
         context.clip(to: rect)
         context.concatenate(front.transform(into: rect))
         context.setFillColor(gray: 1, alpha: 1)
-        for line in lines {
+        for line in lines where NameDirection.isPrintedText(line.string) {
             context.fill(line.bounds(for: page).insetBy(dx: -1, dy: -1))
         }
         context.restoreGState()

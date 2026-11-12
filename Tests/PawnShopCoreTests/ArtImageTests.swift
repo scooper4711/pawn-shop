@@ -41,6 +41,18 @@ import ArtExtractionTestSupport
         #expect(darkPixels(in: art, rows: 20..<118) == darkPixels(in: printed, rows: 20..<118))
     }
 
+    /// Since macOS 27 PDFKit reports a picture as a line holding only an object replacement character, as large
+    /// as the picture. Painting that out left the model a blank image for every pawn drawn from a PDF.
+    @Test(arguments: [("GOBLIN", true), ("© 2018 PAIZO INC.", true), ("160", true), ("\u{FFFC}", false),
+                      (" \u{FFFC}\n", false), ("", false)])
+    func paintsOutOnlyWordsAndNumbers(line: String, isText: Bool) {
+        #expect(NameDirection.isPrintedText(line) == isText)
+    }
+
+    @Test func paintsOutNoLineWithoutText() {
+        #expect(!NameDirection.isPrintedText(nil))
+    }
+
     @Test func leavesTheNameOffCustomPawns() throws {
         writePNG(headRedImage(), to: library.customFolder.appendingPathComponent("hero.png"))
         let hero = Pawn(name: "Hero", size: .medium, art: .custom(CustomArt(imageFile: "hero.png", showsName: true)))

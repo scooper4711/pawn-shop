@@ -11,6 +11,12 @@ enum NameDirection {
         return direction.dy > 0 ? 1 : 3
     }
 
+    /// True for a line of words or numbers. Since macOS 27 PDFKit also reports each picture as a line holding
+    /// only an object replacement character, as large as the picture; painting that out would blank the art.
+    static func isPrintedText(_ line: String?) -> Bool {
+        line?.contains { $0.isLetter || $0.isNumber } ?? false
+    }
+
     /// The way the longest line of words inside `rect` reads, on the page; zero when there are no words.
     /// Every line printed on a pawn runs the same way, and the longest gives the steadiest answer.
     static func readingDirection(on page: PDFPage, inside rect: CGRect) -> CGVector {
