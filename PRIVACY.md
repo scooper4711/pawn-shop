@@ -17,9 +17,9 @@ your Library folder until you delete the folder named Pawn Shop there.
 
 ## Tagging with Ollama
 
-Pawn Shop can suggest keywords and names for pawns by asking Ollama, a program you run on your own Mac. The pictures
-go only to the address in your settings, `localhost` unless you change it yourself, and that server is yours;
-the developer sees nothing. Turn tagging off in Settings › Tagging.
+Pawn Shop can suggest keywords and names for pawns by asking Ollama, a program you run on your own Mac. Tagging is
+off until you turn it on in Settings › Tagging. The pictures go only to the server named there, your own Mac
+unless you change it yourself, and that server is yours; the developer sees nothing.
 
 ## Other apps on your Mac
 

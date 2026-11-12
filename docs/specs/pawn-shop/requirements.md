@@ -87,10 +87,22 @@ is cut out and folded at the heads, giving a two-ply pawn.
   closes it.
 - R2.10 Clicking a tile selects it immediately. Dragging a tile, or the selection when the tile is part of it,
   from the library onto the sheet adds the add bar's number of copies of each, as a double-click does; this holds for pawns, items and spells.
-- R2.9 Tagging can be turned off and on again in Settings; it is on by default. Turning it off stops tagging
+- R2.9 Tagging is turned on and off in Settings; it is off until turned on, as it needs Ollama, which most
+  people won't have. Turning it off stops tagging
   after the pawn in hand and keeps it from starting at launch, after imports or from Library ▸ Tag New Pawns;
   turning it back on resumes it. Settings shows how many of the library's pawns are tagged and how many are
   left, and while tagging runs the library shows a progress bar, with the numbers in its tooltip.
+- R2.11 Settings has the model's name and the Ollama server's address, with `gemma3:12b` and
+  `http://localhost:11434` used when they are empty or the address isn't an http or https one. A change takes
+  effect on Return or on leaving the field: tagging carries on with the new model or server, and a new model
+  tags every pawn again (R2.7). Settings says where the pictures go: this Mac, or the server's host.
+- R2.12 Settings says that tagging is optional and that search works on names, products and traits without it,
+  and links to `docs/tagging.md` in the repository: installing Ollama, the model to choose for the Mac's
+  memory, using the keywords, and what to do when it fails. When tagging stops, Settings and the library's
+  warning say what to do: that Ollama wasn't found at the server's address, or the `ollama pull` command for a
+  model that isn't installed.
+- R2.13 A server on the user's own network (a `.local` name or an IP address) can be reached over plain HTTP;
+  any other needs HTTPS.
 
 ## R3 Custom pawns
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied

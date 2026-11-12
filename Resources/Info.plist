@@ -21,6 +21,13 @@
     <!-- Only HTTPS to the system, and the local Ollama server, which are exempt, so uploads don't ask. -->
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <!-- Lets tagging reach an Ollama server the user named on their own network over plain HTTP (a .local name
+         or an IP address); servers elsewhere need HTTPS. -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
     <key>LSMinimumSystemVersion</key>
     <string>15.0</string>
     <key>LSApplicationCategoryType</key>

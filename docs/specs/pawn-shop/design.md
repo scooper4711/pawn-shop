@@ -197,9 +197,15 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   `nameLayout` and `nameBandHeight`, so it matches the printed front, and dragging moves the art within its room. `PawnLibrary.addCustomPawn(_:)` saves the image as
   PNG in `Custom/` and adds the pawn; the window also adds one copy to its sheet.
 - Tagging (`PawnTaggingModel`): one pawn at a time, choosing the next afresh so pawns on screen go first, and
-  saving every 10 pawns. `OllamaTagger.configured(by:)` reads the model and endpoint from user defaults, and
-  `OllamaTagger.isOn(in:)` the switch, the user default `tagsPawns`, on unless turned off in Settings; the run
-  checks it before each pawn. `TaggingProgress(of:by:)` counts the library's pawns still to tag (the same test
+  saving every 10 pawns. The model keeps the model's name and the server's address as typed in
+  Settings (user defaults `TaggingModel` and `OllamaURL`), and `OllamaTagger.configured(model:address:)` makes
+  the tagger from them, with the defaults for an empty name or an address `endpoint(from:)` rejects. Settings'
+  fields (`CommittedTextField`) hand a value on only on Return or on losing focus. `OllamaTagger.isOn(in:)`
+  reads the switch, the user default `tagsPawns`, off until turned on in Settings. The run checks the switch
+  and that the tagger is still the chosen one (`matches`) before each pawn, and starts over with the new
+  tagger when it isn't. `explanation(of:)` words why a run stopped, and `TaggingSettingsText.serverNote(for:)`
+  where the pictures go. `NSAllowsLocalNetworking` in the Info.plist lets plain HTTP reach a server on the
+  user's network (R2.13). `TaggingProgress(of:by:)` counts the library's pawns still to tag (the same test
   as `pawnsNeedingTags`) against all of them, so the count includes pawns tagged in earlier runs. Settings has
   Updates and Tagging tabs; the Tagging tab's toggle, progress bar and status, and the library's progress bar
   (its tooltip has the counts), observe the model.

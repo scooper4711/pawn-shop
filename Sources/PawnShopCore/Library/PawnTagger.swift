@@ -63,17 +63,54 @@ public struct OllamaTagger: Sendable {
 
     /// The user default that turns tagging on and off.
     public static let isOnKey = "tagsPawns"
+    /// The user defaults that hold the model and the server's address, when the user changed them in Settings.
+    public static let modelKey = "TaggingModel"
+    public static let endpointKey = "OllamaURL"
+    /// The guide to installing Ollama and choosing a model, which Settings links to.
+    public static let guideURL = URL(string: "https://github.com/scooper4711/pawn-shop/blob/main/docs/tagging.md")!
 
-    /// Whether to tag pawns: on unless the user turned it off in Settings.
+    /// Whether to tag pawns: off until the user turns it on in Settings, as it needs Ollama installed.
     public static func isOn(in defaults: UserDefaults) -> Bool {
-        defaults.object(forKey: isOnKey) as? Bool ?? true
+        defaults.bool(forKey: isOnKey)
     }
 
-    /// The tagger the user chose with `defaults write <bundle id> TaggingModel <name>` (and `OllamaURL`), or the
-    /// default one.
+    /// The tagger the user set up in Settings, or the default one.
     public static func configured(by defaults: UserDefaults) -> OllamaTagger {
-        let endpoint = defaults.string(forKey: "OllamaURL").flatMap(URL.init(string:)) ?? defaultEndpoint
-        return OllamaTagger(model: defaults.string(forKey: "TaggingModel") ?? defaultModel, endpoint: endpoint)
+        configured(model: defaults.string(forKey: modelKey) ?? "",
+                   address: defaults.string(forKey: endpointKey) ?? "")
+    }
+
+    /// The tagger for a model's name and a server's address as typed; the default takes the place of an empty
+    /// name, and of an address that is empty or isn't one.
+    public static func configured(model: String, address: String) -> OllamaTagger {
+        let name = model.trimmingCharacters(in: .whitespaces)
+        return OllamaTagger(model: name.isEmpty ? defaultModel : name,
+                            endpoint: endpoint(from: address) ?? defaultEndpoint)
+    }
+
+    /// The server at an address as typed, or nil when it isn't an http or https address with a host.
+    public static func endpoint(from address: String) -> URL? {
+        guard let url = URL(string: address.trimmingCharacters(in: .whitespaces)),
+              ["http", "https"].contains(url.scheme?.lowercased() ?? ""), url.host?.isEmpty == false
+        else { return nil }
+        return url
+    }
+
+    /// True when `other` asks the same model on the same server.
+    public func matches(_ other: OllamaTagger) -> Bool {
+        model == other.model && endpoint == other.endpoint
+    }
+
+    /// Why tagging stopped, with what the user can do about it.
+    public func explanation(of error: PawnTaggingError) -> String {
+        switch error {
+        case .unreachable:
+            "Ollama wasn't found at \(endpoint.absoluteString). Start Ollama, or install it as the guide describes."
+        case .refused(let reason):
+            "Ollama answered \"\(reason)\". Check that the model is installed: ollama pull \(model)"
+        case .unreadableReply, .unencodableImage:
+            error.description
+        }
     }
 
     static let namePrompt = prompt + """

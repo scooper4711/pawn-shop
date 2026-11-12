@@ -24,6 +24,15 @@ final class PawnTaggingModel {
         }
     }
 
+    /// The model's name and the server's address as typed in Settings; empty for the defaults. Changing either
+    /// starts tagging again with the new one.
+    var modelName = UserDefaults.standard.string(forKey: OllamaTagger.modelKey) ?? "" {
+        didSet { keep(modelName, forKey: OllamaTagger.modelKey) }
+    }
+    var serverAddress = UserDefaults.standard.string(forKey: OllamaTagger.endpointKey) ?? "" {
+        didSet { keep(serverAddress, forKey: OllamaTagger.endpointKey) }
+    }
+
     @ObservationIgnored private let library: LibraryModel
     /// Pawns this run has asked about, so one the model can't name isn't asked about again until the next run.
     @ObservationIgnored private var asked: Set<UUID> = []
@@ -34,8 +43,8 @@ final class PawnTaggingModel {
         self.library = library
     }
 
-    /// The model, set with `defaults write <bundle id> TaggingModel <name>`; changing it tags every pawn again.
-    var tagger: OllamaTagger { .configured(by: .standard) }
+    /// The model and server chosen in Settings; changing the model tags every pawn again.
+    var tagger: OllamaTagger { .configured(model: modelName, address: serverAddress) }
 
     /// How many of the library's pawns the current model has tagged; observed through the library's pawns.
     var progress: TaggingProgress { TaggingProgress(of: library.pawns, by: tagger.model) }
@@ -60,13 +69,26 @@ final class PawnTaggingModel {
         start { [library] in library.errorMessage = $0 }
     }
 
+    /// Saves a setting, or forgets it when it was cleared, and tags with the new settings.
+    private func keep(_ value: String, forKey key: String) {
+        let trimmed = value.trimmingCharacters(in: .whitespaces)
+        UserDefaults.standard.set(trimmed.isEmpty ? nil : trimmed, forKey: key)
+        problem = nil
+        tagNewPawns()
+    }
+
     private func start(reportingProblem report: @escaping (String) -> Void = { _ in
         // Tagging in the background reports nothing: without Ollama, pawns simply stay untagged.
     }) {
         guard isOn, !isRunning else { return }
         isRunning = true
         Task {
-            await run(tagger)
+            // A run stops when Settings changes the model or server, and the next one uses the new ones.
+            var used: OllamaTagger
+            repeat {
+                used = tagger
+                await run(used)
+            } while isOn && !used.matches(tagger)
             isRunning = false
             if let problem { report(problem) }
         }
@@ -78,7 +100,7 @@ final class PawnTaggingModel {
         defer { library.saveTags() }
         // The next pawn is chosen afresh each time, so pawns scrolled into view, or added, go ahead of the rest.
         var done = 0
-        while isOn, problem == nil, let pawn = nextPawn(tagger) {
+        while isOn, problem == nil, tagger.matches(self.tagger), let pawn = nextPawn(tagger) {
             await tag(pawn, with: tagger)
             done += 1
             if done.isMultiple(of: Self.saveInterval) { library.saveTags() }
@@ -95,7 +117,7 @@ final class PawnTaggingModel {
         do {
             try await describe(pawn, with: tagger)
         } catch let error as PawnTaggingError where error.stopsTagging {
-            problem = "\(error)"
+            problem = tagger.explanation(of: error)
         } catch where pawn.tagModel != tagger.model {
             // One pawn the model can't describe is left without tags rather than holding up the rest.
             library.setTags([], by: tagger.model, of: pawn.id)
