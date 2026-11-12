@@ -20,22 +20,30 @@ struct TaggingStatus: View {
     }
 }
 
-/// The Settings tab for tagging: whether to tag, and how far it has come.
+/// The Settings tab for tagging: whether to tag, with which model on which server, and how far it has come.
 struct TaggingSettingsView: View {
     @Bindable var tagging: PawnTaggingModel
 
     var body: some View {
         Form {
             Toggle("Tag pawns with AI", isOn: $tagging.isOn)
-            Text("A vision model running in Ollama on this Mac describes each pawn's art in keywords you can "
-                 + "search for. Nothing leaves your Mac.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            note("Tagging is optional: without it, search still finds pawns by name, product and trait. With it, "
+                 + "a vision model describes each pawn's art in keywords you can search for, and suggests names "
+                 + "for pawns printed without one. It needs Ollama, a free program you install yourself.")
+            Link("How to Set Up Tagging", destination: OllamaTagger.guideURL)
+            server
+            CommittedTextField(title: "Model", placeholder: OllamaTagger.defaultModel, text: $tagging.modelName)
+            note("Changing the model tags every pawn again.")
             progress
         }
         .padding(20)
-        .frame(width: 420)
+        .frame(width: 460)
+    }
+
+    @ViewBuilder private var server: some View {
+        CommittedTextField(title: "Server", placeholder: OllamaTagger.defaultEndpoint.absoluteString,
+                           text: $tagging.serverAddress)
+        note(TaggingSettingsText.serverNote(for: tagging.serverAddress))
     }
 
     private var progress: some View {
@@ -44,18 +52,48 @@ struct TaggingSettingsView: View {
             ProgressView(value: progress.fraction)
             Text(progress.summary)
                 .monospacedDigit()
-            Text(status(isComplete: progress.isComplete))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            note(status(isComplete: progress.isComplete))
         }
         .padding(.top, 8)
     }
 
+    private func note(_ text: String) -> some View {
+        Text(text)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
     private func status(isComplete: Bool) -> String {
+        if !tagging.isOn { return "Tagging is turned off." }
         if tagging.isRunning { return "Tagging with \(tagging.tagger.model)…" }
         if let problem = tagging.problem { return problem }
         if isComplete { return "Tagged with \(tagging.tagger.model)." }
-        return tagging.isOn ? "Library › Tag New Pawns tags the rest." : "Tagging is turned off."
+        return "Library › Tag New Pawns tags the rest."
+    }
+}
+
+/// A text field that hands on what was typed only on Return or when the field is left, so a half-typed model
+/// name or address is never used.
+private struct CommittedTextField: View {
+    let title: String
+    let placeholder: String
+    @Binding var text: String
+    @State private var draft = ""
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        TextField(title, text: $draft, prompt: Text(placeholder))
+            .focused($isFocused)
+            .autocorrectionDisabled()
+            .onAppear { draft = text }
+            .onSubmit(commit)
+            .onChange(of: isFocused) { _, focused in
+                if !focused { commit() }
+            }
+    }
+
+    private func commit() {
+        if draft != text { text = draft }
     }
 }

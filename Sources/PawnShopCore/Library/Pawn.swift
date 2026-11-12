@@ -165,9 +165,9 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     public var appearances: [Appearance]
     /// True while the pawn has a stand-in name because none was printed; renaming clears it.
     public var needsName: Bool
-    /// Search keywords for what the art shows, such as "woman", "warrior" and "scimitar".
+    /// Search keywords for what the art adds to the name and traits, such as "scimitar", "shield" and "cloak".
     public var tags: [String] = []
-    /// The model that chose `tags`; empty until the pawn is tagged.
+    /// The model and prompt version that chose `tags` (`TaggingPrompt.signature`); empty until the pawn is tagged.
     public var tagModel = ""
     /// A name the model suggests while the pawn needs one (`needsName`); empty until it has looked.
     public var suggestedName = ""

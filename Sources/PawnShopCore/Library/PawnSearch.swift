@@ -3,8 +3,7 @@ import Foundation
 
 /// What to look for in the library.
 public struct PawnQuery: Equatable, Sendable {
-    /// Words that must all appear in the pawn's name or one of its products' titles, or begin a word of one of its
-    /// tags or traits, so "man" finds the tag "man" but not "woman".
+    /// Words that must all appear in the pawn's name, one of its products' titles, its tags or its traits.
     public var text = ""
     /// Sizes to show; empty shows every size.
     public var sizes: Set<PawnSize> = []
@@ -82,12 +81,8 @@ public extension PawnLibrary {
         guard query.sourceIDs.isEmpty || sources.contains(where: { query.sourceIDs.contains($0.id) }),
               query.games.isEmpty || pawn.isCustom || sources.contains(where: { query.games.contains($0.game) })
         else { return false }
-        let haystack = ([pawn.name] + sourceTitles(of: pawn)).joined(separator: " ")
-        let tagWords = (pawn.tags + pawn.traits).flatMap { $0.split(whereSeparator: \.isWhitespace) }
-        return words.allSatisfy { word in
-            haystack.range(of: word, options: Self.searchOptions) != nil
-                || tagWords.contains { $0.range(of: word, options: Self.searchOptions.union(.anchored)) != nil }
-        }
+        let haystack = ([pawn.name] + sourceTitles(of: pawn) + pawn.tags + pawn.traits).joined(separator: " ")
+        return words.allSatisfy { haystack.range(of: $0, options: Self.searchOptions) != nil }
     }
 
     private static var searchOptions: String.CompareOptions { [.caseInsensitive, .diacriticInsensitive] }

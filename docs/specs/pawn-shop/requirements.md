@@ -68,18 +68,22 @@ is cut out and folded at the heads, giving a two-ply pawn.
 
 ## R2 The library
 - R2.1 The library is kept between launches and shared by every sheet.
-- R2.2 Search matches names and product titles, ignoring case and accents, and the start of words in a pawn's
-  traits (R1.14) and tags (R2.7), so "man" does not find "woman".
+- R2.2 Search finds the pawns whose name, product titles, traits (R1.14) and tags (R2.7) together contain every
+  word typed, anywhere in a word and ignoring case and accents, so "sword" also finds "longsword".
 - R2.3 Results can be filtered by size and by product.
 - R2.4 Pawns with the same name are shown next to each other with their product, so the art can be compared.
 - R2.5 A pawn can be removed from the library, or renamed.
 - R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
-- R2.7 Each pawn is tagged in the background with keywords for what its art shows (person, creature, robot or
-  vehicle, undead, role, weapons, armor, animals) by a vision model running locally in Ollama, without the
-  printed name in view, and with art printed on its side (as its printed name shows) turned to read level. Tagging resumes at
-  launch and after imports, skips quietly when Ollama is not running, and starts over when the model is changed.
+- R2.7 Each pawn is tagged in the background with keywords for what its art adds to its name and traits
+  (weapons, shields, armor, notable gear and clothing, animals with it, striking features) by a vision model
+  running locally in Ollama. The model is told the pawn's name and traits and asked not to repeat them, and
+  keywords made up only of words of the name and traits are left out, as search finds those anyway. Tagging
+  never gives a gender. The art is shown without the printed name in view, and art printed on its side (as its
+  printed name shows) is turned to read level. Tagging resumes at launch and after imports, skips quietly when
+  Ollama is not running, and starts over when the model or the prompts (`TaggingPrompt.version`) change.
   A pawn's tags show in its tooltip and preview. Pawns shown in the library grid are tagged first, then pawns
-  needing a name, and for those alone the model also suggests a name of at most three words (R1.12). The user
+  needing a name, and for those alone the model also guesses the ancestry or kind and role, and suggests a name
+  of at most three words (R1.12). The user
   can correct a pawn's tags from its preview or context menu; tagging never changes corrected tags, even when
   the model is changed.
 - R2.8 Space shows the selected pawn's front and back large over the window, with its name, size, products,
@@ -87,10 +91,22 @@ is cut out and folded at the heads, giving a two-ply pawn.
   closes it.
 - R2.10 Clicking a tile selects it immediately. Dragging a tile, or the selection when the tile is part of it,
   from the library onto the sheet adds the add bar's number of copies of each, as a double-click does; this holds for pawns, items and spells.
-- R2.9 Tagging can be turned off and on again in Settings; it is on by default. Turning it off stops tagging
+- R2.9 Tagging is turned on and off in Settings; it is off until turned on, as it needs Ollama, which most
+  people won't have. Turning it off stops tagging
   after the pawn in hand and keeps it from starting at launch, after imports or from Library ▸ Tag New Pawns;
   turning it back on resumes it. Settings shows how many of the library's pawns are tagged and how many are
   left, and while tagging runs the library shows a progress bar, with the numbers in its tooltip.
+- R2.11 Settings has the model's name and the Ollama server's address, with `gemma3:12b` and
+  `http://localhost:11434` used when they are empty or the address isn't an http or https one. A change takes
+  effect on Return or on leaving the field: tagging carries on with the new model or server, and a new model
+  tags every pawn again (R2.7). Settings says where the pictures go: this Mac, or the server's host.
+- R2.12 Settings says that tagging is optional and that search works on names, products and traits without it,
+  and links to `docs/tagging.md` in the repository: installing Ollama, the model to choose for the Mac's
+  memory, using the keywords, and what to do when it fails. When tagging stops, Settings and the library's
+  warning say what to do: that Ollama wasn't found at the server's address, or the `ollama pull` command for a
+  model that isn't installed.
+- R2.13 A server on the user's own network (a `.local` name or an IP address) can be reached over plain HTTP;
+  any other needs HTTPS.
 
 ## R3 Custom pawns
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied

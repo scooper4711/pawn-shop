@@ -64,7 +64,7 @@ right.*
   a name but not their art (first and second edition, variants) side by side so you can pick.
 - Search by name, product, trait or what the art shows, and filter by size, game, product or your own pawns.
 - Optional tagging by a vision model running on your Mac in [Ollama](https://ollama.com), which describes
-  each pawn's art in keywords such as "woman, warrior, shield, scimitar" and suggests names for pawns printed
+  each pawn's art in keywords such as "scimitar, sword, shield, turban" and suggests names for pawns printed
   without one.
 - Sheets are documents: add pawns with a number of copies, see the pages as they will print, and save the
   sheet to print again later. Strips are packed upright or on their side, whichever needs fewer pages.
@@ -151,22 +151,21 @@ After that it opens normally.
 
 ### Tagging
 
-Tagging is optional and runs entirely on your Mac. Install [Ollama](https://ollama.com), start it, and pull
-the model:
+Tagging is optional, and off until you turn it on in Settings › Tagging. It needs [Ollama](https://ollama.com),
+a free program that runs a vision model on your own Mac. **[Setting up tagging](docs/tagging.md)** explains how
+to install it, which model suits your Mac's memory, and how to use the keywords.
+
+In short: install Ollama, download the model, and turn on Tag pawns with AI.
 
 ```sh
 ollama pull gemma3:12b
 ```
 
-While Pawn Shop runs, it then tags the pawns in the background, about 8 seconds a pawn, starting with those
+While Pawn Shop runs, it then tags the pawns in the background, about 9 seconds a pawn, starting with those
 on screen. A progress bar below the library shows how far it has come (hover over it for the numbers), and
-Settings › Tagging shows how many are tagged. Turn off Tag pawns with AI there to stop tagging, and turn it
-back on to pick up where it left off. Without Ollama, pawns stay untagged and Library › Tag New Pawns tries again. To use another
-vision model, which tags every pawn again:
-
-```sh
-defaults write io.github.scooper4711.PawnShop TaggingModel <model>
-```
+Settings › Tagging shows how many are tagged. The model and the Ollama server's address can be changed there;
+changing the model tags every pawn again. Without Ollama, Settings says so, pawns stay untagged, and Library ›
+Tag New Pawns tries again.
 
 ## Not handled yet
 
@@ -249,9 +248,12 @@ To try the app without touching your library, set `PAWN_SHOP_LIBRARY` to another
 `PAWN_SHOP_SNAPSHOT=<prefix>` the app also draws its windows to `<prefix>-*.png` a few seconds after launch:
 
 ```sh
-open -n --env PAWN_SHOP_LIBRARY="$PWD/tmp/library" --env PAWN_SHOP_SNAPSHOT="$PWD/tmp/snap" \
+TMP="$HOME/Library/Containers/io.github.scooper4711.PawnShop/Data/tmp"
+open -n --env PAWN_SHOP_LIBRARY="$TMP/library" --env PAWN_SHOP_SNAPSHOT="$TMP/snap" \
      -a "$PWD/build/Pawn Shop.app"
 ```
+
+Both folders must be inside the app's container, as the app runs in the App Sandbox.
 
 The code is in three parts: `Sources/ItemCatalogImport` (run as `ItemImport`) builds the item list,
 `Sources/PawnShopCore` holds all the logic and is unit tested (`Extraction` reads

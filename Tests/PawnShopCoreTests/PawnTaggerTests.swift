@@ -49,15 +49,48 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
 
 @Suite struct PawnTaggerTests {
     @Test func cleansUpTheModelsTags() {
-        let tags = PawnTags.normalized([" Woman", "warrior.", "WOMAN", "", "fantasy", "Aldori Swordlord", "scimitar",
+        let tags = PawnTags.normalized([" Cloak", "warrior.", "CLOAK", "", "fantasy", "Aldori Swordlord", "scimitar",
                                         "undead and dwarf", "Tabletop", "roleplaying game", "creature"],
                                        name: "Aldori Swordlord")
-        #expect(tags == ["woman", "warrior", "scimitar", "undead", "dwarf"])
+        #expect(tags == ["cloak", "warrior", "scimitar", "undead", "dwarf"])
+    }
+
+    @Test func leavesOutWhatSearchAlreadyFindsAndGenders() {
+        let tags = PawnTags.normalized(["Skeleton", "guard", "undead", "Mindless", "woman", "male", "halberd",
+                                        "skeleton guard", "night watch"],
+                                       name: "Skeleton Guard, Night", traits: ["medium", "Undead", "mindless"])
+        #expect(tags == ["halberd", "night watch"])
+    }
+
+    @Test func keepsAnUnnamedPawnsAncestryButNoGender() {
+        #expect(PawnTags.described(["Elf", "woman", "wizard", "figure", "staff"]) == ["elf", "wizard", "staff"])
+    }
+
+    @Test func tellsTheModelTheNameAndTraitsAndAsksForNoGender() {
+        let named = TaggingPrompt.named("Skeleton Guard", traits: ["medium", "undead"])
+        #expect(named.contains("\"Skeleton Guard\"") && named.contains("Its game traits are: medium, undead."))
+        #expect(named.contains("do not repeat them") && named.contains("Never give a gender"))
+        #expect(!TaggingPrompt.named("Hero", traits: []).contains("game traits are"))
+        #expect(TaggingPrompt.unnamed.contains("ancestry") && TaggingPrompt.unnamed.contains("Never give a gender"))
+        for prompt in [named, TaggingPrompt.unnamed] {
+            #expect(!prompt.contains("man or woman"))
+        }
+    }
+
+    @Test func tagsAgainWhenTheModelOrThePromptsChange() {
+        let signature = OllamaTagger(model: "gemma3:12b").signature
+        #expect(signature == "gemma3:12b v\(TaggingPrompt.version)" && TaggingPrompt.version >= 2)
+        var pawn = Pawn(name: "Hero", size: .medium, art: .custom(CustomArt(imageFile: "hero.png")))
+        pawn.tagModel = "gemma3:12b"
+        #expect(pawn.needsTagging(by: signature))
+        pawn.tagModel = signature
+        #expect(!pawn.needsTagging(by: signature) && pawn.needsTagging(by: OllamaTagger(model: "other").signature))
     }
 
     @Test func asksForTagsOfTheArt() throws {
         let tagger = OllamaTagger(model: "gemma3:4b", endpoint: URL(string: "http://ollama.test:1234")!)
-        let request = try tagger.request(for: Data("png".utf8), asking: .tags)
+        let question = OllamaTagger.Question.tags(name: "Goblin", traits: ["small"])
+        let request = try tagger.request(for: Data("png".utf8), asking: question)
         #expect(request.url?.absoluteString == "http://ollama.test:1234/api/generate")
         #expect(request.httpMethod == "POST")
         let body = try #require(try JSONSerialization.jsonObject(with: request.httpBody ?? Data()) as? [String: Any])
@@ -65,8 +98,7 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
         #expect(body["images"] as? [String] == [Data("png".utf8).base64EncodedString()])
         #expect(body["stream"] as? Bool == false)
         #expect((body["format"] as? [String: Any])?["required"] as? [String] == ["tags"])
-        #expect(body["prompt"] as? String == OllamaTagger.prompt)
-        #expect(OllamaTagger.prompt.contains("vehicle") && OllamaTagger.prompt.contains("undead"))
+        #expect(body["prompt"] as? String == TaggingPrompt.named("Goblin", traits: ["small"]))
     }
 
     @Test func asksForANameOnlyWhenAskedForTagsAndName() throws {
@@ -76,8 +108,8 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
         #expect(format["required"] as? [String] == ["tags", "name"])
         #expect((format["properties"] as? [String: Any])?["name"] != nil)
         let prompt = try #require(body["prompt"] as? String)
-        #expect(prompt.hasPrefix(OllamaTagger.prompt) && prompt.contains("at most three words"))
-        #expect(!OllamaTagger.prompt.contains("three words"))
+        #expect(prompt == TaggingPrompt.unnamed && prompt.contains("at most three words"))
+        #expect(!TaggingPrompt.named("Goblin", traits: []).contains("three words"))
     }
 
     @Test func readsTheUsersKeywords() {
@@ -127,9 +159,10 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
     }
 
     @Test func tagsAnImageThroughOllama() async throws {
-        let session = StubOllama.session(host: "tagging.test", reply: try ollamaReply(tags: ["Goblin", "fantasy"]))
+        let reply = try ollamaReply(tags: ["Goblin", "fantasy", "small", "Dogslicer"])
+        let session = StubOllama.session(host: "tagging.test", reply: reply)
         let tagger = OllamaTagger(endpoint: URL(string: "http://tagging.test")!, session: session)
-        #expect(try await tagger.tags(for: artImage(), name: "Goblin Warrior") == ["goblin"])
+        #expect(try await tagger.tags(for: artImage(), name: "Goblin Warrior", traits: ["small"]) == ["dogslicer"])
     }
 
     @Test func reportsOllamaNotRunning() async {
@@ -164,30 +197,30 @@ func ollamaReply(answer: [String: Any]) throws -> Data {
         try library.add(hero)
         try library.add(ogre)
         #expect(library.pawnsNeedingTags(by: "gemma3:4b").count == 2)
-        library.setTags(["woman", "scimitar"], by: "gemma3:4b", of: hero.id)
+        library.setTags(["turban", "scimitar"], by: "gemma3:4b", of: hero.id)
         library.setTags(["club"], by: "gemma3:4b", of: UUID())
         try library.save()
         let reopened = try self.library()
-        #expect(reopened.pawn(id: hero.id)?.tags == ["woman", "scimitar"])
+        #expect(reopened.pawn(id: hero.id)?.tags == ["turban", "scimitar"])
         #expect(reopened.pawnsNeedingTags(by: "gemma3:4b").map(\.name) == ["Ogre"])
         #expect(reopened.pawnsNeedingTags(by: "another-model").count == 2)
-        #expect(reopened.search(PawnQuery(text: "Scimitar woman")).map(\.name) == ["Hero"])
+        #expect(reopened.search(PawnQuery(text: "Scimitar turban")).map(\.name) == ["Hero"])
     }
 
-    @Test func matchesTagsFromTheStartOfTheirWords() throws {
+    @Test func matchesTagsAnywhereInThem() throws {
         let library = try library()
         let names = ["Hero", "Heroine", "Ogre"]
-        let tags = [["man", "longsword"], ["woman", "plate armor"], ["club"]]
+        let tags = [["longsword"], ["plate armor", "shortsword"], ["club"]]
         for (name, tags) in zip(names, tags) {
             try library.add(Pawn(name: name, size: .medium, art: .custom(CustomArt(imageFile: "x.png"))))
             library.setTags(tags, by: "model", of: library.pawns.last!.id)
         }
-        #expect(library.search(PawnQuery(text: "man")).map(\.name) == ["Hero"])
-        #expect(library.search(PawnQuery(text: "wom")).map(\.name) == ["Heroine"])
+        #expect(library.search(PawnQuery(text: "sword")).map(\.name) == ["Hero", "Heroine"])
         #expect(library.search(PawnQuery(text: "armor")).map(\.name) == ["Heroine"])
-        #expect(library.search(PawnQuery(text: "long")).map(\.name) == ["Hero"])
-        #expect(library.search(PawnQuery(text: "sword")).isEmpty)
+        #expect(library.search(PawnQuery(text: "LONG")).map(\.name) == ["Hero"])
+        #expect(library.search(PawnQuery(text: "plate sword")).map(\.name) == ["Heroine"])
         #expect(library.search(PawnQuery(text: "ogr")).map(\.name) == ["Ogre"])
+        #expect(library.search(PawnQuery(text: "axe")).isEmpty)
     }
 
     @Test func asksAboutPawnsNeedingANameFirstUntilOneIsSuggested() throws {
