@@ -47,7 +47,7 @@ final class PawnTaggingModel {
     var tagger: OllamaTagger { .configured(model: modelName, address: serverAddress) }
 
     /// How many of the library's pawns the current model has tagged; observed through the library's pawns.
-    var progress: TaggingProgress { TaggingProgress(of: library.pawns, by: tagger.model) }
+    var progress: TaggingProgress { TaggingProgress(of: library.pawns, by: tagger.signature) }
 
     /// Tags the pawns not yet tagged by the current model, quietly giving up when Ollama isn't there.
     func tagNewPawns() {
@@ -109,7 +109,7 @@ final class PawnTaggingModel {
 
     /// The pawn to tag next.
     private func nextPawn(_ tagger: OllamaTagger) -> Pawn? {
-        library.pawnsNeedingTags(by: tagger.model, visible: Set(showing.keys)).first { !asked.contains($0.id) }
+        library.pawnsNeedingTags(by: tagger.signature, visible: Set(showing.keys)).first { !asked.contains($0.id) }
     }
 
     private func tag(_ pawn: Pawn, with tagger: OllamaTagger) async {
@@ -118,9 +118,9 @@ final class PawnTaggingModel {
             try await describe(pawn, with: tagger)
         } catch let error as PawnTaggingError where error.stopsTagging {
             problem = tagger.explanation(of: error)
-        } catch where pawn.tagModel != tagger.model {
+        } catch where pawn.tagModel != tagger.signature {
             // One pawn the model can't describe is left without tags rather than holding up the rest.
-            library.setTags([], by: tagger.model, of: pawn.id)
+            library.setTags([], by: tagger.signature, of: pawn.id)
         } catch {
             // A pawn already tagged that the model couldn't name keeps its tags, and is asked again next run.
         }
@@ -130,11 +130,12 @@ final class PawnTaggingModel {
     private func describe(_ pawn: Pawn, with tagger: OllamaTagger) async throws {
         let image = try await artImage(of: pawn)
         guard pawn.needsName else {
-            library.setTags(try await tagger.tags(for: image, name: pawn.name), by: tagger.model, of: pawn.id)
+            let tags = try await tagger.tags(for: image, name: pawn.name, traits: pawn.traits)
+            library.setTags(tags, by: tagger.signature, of: pawn.id)
             return
         }
         let description = try await tagger.tagsAndName(for: image)
-        library.setTags(description.tags, by: tagger.model, of: pawn.id)
+        library.setTags(description.tags, by: tagger.signature, of: pawn.id)
         library.setSuggestedName(description.suggestedName, of: pawn.id)
     }
 

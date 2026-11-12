@@ -64,7 +64,7 @@ right.*
   a name but not their art (first and second edition, variants) side by side so you can pick.
 - Search by name, product, trait or what the art shows, and filter by size, game, product or your own pawns.
 - Optional tagging by a vision model running on your Mac in [Ollama](https://ollama.com), which describes
-  each pawn's art in keywords such as "woman, warrior, shield, scimitar" and suggests names for pawns printed
+  each pawn's art in keywords such as "scimitar, sword, shield, turban" and suggests names for pawns printed
   without one.
 - Sheets are documents: add pawns with a number of copies, see the pages as they will print, and save the
   sheet to print again later. Strips are packed upright or on their side, whichever needs fewer pages.
@@ -161,7 +161,7 @@ In short: install Ollama, download the model, and turn on Tag pawns with AI.
 ollama pull gemma3:12b
 ```
 
-While Pawn Shop runs, it then tags the pawns in the background, about 8 seconds a pawn, starting with those
+While Pawn Shop runs, it then tags the pawns in the background, about 9 seconds a pawn, starting with those
 on screen. A progress bar below the library shows how far it has come (hover over it for the numbers), and
 Settings › Tagging shows how many are tagged. The model and the Ollama server's address can be changed there;
 changing the model tags every pawn again. Without Ollama, Settings says so, pawns stay untagged, and Library ›

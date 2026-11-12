@@ -35,22 +35,6 @@ public struct OllamaTagger: Sendable {
     public static let defaultModel = "gemma3:12b"
     public static let defaultEndpoint = URL(string: "http://localhost:11434")!
 
-    static let prompt = """
-        This is a pawn (a standee) for a tabletop role-playing game. List 3 to 10 lowercase search keywords for \
-        what you can clearly see. First say what it is: a person or humanoid (human, elf, dwarf, orc, goblin...), \
-        a creature (dragon, insect, bird, beast...), a robot, or a vehicle (spaceship, starship, mech, car...). For \
-        a person or humanoid, always say man or woman. If it is undead (a skeleton, zombie, mummy, ghost or \
-        rotting corpse), add undead as a keyword of its own next to what it was: an undead dwarf gets the two \
-        keywords undead and dwarf. For a person, humanoid or creature, add their role if obvious (warrior, \
-        wizard, archer, priest, rogue, knight...) and the weapons, armor, gear and animals they carry or ride \
-        (shield, scimitar, longsword, axe, bow, spear, staff, gun, plate armor, cloak, wolf, horse...). For a \
-        vehicle, add its kind (fighter, freighter, battleship, station...) and its visible weapons (turret, \
-        cannon, missiles...); a vehicle is never a man or a woman. Prefer specific weapon names, and list the \
-        general kind as well: longsword and sword, scimitar and sword, longbow and bow, rifle and gun, plate \
-        armor and armor. Do not list colors, or generic words such as fantasy, character, creature, art or \
-        figure. Only list things you are sure of: a creature without weapons gets no weapon keywords.
-        """
-
     public let model: String
     public let endpoint: URL
     let session: URLSession
@@ -113,41 +97,45 @@ public struct OllamaTagger: Sendable {
         }
     }
 
-    static let namePrompt = prompt + """
-         Also suggest a name for the pawn of at most three words, like the names printed on pawns: the kind of \
-        creature or person and their role, such as Goblin Archer, Elf Wizard, Fire Giant or Dwarf Priest.
-        """
+    /// What tagging stores with a pawn's tags, to tag it again when the model or the prompts change.
+    public var signature: String { TaggingPrompt.signature(model: model) }
 
     /// What to ask the model for.
-    enum Question {
-        case tags
+    enum Question: Equatable {
+        case tags(name: String, traits: [String])
         case tagsAndName
 
-        var prompt: String { self == .tags ? OllamaTagger.prompt : OllamaTagger.namePrompt }
+        var prompt: String {
+            switch self {
+            case .tags(let name, let traits): TaggingPrompt.named(name, traits: traits)
+            case .tagsAndName: TaggingPrompt.unnamed
+            }
+        }
 
         /// The JSON schema the answer must follow.
         var format: [String: Any] {
             let tags: [String: Any] = ["type": "array", "items": ["type": "string"]]
-            return self == .tags
-                ? ["type": "object", "required": ["tags"], "properties": ["tags": tags]]
-                : ["type": "object", "required": ["tags", "name"],
+            return self == .tagsAndName
+                ? ["type": "object", "required": ["tags", "name"],
                    "properties": ["tags": tags, "name": ["type": "string"]]]
+                : ["type": "object", "required": ["tags"], "properties": ["tags": tags]]
         }
     }
 
-    /// Keywords for what `image` shows, without `name` or words that describe every pawn.
-    public func tags(for image: CGImage, name: String) async throws -> [String] {
-        let reply = try await answer(.tags, about: image)
-        return PawnTags.normalized(try Self.tags(fromReply: reply), name: name)
+    /// Keywords for what `image` adds to the pawn's `name` and `traits`, which the model is told and which are
+    /// left out of the answer, as search finds them anyway.
+    public func tags(for image: CGImage, name: String, traits: [String] = []) async throws -> [String] {
+        let reply = try await answer(.tags(name: name, traits: traits), about: image)
+        return PawnTags.normalized(try Self.tags(fromReply: reply), name: name, traits: traits)
     }
 
-    /// Keywords for what `image` shows and a name for it, for art printed without a name.
+    /// Keywords for what `image` shows, its ancestry or kind among them, and a name for it, for art printed
+    /// without a name.
     public func tagsAndName(for image: CGImage) async throws -> PawnDescription {
         let reply = try await answer(.tagsAndName, about: image)
         let name = SuggestedName.normalized(try Self.name(fromReply: reply))
         guard !name.isEmpty else { throw PawnTaggingError.unreadableReply(Self.text(of: reply)) }
-        return PawnDescription(tags: PawnTags.normalized(try Self.tags(fromReply: reply), name: name),
-                               suggestedName: name)
+        return PawnDescription(tags: PawnTags.described(try Self.tags(fromReply: reply)), suggestedName: name)
     }
 
     private func answer(_ question: Question, about image: CGImage) async throws -> Data {
@@ -224,9 +212,23 @@ public enum PawnTags {
                                            "roleplaying", "role-playing", "roleplaying game", "role-playing game",
                                            "tabletop rpg", "tabletop game"]
 
-    /// Lowercased and trimmed, once each, without meaningless words or the pawn's own name.
-    public static func normalized(_ tags: [String], name: String) -> [String] {
-        cleaned(tags).filter { $0 != name.lowercased() && !meaningless.contains($0) }
+    /// Words for a gender, which tagging doesn't give.
+    static let gendered: Set<String> = ["man", "woman", "male", "female", "boy", "girl"]
+
+    /// A named pawn's keywords: lowercased and trimmed, once each, without meaningless or gendered words, and
+    /// without those made up only of words of its name and traits, which search finds anyway.
+    public static func normalized(_ tags: [String], name: String, traits: [String] = []) -> [String] {
+        let known = Set(words(of: name) + traits.flatMap(words(of:)))
+        return described(tags).filter { !words(of: $0).allSatisfy(known.contains) }
+    }
+
+    private static func words(of text: String) -> [String] {
+        text.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init)
+    }
+
+    /// An unnamed pawn's keywords: lowercased and trimmed, once each, without meaningless or gendered words.
+    public static func described(_ tags: [String]) -> [String] {
+        cleaned(tags).filter { !meaningless.contains($0) && !gendered.contains($0) }
     }
 
     /// Lowercased and trimmed, once each, without empty ones: the user's own tags are otherwise kept as typed.

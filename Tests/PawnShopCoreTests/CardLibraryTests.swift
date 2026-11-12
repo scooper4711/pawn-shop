@@ -134,12 +134,13 @@ func saveLibrary(sources: [PawnSource], pawns: [Pawn], in folder: URL) throws {
         #expect(PawnLibrary.nameKey("Elemental, Air, Invisible Stalker ") == "invisible stalker")
     }
 
-    @Test func findsPawnsByTheStartOfTheirTraits() throws {
+    @Test func findsPawnsByTheirTraits() throws {
         let library = try library()
         try library.importPDF(at: try writeCardDeck(threeCards, in: folder))
         #expect(library.search(PawnQuery(text: "undead")).map(\.name) == ["Ghoul"])
         #expect(library.search(PawnQuery(text: "drag fire")).map(\.name) == ["Dragon, Young Red"])
-        #expect(library.search(PawnQuery(text: "ead")).isEmpty)
+        #expect(library.search(PawnQuery(text: "ead")).map(\.name) == ["Ghoul"])
+        #expect(library.search(PawnQuery(text: "plant")).isEmpty)
     }
 
     @Test func drawsTheCreatureStandingOnItsName() throws {

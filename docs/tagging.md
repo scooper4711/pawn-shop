@@ -1,9 +1,15 @@
 # Tagging pawns with AI
 
-Pawn Shop can look at each pawn's art and describe it in search keywords: what it is (a person, a creature, a
-robot, a vehicle), whether it is undead, its role, and the weapons, armor and animals in the picture. Searching
-for "woman archer" or "undead dwarf" then finds pawns whose printed name says nothing of the kind. For pawns
-printed without a name, it also suggests one.
+Pawn Shop can look at each pawn's art and add search keywords for what only the picture shows: the weapons it
+holds, its shield and armor, notable gear and clothing, animals with it, and striking features such as wings or
+horns. Searching for "scimitar shield" or "lantern" then finds pawns whose printed name says nothing of the
+kind.
+
+- **It builds on what Pawn Shop already knows.** The model is told the pawn's name and its game traits (such as
+  medium, undead, mindless), and asked not to repeat them, as search finds those anyway.
+- **Pawns printed without a name** also get a guess at their ancestry or kind (elf, dwarf, goblin, robot) and
+  role, and a suggested name such as "Elf Wizard".
+- **It never labels gender.**
 
 **Tagging is optional, and off until you turn it on.** Without it, search still finds pawns by name, product
 and trait. Tagging needs [Ollama](https://ollama.com), a free program that runs AI models on your own computer.
@@ -32,15 +38,17 @@ the largest row your Mac's memory allows:
 
 | Your Mac's memory | Model | Download | What to expect |
 |---|---|---|---|
-| 8 GB | `gemma3:4b` | 3.3 GB | The quickest. Keywords are rougher: expect more missed weapons and wrong guesses. |
+| 8 GB | `gemma3:4b` | 3.3 GB | About twice as fast. Keywords are rougher: it lists colors and body parts, and now and then names gear that isn't in the picture. |
 | 16 GB or 24 GB | `gemma3:12b` | 8.2 GB | **The default.** Pawn Shop's keywords were tuned with this model. |
-| 32 GB or more | `gemma3:27b` | about 17 GB | Slower per pawn. May tell similar weapons and creatures apart better. |
+| 32 GB or more | `gemma3:27b` | 17 GB | Needs about 18 GB of memory for itself. On a Mac with less than 32 GB it is unusable: minutes for each pawn. |
 
 With 16 GB, close memory-hungry apps while a large library is tagged for the first time. If your Mac becomes
 slow while tagging, use the next smaller model.
 
-Any Ollama model that accepts pictures (a "vision" model) can be used. Pawn Shop was developed and tested with
-`gemma3:12b`; the other models are your own experiment.
+Any Ollama model that accepts pictures (a "vision" model) can be used. Pawn Shop was developed with
+`gemma3:12b`. In a trial of 30 pawns on an 18 GB Mac, `gemma3:12b` took about 9 seconds a pawn and
+`gemma3:4b` about 4; `gemma3:27b` did not finish a single pawn in ten minutes, so how good its keywords are on
+a larger Mac is untested.
 
 ## 3. Download the model
 
@@ -63,7 +71,7 @@ Pawn Shop starts tagging at once.
 ## What happens then
 
 - **It works in the background**, one pawn at a time, while Pawn Shop is open. With `gemma3:12b` on an Apple
-  silicon Mac, a pawn takes about 8 seconds, so a library of a thousand pawns takes a little over two hours.
+  silicon Mac, a pawn takes about 9 seconds, so a library of a thousand pawns takes about two and a half hours.
   You can keep using Pawn Shop, and quit whenever you like: it carries on where it stopped the next time.
 - **The pawns you are looking at go first**, then pawns that need a name, then the rest.
 - **A progress bar below the library** shows how far it has come; hover over it for the numbers. Settings ▸
@@ -72,8 +80,8 @@ Pawn Shop starts tagging at once.
 
 ## Using the tags
 
-- **Search:** type keywords in the library's search field. A keyword matches the start of a word, so "man"
-  doesn't find "woman".
+- **Search:** type keywords in the library's search field. Every word you type must appear in the pawn's
+  name, product, traits or keywords; "sword" also finds "longsword".
 - **See a pawn's tags:** hover over it, or select it and press Space.
 - **Correct them:** choose Edit Keywords… in the pawn's preview or its context menu (Control-click). Tagging
   never changes keywords you edited, even if you change the model later.

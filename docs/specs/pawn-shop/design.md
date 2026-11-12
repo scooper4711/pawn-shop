@@ -53,8 +53,8 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
     across the whole library 16 and up were different figures. Otherwise it is added as
     "Unknown <product title>" with `needsName`. A named pawn imported later that matches such a pawn gives it
     its name. `pawnsNeedingNames` lists them in library order.
-  - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name or a product title, or
-    begin a word of a trait or tag;
+  - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name, a product title, a
+    trait or a tag;
     filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
 - `ScrollkeeperScanner` lists PDFs under Scrollkeeper's Files folder whose name contains "pawn" or "token", and
   each Battle Cards deck once, as its art PDF (`PawnLibrary.importableFiles`).
@@ -196,6 +196,11 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   the name prints, and Fill Pawn or Fit Whole Picture; the preview uses `PawnRenderer.artArea`, `artRect`,
   `nameLayout` and `nameBandHeight`, so it matches the printed front, and dragging moves the art within its room. `PawnLibrary.addCustomPawn(_:)` saves the image as
   PNG in `Custom/` and adds the pawn; the window also adds one copy to its sheet.
+- Tagging prompts (`TaggingPrompt`): `named(_:traits:)` tells the model a pawn's name and traits and asks only
+  for what the art adds; `unnamed` also asks for the ancestry or kind, the role and a name. A pawn's `tagModel`
+  holds `TaggingPrompt.signature(model:)`, the model's name and the prompts' `version`, so raising the version
+  tags every pawn again, as changing the model does. `PawnTags.normalized(_:name:traits:)` drops keywords made
+  up only of words of the name and traits, and `PawnTags.gendered` words.
 - Tagging (`PawnTaggingModel`): one pawn at a time, choosing the next afresh so pawns on screen go first, and
   saving every 10 pawns. The model keeps the model's name and the server's address as typed in
   Settings (user defaults `TaggingModel` and `OllamaURL`), and `OllamaTagger.configured(model:address:)` makes
