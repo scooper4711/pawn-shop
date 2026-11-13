@@ -133,7 +133,7 @@ struct LibraryBrowser: View {
                 .keyboardShortcut(.return, modifiers: [])
                 .disabled(selection.isEmpty)
         }
-        .padding(8)
+        .addBarPadding()
     }
 
     /// The pawn's products, traits and tags, shown on hover.
@@ -236,6 +236,14 @@ struct LibraryFilterBar: View {
                 set: { isOn in
                     if isOn { query[keyPath: keyPath].insert(value) } else { query[keyPath: keyPath].remove(value) }
                 })
+    }
+}
+
+extension View {
+    /// The padding of a library pane's add bar: wider at the sides, because the bar sits in the window's bottom
+    /// corner, whose curve clips text set closer.
+    func addBarPadding() -> some View {
+        padding(.vertical, 8).padding(.horizontal, 16)
     }
 }
 

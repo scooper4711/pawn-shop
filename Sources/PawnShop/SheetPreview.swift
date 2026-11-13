@@ -11,8 +11,9 @@ struct SheetPreview: View {
         let layout = currentLayout()
         Group {
             if sheet.entries.isEmpty {
-                ContentUnavailableView("Empty Sheet", systemImage: "doc",
-                                       description: Text("Double-click or drag pawns in the library to add them."))
+                ContentUnavailableView(
+                    "Empty Sheet", systemImage: "doc",
+                    description: Text("Double-click or drag pawns, items, or spells in the library to add them."))
             } else {
                 pages(layout)
             }

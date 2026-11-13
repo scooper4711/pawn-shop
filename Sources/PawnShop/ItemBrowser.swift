@@ -96,7 +96,7 @@ struct ItemBrowser: View {
             .keyboardShortcut(.return, modifiers: [])
             .disabled(selection.isEmpty)
         }
-        .padding(8)
+        .addBarPadding()
     }
 
     private func togglePreview() -> KeyPress.Result {
