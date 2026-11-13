@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-11-13
+
+### Added
+- Tag only what the art adds to a pawn's name and traits
+- Tagging off by default, with server and model in Settings
+- Build Pawn Shop for the Mac App Store without its updater
+
+### Fixed
+- Keep the add bar's count clear of the window corner
+- Name items and spells in the empty sheet's hint
+- Keep the art when hiding a PDF pawn's printed words on macOS 27
+- Make the updater check fail when the updater is present
+- Build with no extra flags under the CI shell
+
+### Changed
+- Say what deleting the app leaves on a Mac
+- Say where the review notes live and drop a wrong comment
+- Name Pawn Shop's App Store package correctly
+
+[2.0.0]: https://github.com/scooper4711/pawn-shop/releases/tag/v2.0.0
+
 ## [1.3.1] - 2026-10-20
 
 [1.3.1]: https://github.com/scooper4711/pawn-shop/releases/tag/v1.3.1
