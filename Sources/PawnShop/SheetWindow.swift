@@ -9,6 +9,8 @@ struct SheetWindow: View {
     @State private var selectedEntry: UUID?
     @State private var showsInspector = true
     @State private var outputRequest: OutputKind?
+    /// The export or print chosen in the options sheet, run once that sheet has closed.
+    @State private var pendingOutput: PendingOutput?
     @State private var addingCustomPawn = false
     @State private var reviewingNames = false
     @State private var previewedPawn: UUID?
@@ -68,11 +70,13 @@ struct SheetWindow: View {
             }
         }
         .focusedSceneValue(\.sheetActions, actions)
-        .sheet(item: $outputRequest) { kind in
+        // The print panel opens on the sheet's window once the options sheet is gone: started from the closing
+        // options sheet, it never showed and the job printed at once with the printer's defaults.
+        .sheet(item: $outputRequest, onDismiss: performPendingOutput) { kind in
             OutputOptionsView(kind: kind, settings: document.sheet.settings) { settings in
                 var sheet = document.sheet
                 sheet.settings = settings
-                SheetOutput.perform(kind, sheet: sheet, title: title, library: library)
+                pendingOutput = PendingOutput(kind: kind, sheet: sheet)
             }
         }
         .sheet(isPresented: $reviewingNames) { ReviewNamesView() }
@@ -98,6 +102,12 @@ struct SheetWindow: View {
         } message: {
             Text(library.errorMessage ?? "")
         }
+    }
+
+    private func performPendingOutput() {
+        guard let output = pendingOutput else { return }
+        pendingOutput = nil
+        SheetOutput.perform(output.kind, sheet: output.sheet, title: title, library: library)
     }
 
     private var actions: SheetActions {

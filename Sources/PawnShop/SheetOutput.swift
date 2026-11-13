@@ -25,6 +25,12 @@ extension FocusedValues {
     @Entry var sheetActions: SheetActions?
 }
 
+/// An export or print, with the cut settings chosen for it.
+struct PendingOutput {
+    let kind: OutputKind
+    let sheet: PawnSheet
+}
+
 /// Page Setup, Print and Export for a sheet.
 @MainActor
 enum SheetOutput {
@@ -74,7 +80,8 @@ enum SheetOutput {
         operation.jobTitle = title
         operation.showsPrintPanel = true
         operation.showsProgressPanel = true
-        if let window = NSApp.keyWindow {
+        // A sheet still attached to the window would take the print panel with it, so use the window itself.
+        if let window = NSApp.keyWindow.map({ $0.sheetParent ?? $0 }) {
             operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
         } else {
             operation.run()
@@ -109,8 +116,8 @@ struct OutputOptionsView: View {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
                 Button(kind.actionTitle) {
-                    dismiss()
                     perform(settings)
+                    dismiss()
                 }
             }
         }
