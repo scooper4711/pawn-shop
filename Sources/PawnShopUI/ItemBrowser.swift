@@ -1,4 +1,3 @@
-import AppKit
 import PawnShopCore
 import SwiftUI
 
@@ -117,7 +116,7 @@ struct ItemBrowser: View {
     /// A click selects one item; Command-click adds or removes it from the selection.
 
     private func select(_ id: String) {
-        if NSEvent.modifierFlags.contains(.command) {
+        if SelectionClick.extendsSelection {
             if selection.contains(id) { selection.remove(id) } else { selection.insert(id) }
         } else {
             selection = [id]

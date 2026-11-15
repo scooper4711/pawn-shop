@@ -1,5 +1,4 @@
 import ArtExtraction
-import AppKit
 import PawnShopCore
 import SwiftUI
 import UniformTypeIdentifiers
@@ -16,6 +15,7 @@ struct AddCustomPawnView: View {
     @State private var size = PawnSize.medium
     /// Placement, scaling and name choices; the image file is set when the pawn is saved.
     @State private var art = CustomArt(imageFile: "")
+    @State private var isChoosingImage = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 20) {
@@ -24,9 +24,9 @@ struct AddCustomPawnView: View {
                 .dropDestination(for: URL.self) { urls, _ in load(urls.first) }
             Form {
                 HStack {
-                    Button("Choose Image…", action: chooseImage)
+                    Button("Choose Image…") { isChoosingImage = true }
                     Button("Paste Image", action: paste)
-                        .disabled(!Self.pasteboardHasImage)
+                        .disabled(!ImagePasteboard.hasImage)
                 }
                 TextField("Name", text: $name)
                 Picker("Size", selection: $size) {
@@ -35,7 +35,11 @@ struct AddCustomPawnView: View {
                 Picker("Picture", selection: $art.scaling) {
                     ForEach(ArtScaling.allCases, id: \.self) { Text($0.displayName).tag($0) }
                 }
+                #if os(macOS)
                 .pickerStyle(.radioGroup)
+                #else
+                .pickerStyle(.inline)
+                #endif
                 .onChange(of: art.scaling) { art.focus = CGPoint(x: 0.5, y: 0.5) }
                 Toggle("Print the name", isOn: $art.showsName)
                 Text("Drop or paste (⌘V) an image, then drag the art in the preview to place it.")
@@ -45,7 +49,12 @@ struct AddCustomPawnView: View {
             .frame(width: 260)
         }
         .padding()
+        #if os(macOS)
         .onPasteCommand(of: [.image, .fileURL]) { _ in paste() }
+        #endif
+        .fileImporter(isPresented: $isChoosingImage, allowedContentTypes: [.image]) { result in
+            if case let .success(url) = result { _ = load(url) }
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
@@ -54,31 +63,21 @@ struct AddCustomPawnView: View {
         }
     }
 
-    private func chooseImage() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.image]
-        guard panel.runModal() == .OK else { return }
-        _ = load(panel.url)
-    }
-
-    static var pasteboardHasImage: Bool {
-        NSImage.canInit(with: .general)
-    }
-
     /// Takes the image on the clipboard: image data (as Pluck copies it) or a copied image file.
     private func paste() {
-        let pasteboard = NSPasteboard.general
-        if let url = (pasteboard.readObjects(forClasses: [NSURL.self]) as? [URL])?.first, load(url) { return }
-        guard let pasted = NSImage(pasteboard: pasteboard),
-              let cgImage = pasted.cgImage(forProposedRect: nil, context: nil, hints: nil)
-        else { return }
-        image = cgImage
+        if let url = ImagePasteboard.fileURL, load(url) { return }
+        guard let pasted = ImagePasteboard.image else { return }
+        image = pasted
         art.focus = CGPoint(x: 0.5, y: 0.5)
     }
 
+    /// Reads the image; a file chosen on the iPad is readable only while its access is held.
     @discardableResult
     private func load(_ url: URL?) -> Bool {
-        guard let url, let loaded = try? PawnLibrary.image(at: url) else { return false }
+        guard let url else { return false }
+        let isAccessing = url.startAccessingSecurityScopedResource()
+        defer { if isAccessing { url.stopAccessingSecurityScopedResource() } }
+        guard let loaded = try? PawnLibrary.image(at: url) else { return false }
         image = loaded
         art.focus = CGPoint(x: 0.5, y: 0.5)
         if name.isEmpty { name = url.deletingPathExtension().lastPathComponent }

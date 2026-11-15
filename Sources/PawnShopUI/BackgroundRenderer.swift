@@ -1,4 +1,5 @@
-import AppKit
+import CoreGraphics
+import Foundation
 import PawnShopCore
 
 /// What a sheet page shows, ready to draw on another thread.

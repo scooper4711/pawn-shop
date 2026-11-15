@@ -23,7 +23,7 @@ struct SheetInspector: View {
             HStack {
                 Text(paperDescription).font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button("Page Setup…") { SheetOutput.runPageSetup(for: &sheet) }
+                PaperControl(sheet: $sheet)
             }
             .padding(.horizontal, 8)
             .padding(.bottom, 8)

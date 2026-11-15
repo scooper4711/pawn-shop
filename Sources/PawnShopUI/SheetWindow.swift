@@ -15,6 +15,9 @@ struct SheetWindow: View {
     @State private var reviewingNames = false
     @State private var previewedPawn: UUID?
     @State private var previewedItem: String?
+    /// The rendered sheet waiting for the user to choose where to save it.
+    @State private var exportedPDF: SheetPDF?
+    @State private var showsSettings = false
     /// Whether the library pane lists pawns, items or spells.
     @AppStorage("libraryPane") private var pane = LibraryPane.pawns
 
@@ -49,7 +52,7 @@ struct SheetWindow: View {
                 }
                 .inspector(isPresented: $showsInspector) {
                     SheetInspector(sheet: $document.sheet, selectedEntry: $selectedEntry, pageCount: pageCount)
-                        .inspectorColumnWidth(min: 240, ideal: 280)
+                        .inspectorColumnWidth(min: Self.inspectorWidth.min, ideal: Self.inspectorWidth.ideal)
                 }
                 .toolbar {
                     ToolbarItemGroup {
@@ -59,8 +62,20 @@ struct SheetWindow: View {
                         Button { showsInspector.toggle() } label: { Label("Sheet", systemImage: "sidebar.right") }
                             .help("Show or hide the sheet's pawns")
                     }
+                    #if os(iOS)
+                    ToolbarItemGroup(placement: .topBarLeading) {
+                        LibraryMenu(actions: actions) { showsSettings = true }
+                    }
+                    #endif
                 }
         }
+        #if os(iOS)
+        // An iPad in portrait has no room for three columns: the inspector would cover the page, so it shows only
+        // in a wide window, as in landscape, and opens from the toolbar otherwise.
+        .onGeometryChange(for: Bool.self) { $0.size.width >= Self.widthForInspector } action: { isWide in
+            showsInspector = isWide
+        }
+        #endif
         .overlay(alignment: .bottom) { ImportStatusBanner() }
         .overlay {
             if let pawn = previewedPawn.flatMap(library.pawn(id:)) {
@@ -79,6 +94,16 @@ struct SheetWindow: View {
                 pendingOutput = PendingOutput(kind: kind, sheet: sheet)
             }
         }
+        .fileExporter(isPresented: isExporting, document: exportedPDF, contentType: .pdf,
+                      defaultFilename: exportedPDF?.name) { result in
+            if case let .failure(error) = result {
+                library.errorMessage = "Exporting failed: \(error.localizedDescription)"
+            }
+        }
+        #if os(iOS)
+        .libraryImporters()
+        .sheet(isPresented: $showsSettings) { PadSettingsView() }
+        #endif
         .sheet(isPresented: $reviewingNames) { ReviewNamesView() }
         .sheet(isPresented: $addingCustomPawn) {
             AddCustomPawnView { document.sheet.add($0.id) }
@@ -104,18 +129,41 @@ struct SheetWindow: View {
         }
     }
 
+    #if os(iOS)
+    static let widthForInspector: CGFloat = 1100
+    /// Wider than on the Mac: the iPad's steppers and buttons are larger, and a narrower column cuts names short.
+    static let inspectorWidth: (min: CGFloat, ideal: CGFloat) = (300, 340)
+    #else
+    static let inspectorWidth: (min: CGFloat, ideal: CGFloat) = (240, 280)
+    #endif
+
+    /// Writes or prints the sheet as laid out, at 100% scale.
     private func performPendingOutput() {
         guard let output = pendingOutput else { return }
         pendingOutput = nil
-        SheetOutput.perform(output.kind, sheet: output.sheet, title: title, library: library)
+        guard let data = library.exporter(for: output.sheet)?.pdfData() else { return }
+        switch output.kind {
+        case .export: exportedPDF = SheetPDF(data: data, name: title)
+        case .print: SheetOutput.print(data, title: title, paper: output.sheet.settings.paper)
+        }
+    }
+
+    private var isExporting: Binding<Bool> {
+        Binding(get: { exportedPDF != nil }, set: { if !$0 { exportedPDF = nil } })
     }
 
     private var actions: SheetActions {
-        SheetActions(pageSetup: { SheetOutput.runPageSetup(for: &document.sheet) },
+        SheetActions(pageSetup: pageSetup,
                      output: { outputRequest = $0 },
                      addCustomPawn: { addingCustomPawn = true },
                      reviewNames: { reviewingNames = true },
                      hasPawns: !document.sheet.entries.isEmpty)
+    }
+
+    private func pageSetup() {
+        #if os(macOS)
+        SheetOutput.runPageSetup(for: &document.sheet)
+        #endif
     }
 
     private var title: String {

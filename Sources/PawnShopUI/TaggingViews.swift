@@ -37,7 +37,9 @@ struct TaggingSettingsView: View {
             progress
         }
         .padding(20)
+        #if os(macOS)
         .frame(width: 460)
+        #endif
     }
 
     @ViewBuilder private var server: some View {

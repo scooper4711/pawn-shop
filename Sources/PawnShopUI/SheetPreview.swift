@@ -13,7 +13,7 @@ struct SheetPreview: View {
             if sheet.entries.isEmpty {
                 ContentUnavailableView(
                     "Empty Sheet", systemImage: "doc",
-                    description: Text("Double-click or drag pawns, items, or spells in the library to add them."))
+                    description: Text("\(Self.addGesture) or drag pawns, items, or spells in the library to add them."))
             } else {
                 pages(layout)
             }
@@ -23,7 +23,7 @@ struct SheetPreview: View {
         .contentShape(Rectangle())
         .focusable()
         .focusEffectDisabled()
-        .onDeleteCommand {
+        .deleteCommand {
             if let selectedEntry { sheet.removeCopy(of: selectedEntry) }
         }
     }
@@ -42,7 +42,7 @@ struct SheetPreview: View {
             }
             .padding(24)
         }
-        .background(Color(nsColor: .underPageBackgroundColor))
+        .background(Color.underPage)
     }
 
     private func currentLayout() -> SheetLayout {
@@ -109,5 +109,24 @@ struct PageView: View {
         guard let renderer = library.backgroundRenderer, let exporter = library.exporter(for: sheet) else { return }
         let drawing = PageDrawing(strips: page, contents: exporter.contents(of: page), settings: sheet.settings)
         image = await renderer.image(of: drawing, width: Int(Self.maximumWidth * 2))
+    }
+}
+
+extension SheetPreview {
+    #if os(macOS)
+    static let addGesture = "Double-click"
+    #else
+    static let addGesture = "Double-tap"
+    #endif
+}
+
+extension Color {
+    /// Behind the pages, as in a document app.
+    static var underPage: Color {
+        #if os(macOS)
+        Color(nsColor: .underPageBackgroundColor)
+        #else
+        Color(uiColor: .secondarySystemBackground)
+        #endif
     }
 }
