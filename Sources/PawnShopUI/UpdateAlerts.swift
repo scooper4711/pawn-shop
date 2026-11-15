@@ -1,4 +1,4 @@
-#if !APP_STORE
+#if os(macOS) && !APP_STORE
 import AppKit
 import PawnShopCore
 import SwiftUI

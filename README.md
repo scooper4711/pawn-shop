@@ -5,14 +5,14 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=scooper4711_pawn-shop&metric=coverage)](https://sonarcloud.io/summary/new_code?id=scooper4711_pawn-shop)
 [![GitHub Release](https://img.shields.io/github/v/release/scooper4711/pawn-shop)](https://github.com/scooper4711/pawn-shop/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/scooper4711/pawn-shop/total)](https://github.com/scooper4711/pawn-shop/releases)
-[![Platform](https://img.shields.io/badge/platform-macOS%2015%2B-informational)](#requirements)
+[![Platform](https://img.shields.io/badge/platform-macOS%2015%2B%20%7C%20iPadOS%2018%2B-informational)](#requirements)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 Do you have pawn PDFs you never print because the double-sided layout is so hard to line up? And when you
 do get it to work, needing six goblins means printing the goblins' page six times, along with the other 29
 pawns on it that you don't want.
 
-Pawn Shop is an unofficial Mac app for Pathfinder and Starfinder that fixes both. Give it the pawn PDFs you
+Pawn Shop is an unofficial Mac and iPad app for Pathfinder and Starfinder that fixes both. Give it the pawn PDFs you
 own, or import them all from [Scrollkeeper](https://github.com/scooper4711/scrollkeeper). It reads Paizo's
 pawn boxes, Battle Cards and Starfinder Second Edition's round tokens, and builds a library of pawns.
 Search for exactly the ones you want, add as many of each as you need, and they all print together on as few
@@ -93,9 +93,16 @@ Clone with `git clone --recursive`, or run `git submodule update --init` after c
 licensed and not redistributable. Without access to it, the build still works and falls back to built-in
 artwork.
 
+### On the iPad
+
+The iPad app (it runs on the iPhone too) builds the same library and prints the same sheets. Sheets are documents
+in the document browser. The Library button in the toolbar holds the Library menu, with Export PDF… and
+Settings…. Import from Scrollkeeper reads what Scrollkeeper on the iPad downloaded. There is no Page Setup: pick
+the paper from the inspector's Paper menu. Every page prints at 100%.
+
 ## Requirements
 
-macOS 15 or later. You need the pawn PDFs themselves: buy them from [paizo.com](https://paizo.com) and
+macOS 15 or later, or iPadOS (or iOS) 18 or later. You need the pawn PDFs themselves: buy them from [paizo.com](https://paizo.com) and
 download them from your account, or let [Scrollkeeper](https://github.com/scooper4711/scrollkeeper), a
 library manager for your Paizo purchases, download them.
 
@@ -221,8 +228,15 @@ make coverage # runs the tests and enforces the coverage threshold
 make items    # builds Generated/: the item list and the item cards' art
 make dmg      # packages the app into a disk image
 make release-dmg # builds the tagged version's disk image here and attaches it, if GitHub's build fails
-make icon     # redraws Resources/AppIcon.icns
+make icon     # redraws Resources/AppIcon.icns and the iPad's icon
+make ipad-simulator # builds the iPad app and starts it in a simulator
+make ipad-install   # builds the iPad app and installs it on a connected iPad
+make ipad-uitests   # runs the iPad UI tests, which screenshot both orientations
 ```
+
+The iPad app is `ios/PawnShop.xcodeproj` (scheme `PawnShop-iPad`); it bundles `Generated/` like the Mac app. To
+build it with your own Apple developer team, put `DEVELOPMENT_TEAM = <team>` in `ios/Local.xcconfig` (see
+`ios/Signing.xcconfig`).
 
 `pawn-bases/build.sh` renders every base and the slot test piece to `pawn-bases/stl/` with OpenSCAD (by default
 from `/Applications/OpenSCAD-2021.01.app`; set `OPENSCAD` to use another copy). It takes a minute or two.
@@ -257,8 +271,8 @@ Both folders must be inside the app's container, as the app runs in the App Sand
 
 The code is in three parts: `Sources/ItemCatalogImport` (run as `ItemImport`) builds the item list,
 `Sources/PawnShopCore` holds all the logic and is unit tested (`Extraction` reads
-pawn PDFs, `Library` keeps the library, `Sheet` lays out, draws and exports sheets), and `Sources/PawnShop` is
-the SwiftUI app.
+pawn PDFs, `Library` keeps the library, `Sheet` lays out, draws and exports sheets), and `Sources/PawnShopUI` is
+the SwiftUI app, shared by the Mac (`Sources/PawnShop`) and the iPad (`ios/`).
 
 ## Where things are stored
 
@@ -269,7 +283,9 @@ the SwiftUI app.
 | Tokens' art | `~/Library/Application Support/Pawn Shop/Tokens/` |
 | Item art from decks sold as pictures | `~/Library/Application Support/Pawn Shop/Items/` |
 | Custom pawns' images | `~/Library/Application Support/Pawn Shop/Custom/` |
-| Sheets | wherever you save them, as `.pawnsheet` files |
+| Sheets | wherever you save them, as `.pawnsheet` files; on the iPad, On My iPad › Pawn Shop by default |
+
+On the iPad the library is in the app's own Application Support folder, with the same layout.
 
 ## Documentation
 

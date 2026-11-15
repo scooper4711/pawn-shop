@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Keys Xcode can't generate, merged into the Info.plist it writes (GENERATE_INFOPLIST_FILE). -->
+<plist version="1.0">
+<dict>
+    <!-- Sheets are .pawnsheet documents, in the document browser and Files, as on the Mac. -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Pawn Sheet</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>io.github.scooper4711.pawnsheet</string>
+            </array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>io.github.scooper4711.pawnsheet</string>
+            <key>UTTypeDescription</key>
+            <string>Pawn Sheet</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.json</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>pawnsheet</string>
+                </array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>io.github.scooper4711.PawnShop.sheet-content</string>
+            <key>UTTypeDescription</key>
+            <string>Pawn Shop Library Selection</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+        </dict>
+    </array>
+    <!-- The app's Documents folder shows in Files as On My iPad › Pawn Shop, where new sheets go. -->
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    <key>UISupportsDocumentBrowser</key>
+    <true/>
+    <!-- Tagging asks an Ollama server the user runs, usually on a Mac on the same network, over plain HTTP. -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Pawn Shop asks the Ollama server you set up in Settings › Tagging to describe your pawns' art.</string>
+</dict>
+</plist>

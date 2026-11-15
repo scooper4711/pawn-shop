@@ -94,6 +94,8 @@ struct ItemCardSettingsView: View {
             }
         }
         .padding(20)
+        #if os(macOS)
         .frame(width: 560)
+        #endif
     }
 }

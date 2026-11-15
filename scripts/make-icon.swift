@@ -1,9 +1,12 @@
 #!/usr/bin/env swift
 // Draws the app icon (a wizard on a Paizo-style pawn standing in its base, on green) and writes a 1024 px PNG.
-// Few, bold shapes so it still reads at small sizes. Usage: swift scripts/make-icon.swift <output.png>
+// Few, bold shapes so it still reads at small sizes. Usage: swift scripts/make-icon.swift [--full-bleed] <output.png>
+// --full-bleed draws the iPad's icon: the green fills the square, opaque, and the system rounds the corners.
 import AppKit
 import CoreGraphics
 
+let fullBleed = CommandLine.arguments.contains("--full-bleed")
+let outputPath = CommandLine.arguments.dropFirst().filter { $0 != "--full-bleed" }
 let size: CGFloat = 1024
 let body = CGRect(x: 100, y: 100, width: 824, height: 824)
 let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
@@ -45,7 +48,8 @@ func fillEllipse(_ context: CGContext, _ rect: CGRect, _ hex: UInt32) {
 }
 
 func drawBackground(_ context: CGContext) {
-    let shape = CGPath(roundedRect: body, cornerWidth: 185, cornerHeight: 185, transform: nil)
+    let corner: CGFloat = fullBleed ? 0 : 185
+    let shape = CGPath(roundedRect: body, cornerWidth: corner, cornerHeight: corner, transform: nil)
     context.saveGState()
     context.setShadow(offset: CGSize(width: 0, height: -12), blur: 28, color: color(0, 0.35))
     fill(context, shape, 0x0E3427)
@@ -132,16 +136,23 @@ func drawRobeAndStaff(_ context: CGContext, in frame: Frame) {
     context.restoreGState()
 }
 
-guard CommandLine.arguments.count == 2 else {
-    FileHandle.standardError.write("usage: make-icon.swift <output.png>\n".data(using: .utf8)!)
+guard outputPath.count == 1 else {
+    FileHandle.standardError.write("usage: make-icon.swift [--full-bleed] <output.png>\n".data(using: .utf8)!)
     exit(1)
 }
+// App Store Connect rejects an iOS icon with an alpha channel, so the full-bleed icon is drawn opaque.
+let alpha = fullBleed ? CGImageAlphaInfo.noneSkipLast : CGImageAlphaInfo.premultipliedLast
 let context = CGContext(data: nil, width: Int(size), height: Int(size), bitsPerComponent: 8, bytesPerRow: 0,
-                        space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                        space: sRGB, bitmapInfo: alpha.rawValue)!
+if fullBleed {
+    // The icon's square fills the canvas.
+    context.scaleBy(x: size / body.width, y: size / body.height)
+    context.translateBy(x: -body.minX, y: -body.minY)
+}
 drawBackground(context)
 drawPawn(context)
 
-let output = URL(fileURLWithPath: CommandLine.arguments[1])
+let output = URL(fileURLWithPath: outputPath[0])
 let destination = CGImageDestinationCreateWithURL(output as CFURL, "public.png" as CFString, 1, nil)!
 CGImageDestinationAddImage(destination, context.makeImage()!, nil)
 guard CGImageDestinationFinalize(destination) else { exit(1) }

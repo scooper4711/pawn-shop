@@ -43,7 +43,7 @@ public struct ScrollkeeperFolder {
 
     /// Remembers the folder the user picked, so `open()` finds it after the app restarts.
     public func remember(_ folder: URL) throws {
-        let bookmark = try folder.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil,
+        let bookmark = try folder.bookmarkData(options: Self.bookmarkCreation, includingResourceValuesForKeys: nil,
                                                relativeTo: nil)
         defaults.set(bookmark, forKey: Self.bookmarkKey)
     }
@@ -51,7 +51,7 @@ public struct ScrollkeeperFolder {
     private func rememberedFolder() -> URL? {
         guard let bookmark = defaults.data(forKey: Self.bookmarkKey) else { return nil }
         var isStale = false
-        guard let folder = try? URL(resolvingBookmarkData: bookmark, options: .withSecurityScope, relativeTo: nil,
+        guard let folder = try? URL(resolvingBookmarkData: bookmark, options: Self.bookmarkResolution, relativeTo: nil,
                                     bookmarkDataIsStale: &isStale)
         else { return nil }
         let isAccessing = folder.startAccessingSecurityScopedResource()
@@ -79,11 +79,22 @@ public struct ScrollkeeperFolder {
         (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) != nil
     }
 
-    /// The user's home folder; in the sandbox `FileManager` answers with the app's container instead.
+    /// The user's home folder; in the sandbox `FileManager` answers with the app's container instead. On the iPad
+    /// there is no such folder, and Scrollkeeper's downloads are only in the App Group or where the user picks.
     private static var realHomeDirectory: URL {
         guard let entry = getpwuid(getuid()), let directory = entry.pointee.pw_dir else {
-            return FileManager.default.homeDirectoryForCurrentUser
+            return URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
         }
         return URL(fileURLWithPath: String(cString: directory), isDirectory: true)
     }
+
+    // On the Mac a bookmark keeps sandbox access only when it says so; on the iPad a bookmark to a folder the user
+    // picked always does.
+    #if os(macOS)
+    private static let bookmarkCreation: URL.BookmarkCreationOptions = .withSecurityScope
+    private static let bookmarkResolution: URL.BookmarkResolutionOptions = .withSecurityScope
+    #else
+    private static let bookmarkCreation: URL.BookmarkCreationOptions = []
+    private static let bookmarkResolution: URL.BookmarkResolutionOptions = []
+    #endif
 }

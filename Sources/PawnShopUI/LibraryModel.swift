@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 import Observation
 import PawnShopCore
 import TablesideShared
@@ -24,6 +24,9 @@ final class LibraryModel {
     /// The outcome of the last import batch, shown until dismissed.
     var importSummary: String?
     var errorMessage: String?
+    /// On the iPad, the file browser for Import PDF… and for Scrollkeeper's folder; the Mac uses open panels.
+    var isChoosingPDFs = false
+    var isChoosingScrollkeeperFolder = false
 
     @ObservationIgnored private(set) var library: PawnLibrary?
     @ObservationIgnored private(set) var renderer: PawnRenderer?
@@ -103,21 +106,33 @@ final class LibraryModel {
 
     // MARK: Importing
 
-    /// Asks for pawn PDFs and imports them.
-    func chooseAndImportPDFs() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.pdf, .jpeg]
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = true
-        panel.message = "Choose Paizo pawn, token, Battle Cards or item deck PDFs, or the folder of an item deck "
-            + "sold as pictures, to add to the library."
-        guard panel.runModal() == .OK else { return }
-        importPDFs(panel.urls)
-    }
+    /// What Import PDF… asks for.
+    static let importPrompt = "Choose Paizo pawn, token, Battle Cards or item deck PDFs, or the folder of an item "
+        + "deck sold as pictures, to add to the library."
 
     /// Imports every pawn, token, Battle Cards and item deck Scrollkeeper downloaded that isn't in the library yet.
     func importFromScrollkeeper() {
-        guard let folder = ScrollkeeperFolder().open() ?? chooseScrollkeeperFolder() else { return }
+        guard let folder = ScrollkeeperFolder().open() else {
+            askForScrollkeeperFolder()
+            return
+        }
+        importScrollkeeperDownloads(in: folder)
+    }
+
+    /// Remembers the folder the user picked for Scrollkeeper's downloads and imports from it. Access to a folder
+    /// chosen on the iPad is held until the app quits, as for a remembered folder (`ScrollkeeperFolder.open()`):
+    /// its files are readable only while it is.
+    func useScrollkeeperFolder(_ folder: URL) {
+        _ = folder.startAccessingSecurityScopedResource()
+        do {
+            try ScrollkeeperFolder().remember(folder)
+        } catch {
+            errorMessage = "Remembering Scrollkeeper's folder failed: \(error.localizedDescription)"
+        }
+        importScrollkeeperDownloads(in: folder)
+    }
+
+    private func importScrollkeeperDownloads(in folder: URL) {
         let files = ScrollkeeperScanner.artFiles(in: folder)
         guard !files.isEmpty else {
             let place = FolderName(url: folder)
@@ -128,34 +143,22 @@ final class LibraryModel {
         importPDFs(files)
     }
 
-    /// In the App Sandbox Pawn Shop may only read folders the user picks, so it asks once for Scrollkeeper's.
-    private func chooseScrollkeeperFolder() -> URL? {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.directoryURL = ScrollkeeperFolder().suggestedLocation
-        panel.prompt = "Use Folder"
-        panel.message = "Choose Scrollkeeper's downloads folder so Pawn Shop can import from it. "
-            + "You'll only be asked once."
-        guard panel.runModal() == .OK, let folder = panel.url else { return nil }
-        do {
-            try ScrollkeeperFolder().remember(folder)
-        } catch {
-            errorMessage = "Remembering Scrollkeeper's folder failed: \(error.localizedDescription)"
-        }
-        return folder
-    }
-
-    /// Imports PDFs one at a time, reading each off the main thread.
+    /// Imports PDFs one at a time, reading each off the main thread. Files and folders chosen on the iPad are
+    /// readable only while their access is held, so it is held until the imports are done.
     func importPDFs(_ urls: [URL]) {
         guard !isImporting, let library else { return }
+        let accessed = urls.filter { $0.startAccessingSecurityScopedResource() }
         let pending = PawnLibrary.importableFiles(urls).filter { !library.hasImported($0) }
         guard !pending.isEmpty else {
+            accessed.forEach { $0.stopAccessingSecurityScopedResource() }
             importSummary = urls.count == 1 ? "That PDF is already in the library."
                                             : "Those PDFs are already in the library."
             return
         }
-        Task { await runImports(pending) }
+        Task {
+            await runImports(pending)
+            accessed.forEach { $0.stopAccessingSecurityScopedResource() }
+        }
     }
 
     private func runImports(_ urls: [URL]) async {

@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 import PawnShopCore
 import SwiftUI
@@ -78,3 +79,4 @@ enum WindowSnapshots {
         CGImageDestinationFinalize(destination)
     }
 }
+#endif

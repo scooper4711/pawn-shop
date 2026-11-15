@@ -1,5 +1,4 @@
 import ArtExtraction
-import AppKit
 import PawnShopCore
 import SwiftUI
 
@@ -166,7 +165,7 @@ struct LibraryBrowser: View {
     private func select(_ id: UUID) {
         cursor = id
         gridFocused = true
-        if NSEvent.modifierFlags.contains(.command) {
+        if SelectionClick.extendsSelection {
             if selection.contains(id) { selection.remove(id) } else { selection.insert(id) }
         } else {
             selection = [id]
