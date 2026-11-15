@@ -12,3 +12,6 @@ Generated/
 
 # Copyrighted pawn PDFs used for local testing only — never commit.
 TestData/
+ios/build/
+ios/Local.xcconfig
+ios/Version.xcconfig

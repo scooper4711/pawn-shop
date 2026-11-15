@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Pawn Shop's privacy manifest (scripts/build-app.sh copies it into Contents/Resources), for both channels. No
+<!-- Pawn Shop's privacy manifest, for the iPad app (ios/App is a synchronized folder) and the Mac app
+     (scripts/build-app.sh copies it into Contents/Resources, for both channels). No
      tracking and no data collected. User defaults hold the app's own settings (CA92.1); LibraryFiles reads the
      size of the library's files through file attributes, which includes the timestamps API (C617.1 for files in
      the app's container and the user's chosen folders, 3B52.1 for files the user gave it). -->

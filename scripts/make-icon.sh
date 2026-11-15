@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate Resources/AppIcon.icns from scripts/make-icon.swift.
+# Regenerate Resources/AppIcon.icns and the iPad's icon from scripts/make-icon.swift.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -16,3 +16,7 @@ for size in 16 32 128 256 512; do
 done
 iconutil -c icns "$ICONSET" -o Resources/AppIcon.icns
 echo "Wrote Resources/AppIcon.icns"
+
+IPAD_ICON=ios/App/Assets.xcassets/AppIcon.appiconset/icon-1024.png
+swift scripts/make-icon.swift --full-bleed "$IPAD_ICON"
+echo "Wrote $IPAD_ICON"

@@ -42,7 +42,7 @@ if [[ -d Generated ]]; then
 else
     echo "Warning: Generated/ is missing; run \"make items\" to bundle the item cards." >&2
 fi
-cp Resources/PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
+cp ios/App/PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" \
     -c "Set :CFBundleVersion ${BUILD_NUMBER:-$VERSION}" "$APP/Contents/Info.plist"
 # The entitlements turn on the App Sandbox. A build signed with the team's Developer ID also joins the Tableside

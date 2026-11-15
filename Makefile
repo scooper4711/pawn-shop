@@ -1,4 +1,4 @@
-.PHONY: build test lint coverage items app run install dmg release-dmg appstore icon clean
+.PHONY: build test lint coverage items app run install dmg release-dmg appstore icon ipad-install ipad-simulator ipad-uitests clean
 
 build:
 	swift build
@@ -39,9 +39,21 @@ appstore:
 	swift package resolve
 	CHANNEL=appstore scripts/build-app.sh
 
-# Redraws Resources/AppIcon.icns from scripts/make-icon.swift.
+# Redraws Resources/AppIcon.icns and the iPad's icon from scripts/make-icon.swift.
 icon:
 	scripts/make-icon.sh
 
+# Builds the iPad app and installs it on a connected iPad. IPAD names the iPad.
+ipad-install:
+	scripts/install-ipad.sh
+
+# Builds the iPad app and starts it in a simulator. IPAD_SIMULATOR names the simulator.
+ipad-simulator:
+	scripts/run-ipad-simulator.sh
+
+# Runs the iPad UI tests, which screenshot the window in both orientations.
+ipad-uitests:
+	scripts/run-ipad-uitests.sh
+
 clean:
-	rm -rf .build build coverage Generated
+	rm -rf .build build coverage Generated ios/build
