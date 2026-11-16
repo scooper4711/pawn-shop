@@ -19,7 +19,10 @@ public struct PawnShopApp: App {
         }
         .commands {
             LibraryCommands(library: library)
+            AboutCommands(info: .pawnShop)
         }
+
+        AboutWindow(info: .pawnShop)
     }
 }
 
