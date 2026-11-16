@@ -33,6 +33,7 @@ struct ReviewNamesView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
         }
+        .sheetToolbar(title: "Review Unnamed Pawns")
     }
 
     private func review(_ pawn: Pawn) -> some View {
