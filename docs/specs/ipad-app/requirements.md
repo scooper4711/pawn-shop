@@ -28,7 +28,8 @@ library and prints the same sheets as the Mac app.
 - R3.3 Export saves the sheet as a PDF through the system file browser.
 
 ## R4 Settings
-- R4.1 Settings… shows the Mac's Tagging and Item Cards settings and the About screen.
+- R4.1 Settings… shows the Mac's Tagging and Item Cards settings and the About screen. About Pawn Shop in the
+  menu bar's app menu shows the About screen in a window of its own.
 - R4.2 Tagging can reach an Ollama server on the local network.
 
 ## R5 Unchanged
