@@ -31,10 +31,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.tag || github.ref }}
           # scripts/version.sh counts every commit for the build number.
           fetch-depth: 0
-        with:
-          ref: ${{ inputs.tag || github.ref }}
 
       - name: Fetch artwork
         env:
