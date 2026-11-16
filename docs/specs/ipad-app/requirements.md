@@ -19,6 +19,9 @@ library and prints the same sheets as the Mac app.
 - R2.3 Import from Scrollkeeper reads Scrollkeeper's downloads from the Tableside Toolkit's App Group, where
   Scrollkeeper on the iPad keeps them. Without them it asks once for the folder in Files and remembers it.
 - R2.4 Add Custom Pawn takes an image from the file browser or the clipboard.
+- R2.5 Long-pressing a pawn shows the Mac's context menu, with Rename… and Edit Keywords….
+- R2.6 Every sheet that asks something (Rename, Edit Keywords, Add Custom Pawn, Review Unnamed Pawns, and the
+  Print and Export options) shows its title and its buttons in a bar at its top.
 
 ## R3 Printing
 - R3.1 The iPad has no Page Setup. The inspector's Paper menu lists US Letter, US Legal, A4, A3 and Tabloid,

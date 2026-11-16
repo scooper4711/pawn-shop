@@ -72,7 +72,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
   word typed, anywhere in a word and ignoring case and accents, so "sword" also finds "longsword".
 - R2.3 Results can be filtered by size and by product.
 - R2.4 Pawns with the same name are shown next to each other with their product, so the art can be compared.
-- R2.5 A pawn can be removed from the library, or renamed.
+- R2.5 A pawn can be removed from the library, or renamed: Rename… is in its context menu and its preview
+  (R2.8). A blank name changes nothing.
 - R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
 - R2.7 Each pawn is tagged in the background with keywords for what its art adds to its name and traits
   (weapons, shields, armor, notable gear and clothing, animals with it, striking features) by a vision model
