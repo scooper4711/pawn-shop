@@ -17,6 +17,9 @@
   `Info.plist` exports the `pawnsheet` and `sheet-content` types, supports the document browser and opening in
   place, and shares the Documents folder (`UIFileSharingEnabled`) so new sheets have a home.
 - The toolbar gets a `LibraryMenu` (R2.1); Settings… is a sheet (`PadSettingsView`).
+- iOS shows a sheet's toolbar items only in a navigation bar, so the sheets that ask something end with
+  `sheetToolbar(title:)`, which puts them in a `NavigationStack` with an inline title on iOS and leaves them
+  as they are on the Mac, where the buttons sit at the sheet's foot (R2.6).
 - `SheetWindow` hides the inspector while the window is narrower than 1100 points (R1.2), via
   `onGeometryChange`.
 
@@ -40,3 +43,5 @@ Scrollkeeper folder keeps its access until the app quits, as a remembered one do
 - `ios/UITests` opens a sheet in both orientations, opens the Library menu and adds an item card, keeping
   screenshots. In the simulator a new document sometimes fails with "Unable to Import Document"; the test then
   opens one made earlier.
+- `RenameUITests` writes a library with one custom pawn to a temporary folder, points the app at it with
+  `PAWN_SHOP_LIBRARY`, and renames the pawn from its menu, checking that the sheet's Rename button is on screen.

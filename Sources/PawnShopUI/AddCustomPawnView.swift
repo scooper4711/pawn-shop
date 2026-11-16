@@ -61,6 +61,7 @@ struct AddCustomPawnView: View {
                 Button("Add Pawn", action: add).disabled(image == nil)
             }
         }
+        .sheetToolbar(title: "Add Custom Pawn")
     }
 
     /// Takes the image on the clipboard: image data (as Pluck copies it) or a copied image file.

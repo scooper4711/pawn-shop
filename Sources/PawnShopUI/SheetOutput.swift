@@ -79,6 +79,7 @@ struct OutputOptionsView: View {
                 }
             }
         }
+        .sheetToolbar(title: kind == .export ? "Export as PDF" : "Print")
     }
 }
 

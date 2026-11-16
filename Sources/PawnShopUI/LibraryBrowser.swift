@@ -285,5 +285,6 @@ struct RenamePawnView: View {
                 }
             }
         }
+        .sheetToolbar(title: "Rename Pawn")
     }
 }

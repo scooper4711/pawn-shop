@@ -10,6 +10,7 @@ struct PawnPreview: View {
     let close: () -> Void
     @Environment(LibraryModel.self) private var library
     @State private var editingKeywords = false
+    @State private var renaming = false
 
     var body: some View {
         ZStack {
@@ -32,6 +33,8 @@ struct PawnPreview: View {
                     if !pawn.tags.isEmpty {
                         Text(pawn.tags.joined(separator: ", ")).font(.callout).foregroundStyle(.secondary)
                     }
+                    Button("Rename…") { renaming = true }
+                        .controlSize(.small)
                     Button("Edit Keywords…") { editingKeywords = true }
                         .controlSize(.small)
                 }
@@ -44,6 +47,9 @@ struct PawnPreview: View {
         .ignoresSafeArea()
         .sheet(isPresented: $editingKeywords) {
             EditKeywordsView(pawn: pawn) { library.correctTags($0, of: pawn.id) }
+        }
+        .sheet(isPresented: $renaming) {
+            RenamePawnView(pawn: pawn) { library.rename(pawn.id, to: $0) }
         }
     }
 }
@@ -74,5 +80,6 @@ struct EditKeywordsView: View {
                 }
             }
         }
+        .sheetToolbar(title: "Edit Keywords")
     }
 }
