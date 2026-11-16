@@ -22,6 +22,9 @@
   as they are on the Mac, where the buttons sit at the sheet's foot (R2.6).
 - `SheetWindow` hides the inspector while the window is narrower than 1100 points (R1.2), via
   `onGeometryChange`.
+- In a compact horizontal size class `SheetWindow` shows a `TabView` of the same three views in place of the
+  `NavigationSplitView` (R1.4): a split view there folds down to its sidebar, with no way to the detail or to
+  the toolbar that sits on it.
 
 ## Choosing files
 `LibraryModel.chooseAndImportPDFs()` and `askForScrollkeeperFolder()` show open panels on the Mac. On iOS they
@@ -41,7 +44,8 @@ Scrollkeeper folder keeps its access until the app quits, as a remembered one do
 ## Testing
 - Unit tests cover `NamedPaper`.
 - `ios/UITests` opens a sheet in both orientations, opens the Library menu and adds an item card, keeping
-  screenshots. In the simulator a new document sometimes fails with "Unable to Import Document"; the test then
-  opens one made earlier.
+  screenshots. `CompactLayoutUITests` runs on an iPhone simulator only (`IPAD_SIMULATOR="iPhone 18 Pro"`) and
+  checks the toolbar and the tabs. In the simulator a new document sometimes fails with "Unable to Import
+  Document"; the test then opens one made earlier.
 - `RenameUITests` writes a library with one custom pawn to a temporary folder, points the app at it with
   `PAWN_SHOP_LIBRARY`, and renames the pawn from its menu, checking that the sheet's Rename button is on screen.
