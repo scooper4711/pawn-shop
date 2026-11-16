@@ -20,55 +20,13 @@ struct SheetWindow: View {
     @State private var showsSettings = false
     /// Whether the library pane lists pawns, items or spells.
     @AppStorage("libraryPane") private var pane = LibraryPane.pawns
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var widthClass
+    @State private var compactTab = CompactTab.browse
+    #endif
 
     var body: some View {
-        NavigationSplitView {
-            VStack(spacing: 0) {
-                Picker("Library", selection: $pane) {
-                    Text("Pawns").tag(LibraryPane.pawns)
-                    Text("Items").tag(LibraryPane.items)
-                    Text("Spells").tag(LibraryPane.spells)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .padding([.horizontal, .top], 8)
-                switch pane {
-                case .pawns:
-                    LibraryBrowser(sheet: $document.sheet, preview: $previewedPawn) { reviewingNames = true }
-                case .items:
-                    ItemBrowser(sheet: $document.sheet, preview: $previewedItem, pane: .items)
-                        .id(LibraryPane.items)
-                case .spells:
-                    ItemBrowser(sheet: $document.sheet, preview: $previewedItem, pane: .spells)
-                        .id(LibraryPane.spells)
-                }
-            }
-            .navigationSplitViewColumnWidth(min: 280, ideal: 360, max: 600)
-        } detail: {
-            SheetPreview(sheet: $document.sheet, selectedEntry: $selectedEntry)
-                .dropDestination(for: DraggedContent.self) { dropped, _ in
-                    dropped.forEach { document.sheet.add($0.contents, copies: $0.copies) }
-                    return !dropped.isEmpty
-                }
-                .inspector(isPresented: $showsInspector) {
-                    SheetInspector(sheet: $document.sheet, selectedEntry: $selectedEntry, pageCount: pageCount)
-                        .inspectorColumnWidth(min: Self.inspectorWidth.min, ideal: Self.inspectorWidth.ideal)
-                }
-                .toolbar {
-                    ToolbarItemGroup {
-                        Button { outputRequest = .print } label: { Label("Print", systemImage: "printer") }
-                            .help("Print the sheet")
-                            .disabled(document.sheet.entries.isEmpty)
-                        Button { showsInspector.toggle() } label: { Label("Sheet", systemImage: "sidebar.right") }
-                            .help("Show or hide the sheet's pawns")
-                    }
-                    #if os(iOS)
-                    ToolbarItemGroup(placement: .topBarLeading) {
-                        LibraryMenu(actions: actions) { showsSettings = true }
-                    }
-                    #endif
-                }
-        }
+        layout
         #if os(iOS)
         // An iPad in portrait has no room for three columns: the inspector would cover the page, so it shows only
         // in a wide window, as in landscape, and opens from the toolbar otherwise.
@@ -127,6 +85,100 @@ struct SheetWindow: View {
         } message: {
             Text(library.errorMessage ?? "")
         }
+    }
+
+    /// Three columns, or on a narrow screen (an iPhone, an iPad's slim window) the same three as tabs: columns
+    /// there fold down to the library alone, with no way to the pages, the inspector or the toolbar.
+    @ViewBuilder private var layout: some View {
+        #if os(iOS)
+        if widthClass == .compact { tabs } else { columns }
+        #else
+        columns
+        #endif
+    }
+
+    private var columns: some View {
+        NavigationSplitView {
+            libraryPane
+                .navigationSplitViewColumnWidth(min: 280, ideal: 360, max: 600)
+        } detail: {
+            pages
+                .inspector(isPresented: $showsInspector) {
+                    inspector
+                        .inspectorColumnWidth(min: Self.inspectorWidth.min, ideal: Self.inspectorWidth.ideal)
+                }
+                .toolbar {
+                    ToolbarItemGroup {
+                        printButton
+                        Button { showsInspector.toggle() } label: { Label("Sheet", systemImage: "sidebar.right") }
+                            .help("Show or hide the sheet's pawns")
+                    }
+                    #if os(iOS)
+                    ToolbarItemGroup(placement: .topBarLeading) { libraryMenu }
+                    #endif
+                }
+        }
+    }
+
+    #if os(iOS)
+    private var tabs: some View {
+        TabView(selection: $compactTab) {
+            Tab("Browse", systemImage: "square.grid.2x2", value: CompactTab.browse) { libraryPane }
+            Tab("Pages", systemImage: "doc", value: CompactTab.pages) { pages }
+            // The badge counts the copies, so adding one shows without leaving the library.
+            Tab("Sheet", systemImage: "list.bullet", value: CompactTab.sheet) { inspector }
+                .badge(document.sheet.copyCount)
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) { libraryMenu }
+            ToolbarItem(placement: .primaryAction) { printButton }
+        }
+    }
+
+    private var libraryMenu: some View {
+        LibraryMenu(actions: actions) { showsSettings = true }
+    }
+    #endif
+
+    private var libraryPane: some View {
+        VStack(spacing: 0) {
+            Picker("Library", selection: $pane) {
+                Text("Pawns").tag(LibraryPane.pawns)
+                Text("Items").tag(LibraryPane.items)
+                Text("Spells").tag(LibraryPane.spells)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding([.horizontal, .top], 8)
+            switch pane {
+            case .pawns:
+                LibraryBrowser(sheet: $document.sheet, preview: $previewedPawn) { reviewingNames = true }
+            case .items:
+                ItemBrowser(sheet: $document.sheet, preview: $previewedItem, pane: .items)
+                    .id(LibraryPane.items)
+            case .spells:
+                ItemBrowser(sheet: $document.sheet, preview: $previewedItem, pane: .spells)
+                    .id(LibraryPane.spells)
+            }
+        }
+    }
+
+    private var pages: some View {
+        SheetPreview(sheet: $document.sheet, selectedEntry: $selectedEntry)
+            .dropDestination(for: DraggedContent.self) { dropped, _ in
+                dropped.forEach { document.sheet.add($0.contents, copies: $0.copies) }
+                return !dropped.isEmpty
+            }
+    }
+
+    private var inspector: some View {
+        SheetInspector(sheet: $document.sheet, selectedEntry: $selectedEntry, pageCount: pageCount)
+    }
+
+    private var printButton: some View {
+        Button { outputRequest = .print } label: { Label("Print", systemImage: "printer") }
+            .help("Print the sheet")
+            .disabled(document.sheet.entries.isEmpty)
     }
 
     #if os(iOS)
@@ -202,6 +254,13 @@ struct ImportStatusBanner: View {
         }
     }
 }
+
+#if os(iOS)
+/// The tabs a narrow screen shows in place of the columns.
+enum CompactTab {
+    case browse, pages, sheet
+}
+#endif
 
 /// What the library pane lists.
 enum LibraryPane: String {

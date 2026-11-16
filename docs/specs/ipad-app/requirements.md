@@ -1,6 +1,6 @@
 # iPad app: requirements
 
-Pawn Shop also runs on the iPad (and the iPhone, with the same layout in a compact width). It builds the same
+Pawn Shop also runs on the iPad (and the iPhone, with the columns as tabs). It builds the same
 library and prints the same sheets as the Mac app.
 
 ## R1 Sheets
@@ -9,6 +9,9 @@ library and prints the same sheets as the Mac app.
 - R1.2 A sheet shows the library, the pages and the inspector side by side. Where three columns don't fit
   (portrait), the inspector is hidden and opens from the toolbar, so it never covers the pages.
 - R1.3 Pawns, items and spells are added by double-tapping, by dragging, or with Add to Sheet.
+- R1.4 In a compact width (an iPhone, an iPad's slim window) the three are tabs instead: Browse, Pages and Sheet.
+  The Library button and Print stay in the toolbar on every tab, and the Sheet tab's badge counts the copies on
+  the sheet.
 
 ## R2 Library
 - R2.1 The Library button in the toolbar has the Mac's Library menu: Import PDF…, Import from Scrollkeeper, Tag

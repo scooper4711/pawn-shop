@@ -1,5 +1,5 @@
 #!/bin/sh
-# Prints the identifier of an iPad simulator: the one named by IPAD_SIMULATOR, or otherwise an
+# Prints the identifier of a simulator: the one named by IPAD_SIMULATOR (an iPhone will do), or otherwise an
 # iPad on the newest installed iOS version. Prints nothing when there is none.
 set -eu
 
@@ -20,8 +20,7 @@ def version(runtime):
 candidates = [
     (version(runtime), device)
     for runtime, devices in runtimes.items() if "iOS" in runtime
-    for device in devices if device["name"].startswith("iPad")
-    and (not wanted or device["name"] == wanted)
+    for device in devices if device["name"] == wanted or (not wanted and device["name"].startswith("iPad"))
 ]
 candidates.sort(key=lambda pair: pair[0])
 print(candidates[-1][1]["udid"] if candidates else "")
