@@ -184,15 +184,35 @@ enum ItemCardFonts {
     /// The action icons' font file, which `make items` copies unaltered from the private `Artwork` submodule.
     static let actionsFile = "Fonts/Pathfinder-Icons.ttf"
 
-    /// Paizo's Pathfinder-Icons font, from a `Fonts` folder in `generated`; nil when it isn't there.
+    /// Paizo's Pathfinder-Icons font, from a `Fonts` folder in `generated`; nil when it isn't there. Each file is
+    /// read once (`FontFileCache`).
     static func actions(in generated: URL?) -> CTFontDescriptor? {
         guard let file = generated?.appendingPathComponent(actionsFile) else { return nil }
-        return (CTFontManagerCreateFontDescriptorsFromURL(file as CFURL) as? [CTFontDescriptor])?.first
+        return FontFileCache.shared.descriptor(for: file)
     }
 
     private static func font(_ name: String, fallback: String, size: CGFloat) -> CTFont {
         let font = CTFontCreateWithName(name as CFString, size, nil)
         let found = CTFontCopyPostScriptName(font) as String == name
         return found ? font : CTFontCreateWithName(fallback as CFString, size, nil)
+    }
+}
+
+/// Font files read so far, by path. CoreText asked to read one font file on two threads at once never answered
+/// either (seen on macOS 27 with tests in parallel), so files are read one at a time, under the lock, and once.
+final class FontFileCache: @unchecked Sendable {  // Sendable by hand: `descriptors` is only touched under `lock`.
+    static let shared = FontFileCache()
+
+    private let lock = NSLock()
+    private var descriptors: [String: CTFontDescriptor?] = [:]
+
+    /// The first font in `file`; nil when it can't be read, which is remembered too.
+    func descriptor(for file: URL) -> CTFontDescriptor? {
+        lock.withLock {
+            if let known = descriptors[file.path] { return known }
+            let read = (CTFontManagerCreateFontDescriptorsFromURL(file as CFURL) as? [CTFontDescriptor])?.first
+            descriptors.updateValue(read, forKey: file.path)
+            return read
+        }
     }
 }
