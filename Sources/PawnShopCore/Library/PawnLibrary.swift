@@ -52,12 +52,16 @@ public enum PawnLibraryError: Error, Equatable, CustomStringConvertible {
 /// The pawns collected from every imported PDF, kept in a folder between launches.
 public final class PawnLibrary {
     static let indexFile = "library.json"
+    /// The library as version 1 saved it, kept when its pawns are given their keys.
+    static let version1File = "library-v1.json"
 
     public let folder: URL
     public internal(set) var sources: [PawnSource] = []
     public internal(set) var pawns: [Pawn] = []
     /// The items' pictures from imported item decks.
     public internal(set) var itemArt: [ItemArtwork] = []
+    /// Other IDs pawns answer to (see `StoredLibrary.aliases`).
+    public internal(set) var aliases: [UUID: UUID] = [:]
     /// Reads pawns' pictures to compare them while importing.
     private(set) lazy var figures = FigureReader(folders: folders)
     /// Pawn indexes by name (see `nameKey`), while importing; nil until needed.
@@ -81,6 +85,22 @@ public final class PawnLibrary {
         sources = stored.sources
         pawns = stored.pawns
         itemArt = stored.itemArt
+        aliases = stored.aliases
+        if stored.version < StoredLibrary.currentVersion { try upgrade(from: index) }
+    }
+
+    /// Gives a version 1 library's pawns their keys and saves it, keeping the old file beside it.
+    private func upgrade(from index: URL) throws {
+        let kept = folder.appendingPathComponent(Self.version1File)
+        if !FileManager.default.fileExists(atPath: kept.path) {
+            do {
+                try FileManager.default.copyItem(at: index, to: kept)
+            } catch {
+                throw PawnLibraryError.saveFailed("keeping \(Self.version1File): \(error.localizedDescription)")
+            }
+        }
+        rekeyPawns()
+        try save()
     }
 
     /// Where the library keeps its files; safe to hand to other threads.
@@ -92,8 +112,6 @@ public final class PawnLibrary {
     public func fileURL(forSource id: String) -> URL { folders.sourceFile(id: id) }
 
     public func source(id: String) -> PawnSource? { sources.first { $0.id == id } }
-
-    public func pawn(id: UUID) -> Pawn? { pawns.first { $0.id == id } }
 
     /// True when the PDF at `url` was imported before: recognized by its path and size, or else its contents.
     /// Either PDF of a two-file deck stands for the deck, and any picture of a deck sold as pictures for its
@@ -152,8 +170,8 @@ public final class PawnLibrary {
             figures.forgetPages()
             paintingIndex = nil
         }
-        for found in prepared.extraction.pawns {
-            try merge(found, from: source, into: &report)
+        for print in FoundPrint.prints(of: prepared.extraction, from: source) {
+            try merge(print, into: &report)
         }
         try save()
         return report
@@ -225,6 +243,7 @@ public final class PawnLibrary {
             }
         }
         pawns.removeAll { ids.contains($0.id) }
+        forgetAliases(of: ids)
         try save()
     }
 
@@ -250,7 +269,8 @@ public final class PawnLibrary {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         do {
-            let data = try encoder.encode(StoredLibrary(sources: sources, pawns: pawns, itemArt: itemArt))
+            let data = try encoder.encode(StoredLibrary(sources: sources, pawns: pawns, itemArt: itemArt,
+                                                           aliases: aliases))
             try data.write(to: folder.appendingPathComponent(Self.indexFile), options: .atomic)
         } catch {
             throw PawnLibraryError.saveFailed(error.localizedDescription)

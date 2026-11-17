@@ -108,6 +108,13 @@ is cut out and folded at the heads, giving a two-ply pawn.
   model that isn't installed.
 - R2.13 A server on the user's own network (a `.local` name or an IP address) can be reached over plain HTTP;
   any other needs HTTPS.
+- R2.14 A pawn read from a PDF has the same ID on every device that imports the PDF, in any order of import: its
+  art's ID (tabletop-kit shared libraries R2), from the picture Paizo embedded and the name printed with it. A pawn
+  holding art printed by several products answers to the ID of each print. Custom pawns keep random IDs.
+- R2.15 The first launch of this version gives the library's pawns their IDs in place, without reading a PDF
+  again. Each pawn keeps its old ID as an alias, so sheets saved before still find it, and the library file
+  as it was is kept beside it (`library-v1.json`). Pawns whose art and name turn out to be the same merge, such as
+  "Planetoid, Beetle" and "Planetoid Beetle". Moving into the shared library (#27) carries the aliases with it.
 
 ## R3 Custom pawns
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied
@@ -128,7 +135,11 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R4.6 Each sheet has a cut style: shared cut lines (strips edge to edge, so one cut separates two pawns) or
   gaps (each strip outlined separately, with an adjustable gap). The fold line can be shown or hidden.
 - R4.7 Paper size and margins come from File ▸ Page Setup… and are saved with the sheet.
-- R4.8 A pawn missing from the library shows as a placeholder rather than breaking the sheet.
+- R4.8 A pawn missing from the library shows as a placeholder rather than breaking the sheet. The placeholder
+  and the sheet's list say what is missing, "Goblin Warrior, from Pathfinder Pawns: Monster Core Pawn Box", when
+  the sheet was saved with the pawn in the library.
+- R4.10 A sheet saves each pawn's ID with its name and product, never its art (shared libraries R2.9). A sheet
+  saved before stable IDs (R2.14) is pointed at the pawns' new IDs and labeled when it is opened.
 - R4.9 A sheet can leave room for a base: blank paper below the foot of each face, front and back, so a base's
   slot hides it rather than the bottom of the name. The faces keep their size and the strip grows. The room
   is set in millimeters, defaults to 6 mm (the depth of the slot in the bases the app comes with, R7), and is

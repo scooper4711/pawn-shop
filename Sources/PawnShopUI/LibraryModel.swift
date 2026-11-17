@@ -56,6 +56,9 @@ final class LibraryModel {
 
     func pawn(id: UUID) -> Pawn? { library?.pawn(id: id) }
 
+    /// The sheet with its pawns' current IDs and labels (`PawnLibrary.labeled`).
+    func labeled(_ sheet: PawnSheet) -> PawnSheet { library?.labeled(sheet) ?? sheet }
+
     /// Pawns waiting for a name; observed through `pawns`.
     var pawnsNeedingNames: [Pawn] { pawns.filter(\.needsName) }
 

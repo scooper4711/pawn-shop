@@ -1,3 +1,4 @@
+import ArtExtraction
 import CoreGraphics
 import Foundation
 
@@ -81,6 +82,9 @@ public struct SheetEntry: Codable, Hashable, Identifiable, Sendable {
     public let id: UUID
     public var content: SheetContent
     public var count: Int
+    /// What the pawn is called and where it is printed, so a device without it can say what is missing (shared
+    /// libraries R2.8); nil for an item card, and for a pawn until the sheet is labeled (`PawnLibrary.labeled`).
+    public var label: ArtReference?
 
     public init(id: UUID = UUID(), content: SheetContent, count: Int) {
         self.id = id
@@ -98,6 +102,12 @@ public struct SheetEntry: Codable, Hashable, Identifiable, Sendable {
         return nil
     }
 
+    /// What a missing pawn's placeholder says: its name and product when the entry is labeled.
+    public var missingDescription: String { label?.missingDescription ?? Self.missingPawn }
+
+    /// What a missing pawn's placeholder says without a label.
+    public static let missingPawn = "Missing pawn"
+
     /// The item whose card the entry prints; nil for a pawn.
     public var itemID: String? {
         if case .item(let id) = content { return id }
@@ -105,12 +115,13 @@ public struct SheetEntry: Codable, Hashable, Identifiable, Sendable {
     }
 
     // A pawn is saved under `pawnID`, as before items, so older versions still open sheets of pawns alone.
-    private enum CodingKeys: String, CodingKey { case id, pawnID, itemID, count }
+    private enum CodingKeys: String, CodingKey { case id, pawnID, itemID, count, label }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         count = try container.decode(Int.self, forKey: .count)
+        label = try container.decodeIfPresent(ArtReference.self, forKey: .label)
         if let itemID = try container.decodeIfPresent(String.self, forKey: .itemID) {
             content = .item(itemID)
         } else {
@@ -122,6 +133,7 @@ public struct SheetEntry: Codable, Hashable, Identifiable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(count, forKey: .count)
+        try container.encodeIfPresent(label, forKey: .label)
         switch content {
         case .pawn(let pawnID): try container.encode(pawnID, forKey: .pawnID)
         case .item(let itemID): try container.encode(itemID, forKey: .itemID)

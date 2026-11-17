@@ -63,7 +63,7 @@ struct Canvas {
         let canvas = Canvas(size: CGSize(width: 81, height: 276))
         let placed = PlacedStrip(entryID: UUID(), copy: 0, rect: CGRect(x: 0, y: 0, width: 81, height: 276),
                                  sideways: false)
-        renderer.drawStrip(custom, in: placed, settings: SheetSettings(), context: canvas.context)
+        renderer.drawStrip(.found(custom), in: placed, settings: SheetSettings(), context: canvas.context)
         #expect(canvas.color(atX: 40, y: 20) == "blue")
         #expect(canvas.color(atX: 40, y: 125) == "red")
         #expect(canvas.color(atX: 40, y: 150) == "red")
@@ -74,7 +74,8 @@ struct Canvas {
         let canvas = Canvas(size: CGSize(width: 276, height: 81))
         let placed = PlacedStrip(entryID: UUID(), copy: 0, rect: CGRect(x: 0, y: 0, width: 276, height: 81),
                                  sideways: true)
-        renderer.drawStrip(custom, in: placed, settings: SheetSettings(showsFoldLine: false), context: canvas.context)
+        renderer.drawStrip(.found(custom), in: placed, settings: SheetSettings(showsFoldLine: false),
+                           context: canvas.context)
         #expect(canvas.color(atX: 20, y: 40) == "blue")
         #expect(canvas.color(atX: 125, y: 40) == "red")
         #expect(canvas.color(atX: 256, y: 40) == "blue")
@@ -84,7 +85,7 @@ struct Canvas {
         let canvas = Canvas(size: CGSize(width: 81, height: 276))
         let placed = PlacedStrip(entryID: UUID(), copy: 0, rect: CGRect(x: 0, y: 0, width: 81, height: 276),
                                  sideways: false)
-        renderer.drawStrip(nil, in: placed, settings: SheetSettings(), context: canvas.context)
+        renderer.drawStrip(.missing("Missing pawn"), in: placed, settings: SheetSettings(), context: canvas.context)
         #expect(canvas.color(atX: 40, y: 60) == "other")
     }
 

@@ -18,8 +18,14 @@ public struct ItemCardContent: Sendable {
 
 /// What a placed strip shows: a pawn's strip or an item's card, nil when it is missing.
 public enum PlacedContent: Sendable {
-    case pawn(Pawn?)
+    case pawn(StripPawn)
     case card(ItemCardContent?)
+}
+
+/// The pawn a strip shows, or what to call it when the library doesn't have it.
+public enum StripPawn: Sendable {
+    case found(Pawn)
+    case missing(String)
 }
 
 /// Drawing item cards, single-sided, with the same cut outline as strips and no fold.

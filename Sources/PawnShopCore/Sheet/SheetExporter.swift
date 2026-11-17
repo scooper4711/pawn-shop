@@ -63,18 +63,17 @@ public struct SheetExporter {
 
     /// What each strip of a page shows, ready to draw on another thread.
     public func contents(of page: [PlacedStrip]) -> [PlacedContent] {
-        let contents = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.content) })
+        let entries = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0) })
         let matcher = catalog.artMatcher(for: library)
         return page.map { placed in
-            switch contents[placed.entryID] {
+            guard let entry = entries[placed.entryID] else { return .pawn(.missing(SheetEntry.missingPawn)) }
+            switch entry.content {
             case .item(let itemID):
-                .card(catalog.item(id: itemID).map {
+                return .card(catalog.item(id: itemID).map {
                     ItemCardContent(item: $0, artwork: matcher.artwork(for: $0), card: placed.card)
                 })
             case .pawn(let pawnID):
-                .pawn(library.pawn(id: pawnID))
-            case nil:
-                .pawn(nil)
+                return .pawn(library.pawn(id: pawnID).map(StripPawn.found) ?? .missing(entry.missingDescription))
             }
         }
     }

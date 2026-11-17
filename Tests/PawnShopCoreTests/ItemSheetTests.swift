@@ -57,7 +57,7 @@ import ArtExtractionTestSupport
         let exporter = SheetExporter(sheet: PawnSheet(), library: library, renderer: PawnRenderer(library: library))
         let placed = PlacedStrip(entryID: UUID(), copy: 0, rect: CGRect(x: 0, y: 0, width: 10, height: 10),
                                  sideways: false)
-        guard case .pawn(nil) = exporter.contents(of: [placed]).first else {
+        guard case .pawn(.missing) = exporter.contents(of: [placed]).first else {
             Issue.record("expected a missing pawn")
             return
         }

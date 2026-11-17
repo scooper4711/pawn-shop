@@ -7,8 +7,7 @@ import Foundation
 extension PawnLibrary {
     /// An imported pawn showing the same painting as a pawn in the library.
     struct PaintingMatch {
-        let found: ExtractedPawn
-        let source: PawnSource
+        let print: FoundPrint
         let foundFigure: Figure
         /// The library pawn, and its figure.
         let index: Int
@@ -17,35 +16,39 @@ extension PawnLibrary {
 
     /// The library pawn with the same name showing the same painting as `found`, when either is from a Battle
     /// Card. Printed pawns of the same name are told apart by their images alone (see `ArtFingerprint`).
-    func samePainting(as found: ExtractedPawn, from source: PawnSource) -> PaintingMatch? {
+    func samePainting(as print: FoundPrint) -> PaintingMatch? {
+        let found = print.pawn
         let foundIsCard = found.shape.isCard
         let candidates = pawnsNamed(like: found.name).filter { index in
             let pawn = pawns[index]
             return !pawn.needsName && (foundIsCard || pawn.art.isCard) && pawn.art.showsFigure
                 && Self.namesMatch(pawn.name, found.name)
         }
-        guard !candidates.isEmpty, let foundFigure = figures.figure(of: found, source: source.id) else { return nil }
+        guard !candidates.isEmpty, let foundFigure = figures.figure(of: found, source: print.source.id) else {
+            return nil
+        }
         let palette = foundFigure.palette()
         for index in candidates {
             guard let figure = figures.figure(of: pawns[index]),
                   Figure.paletteDistance(palette, figure.palette()) <= Figure.samePaintingDistance
             else { continue }
-            return PaintingMatch(found: found, source: source, foundFigure: foundFigure, index: index, figure: figure)
+            return PaintingMatch(print: print, foundFigure: foundFigure, index: index, figure: figure)
         }
         return nil
     }
 
     /// Adds the imported pawn's product to the library pawn, and its traits; the pawn is drawn from the
-    /// imported picture when it is sharper. A printed pawn's outline gives the size.
+    /// imported picture when it is sharper, and keeps its ID. A printed pawn's outline gives the size.
     func merge(_ match: PaintingMatch, into report: inout ImportReport) throws {
-        let found = match.found
-        let appearance = Appearance(sourceID: match.source.id, copies: found.copies)
+        let found = match.print.pawn
+        let appearance = match.print.appearance
         var pawn = pawns[match.index]
         report.alreadyKnown += 1
         // Read again by a newer reader, a product the pawn already lists adds nothing.
-        guard !pawn.appearances.contains(where: { $0.sourceID == match.source.id }) else { return }
+        guard !pawn.appearances.contains(where: { $0.sourceID == match.print.source.id }) else { return }
+        recordKey(match.print.key, of: match.index)
         if match.foundFigure.pixelArea > match.figure.pixelArea {
-            pawn.art = try art(of: found, from: match.source)
+            pawn.art = try art(of: found, from: match.print.source)
             pawn.appearances.insert(appearance, at: 0)
             report.sharpened += 1
         } else {

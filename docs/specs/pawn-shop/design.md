@@ -13,8 +13,9 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   - `Sources/<sha256>.pdf`: a copy of each imported PDF;
   - `Custom/<file>`: custom pawn art;
   - `Tokens/<file>`: tokens' art drawn alone (PNG), written when an import is committed;
-  - `library.json`: sources and pawns (`StoredLibrary`, with a version number). Thumbnails are stored as
-    base64 data; the whole collection (about 8,000 pawns from 61 PDFs) is under 10 MB.
+  - `library.json`: sources, pawns and aliases (`StoredLibrary`, version 2). Thumbnails are stored as
+    base64 data; the whole collection (about 9,800 pawns from 85 PDFs) is about 14 MB;
+  - `library-v1.json`: the version 1 file, kept when its pawns were given their keys.
 - `PawnSource`: id (SHA-256 of the file), title (from the file name, without product codes and " PDF"),
   import date, original path and byte count (to recognize a file again without hashing it), the game, read
   from the title, and how many pawns the import found with which `PawnExtractor.version`. A source read by an
@@ -33,6 +34,22 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   `CustomArt`: image file name, scaling (`.fill` covers the face; `.fit` shows the whole picture in the area
   above the name band), focus point (where the image sits within its room to move: the overflow when filling,
   the free space when fitting), and whether the name is printed.
+- Pawn IDs (`PawnKeys.swift`, R2.14): an extracted pawn's ID is tabletop-kit's `ArtKey` of its print. On import
+  `FoundPrint.prints(of:from:)` keys every pawn of the PDF together (so a picture the PDF prints in two sizes gets
+  two keys) from the name as printed, empty for a nameless product, before any stand-in name. `merge` first looks
+  for a pawn answering to the key (`pawnIndex(answeringTo:)`), then applies the rules below; a print merged into a
+  pawn under another key records that key in `aliases` (key → pawn ID), so another device that imported the
+  products in the other order, and gave the pawn the other key, still finds it. `pawn(id:)` looks in `aliases`
+  too, and `remove` drops a removed pawn's aliases.
+  - Version 1 libraries (`rekeyPawns`, R2.15): each extracted pawn is keyed from its art's source, its
+    fingerprint, its front face, and its name, empty when the pawn needs a name or its first product is nameless,
+    so a name it took later doesn't count. Pawns sharing a key merge into the first (products and traits); every
+    old ID becomes an alias. A pawn renamed by the user before this keys by its new name, so it may differ from
+    another device's until the libraries sync (#30). On a copy of the real library (9,848 pawns, 78 custom, 4
+    without pictures, on flattened pages, keyed by place), one pair merged, and every pawn on the sheets saved
+    with it was found (`RealLibraryUpgradeTests`, run when `TestData/library-v1.json` is there).
+  - Only the first print of a version 1 pawn is keyed, as the library keeps no faces or fingerprints for the
+    others; its other products answer to the key when they print the same picture and name.
 - `PawnLibrary`:
   - `prepareImport(of:)` hashes and extracts a PDF without touching the library, so it can run off the main
     thread; `commit(_:)` copies the file, adds the source, and merges each pawn into an existing one with the
@@ -72,7 +89,8 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   Monster Core reusing Bestiary art.
 
 ## Sheets and layout (`PawnShopCore/Sheet`)
-- `PawnSheet` (Codable, the `.pawnsheet` document): entries (pawn id, count; adding a pawn again adds to its
+- `PawnSheet` (Codable, the `.pawnsheet` document): entries (pawn id, count, and `label`, tabletop-kit's
+  `ArtReference`: id, name and product title, for a device without the pawn; adding a pawn again adds to its
   entry) and `SheetSettings`: cut style (`.sharedLines` or `.gaps(points)`, default gap 0.1"), show fold line,
   and `PaperSetup` (paper size and imageable rect; Letter with ¼" margins by default).
 - A pawn prints as a strip of `w × 2(h + r)`: the front face in the lower half, the back face rotated 180° in
@@ -96,6 +114,10 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
   (60% of a 13% band) if it fits 92% of the width, else two lines at that size (the band grows), and only then
   smaller type, down to 3 pt. It draws strips with a hairline
   gray cut outline and a dashed fold line, a gray placeholder for a missing pawn, and face thumbnails.
+- `PawnLibrary.labeled(_:)` points each pawn entry the library finds at the pawn's own ID, not an alias, and
+  labels it; `SheetWindow` applies it whenever the entries change, and when the sheet opens, writing only when
+  something changed so an up-to-date sheet isn't marked as edited. A missing pawn's placeholder and inspector row
+  show `SheetEntry.missingDescription`.
 - `SheetExporter` (sheet, library, renderer) builds the layout items (a missing pawn takes a medium strip),
   the layout, each page's drawing (shared by preview and print), and the PDF at 100% scale.
 

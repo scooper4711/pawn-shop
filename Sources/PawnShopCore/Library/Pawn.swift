@@ -156,7 +156,8 @@ public struct Appearance: Codable, Hashable, Sendable {
 
 /// One piece of pawn art with one name, in one size.
 public struct Pawn: Codable, Identifiable, Hashable, Sendable {
-    public let id: UUID
+    /// Extracted art's key (`ArtKey`), the same on every device; a random UUID for a custom pawn.
+    public internal(set) var id: UUID
     public var name: String
     public var size: PawnSize
     public var art: PawnArt
