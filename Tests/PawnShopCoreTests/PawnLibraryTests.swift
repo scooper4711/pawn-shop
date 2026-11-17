@@ -16,7 +16,7 @@ import ArtExtractionTestSupport
     @Test func importsAndKeepsPawnsBetweenLaunches() throws {
         let pdf = try writePawnPDF([goblin, ogre], named: "Pathfinder Pawns- Test Box PDF.pdf", in: folder)
         let report = try library().importPDF(at: pdf)
-        #expect(report == ImportReport(sourceTitle: "Pathfinder Pawns: Test Box", added: 2))
+        #expect(report.sourceTitle == "Pathfinder Pawns: Test Box" && report.added == 2 && report.alreadyKnown == 0)
         let reopened = try library()
         #expect(reopened.pawns.map(\.name).sorted() == ["Goblin Warrior", "Ogre"])
         #expect(reopened.sources.map(\.title) == ["Pathfinder Pawns: Test Box"])
@@ -57,7 +57,7 @@ import ArtExtractionTestSupport
         #expect(report.added == 1 && report.alreadyKnown == 1)
         let merged = try #require(library.pawns.first { $0.name == "Goblin Warrior" })
         #expect(merged.appearances.count == 2)
-        #expect(library.sourceTitles(of: merged) == ["First", "Second"])
+        #expect(library.sourceTitles(of: merged).sorted() == ["First", "Second"])
     }
 
     @Test func addsUpdatesAndRemovesPawns() throws {

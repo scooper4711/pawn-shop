@@ -126,9 +126,10 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R2.16 The first launch of the version using the shared library moves Pawn Shop's library into it once
   (shared libraries R6): every pawn keeps its ID and old IDs, its name, tags, corrections and products, and the kept
   PDFs and token pictures move rather than copy. Custom pawns stay in Pawn Shop's folder. The PDFs whose other
-  products' pawns Pawn Shop doesn't record by place are then read again in the background, with progress, so each
-  pawn lists every product again; nothing the user sees changes otherwise. Until a move finishes, Pawn Shop keeps
-  using its own library and tries again at the next launch.
+  products' pawns Pawn Shop doesn't record by place are then read again in the background from Scrollkeeper's
+  folder, with progress, so each pawn lists every product again; one it can't reach is read at the next Import
+  from Scrollkeeper. Nothing the user sees changes otherwise. A move cut short says why and finishes at the next
+  launch.
 
 ## R3 Custom pawns
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied

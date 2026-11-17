@@ -49,18 +49,30 @@ is a view over it, so the app above it changes little.
     old ID becomes an alias. On a copy of the real library (9,848 pawns, 78 custom, 4 without pictures, on
     flattened pages, keyed by place), one pair merged, and every pawn on the sheets saved with it was found
     (`RealLibraryUpgradeTests`, run when `TestData/library-v1.json` is there).
-- **The move** (`LibraryMoving.swift`, R2.16). At launch, while `library.json` exists and the store hasn't recorded
-  Pawn Shop's move as finished, `PawnLibrary` reads it (keying a version 1 file first) and calls `moveIn` with a
-  `LibraryMove`: each extracted pawn as keyed art (`keyedArt`) with one print, its ID as the key, from its art (a
-  pawn's faces, a card's face and image index, a token's pictures renamed `<id>.png` and `<id>-back.png`);
-  `itemArt` as item entries; the sources (`keyedSources`, kept); `aliases`; a note per pawn with its tags, tag
-  model, suggested name and corrections; the kept PDFs (`keptPDFs`) and token and item pictures
-  (`pictureFiles`). The name is the pawn's current one (the printed name isn't recorded), a pawn needing a name
-  moves with `needsName`. Custom pawns go to `pawn-shop.json`, then `library.json` becomes `library.json.moved`.
+- **The move** (`LibraryMoving.swift`, `PawnShopMove.swift`, R2.16). At launch, while `library.json` exists and the
+  store hasn't recorded Pawn Shop's move as finished, `PawnLibrary` reads it (keying a version 1 file first) and
+  calls `moveIn` with a `LibraryMove`: each extracted pawn as keyed art (`keyedArt`) with one print, its ID as the
+  key, from its art (a pawn's faces, a card's face and image index, a token's pictures renamed `<id>.png` and
+  `<id>-back.png`); item art keyed by `ArtKey` as an import keys it, a drawn item's picture renamed `<key>.png`; the
+  sources (`keyedSources`), kept when their PDF is, else referenced where they were imported from, a file that is
+  gone as a reference that never resolves, so it is listed as missing; `aliases`; a note per pawn with its tags,
+  tag model, suggested name and corrections; the kept PDFs (`keptPDFs`) and token and item pictures
+  (`pictureFiles`). The name is the pawn's current one (the printed name isn't recorded). Art from a product
+  printing no names keeps its stand-in name and `needsName`, and a name the user gave it is the note's
+  `userName`. Custom pawns and the imported files' paths, sizes and digests go to `pawn-shop.json`, then
+  `library.json` becomes `library.json.moved`.
   - A version 2 library records the faces of a pawn's first product only: 2,710 other prints in 65 of the 85
-    PDFs have none. Those sources move in with reader version 0, and `sourcesToReadAgain` lists their kept PDFs,
-    which `LibraryModel` reads again in the background like an import: each print then joins its pawn by key, or
-    by name and fingerprint as on any import, and the pawn lists every product again.
+    PDFs have none. The sources of every pawn printed by more than one product move in with reader version 0 and
+    are listed in `pawn-shop.json` (`readAgain`) with their original files. `LibraryModel` reads those again in
+    the background, from Scrollkeeper's folder, pawn PDFs before Battle Cards (`filesToReadAgain`), like an
+    import but telling only of failures; a file it can't reach is read again at the next Import from
+    Scrollkeeper, which counts a source read by an older reader as not imported. A kept copy can't be read
+    instead: a Battle Cards deck or a deck of pictures is recognized by its files' names. Each print then joins
+    its pawn by key, or by name and fingerprint or colors as on any import, and the pawn lists every product
+    again; a pawn whose ID was its art's other print's key keeps its note through the store's `retire`.
+  - On the real library (`RealLibraryUpgradeTests`) the move takes about 5 seconds in a debug build; every
+    pawn is found by its old ID, its tags and corrections and the names given to nameless art are kept, and the
+    saved sheets open.
   - A move cut short finishes at the next launch (the store records its rows first, and moves files it hasn't).
   - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name, a product title, a
     trait or a tag;

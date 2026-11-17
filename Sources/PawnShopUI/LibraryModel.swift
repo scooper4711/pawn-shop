@@ -214,14 +214,10 @@ final class LibraryModel {
         return lines.joined(separator: "\n")
     }
 
-    /// What the reports say about art the library had already, from other products or sharper.
+    /// What the reports say about art the library had already, from other products.
     private static func mergingNotes(of reports: [ImportReport]) -> [String] {
         let known = reports.reduce(0) { $0 + $1.alreadyKnown }
-        let sharpened = reports.reduce(0) { $0 + $1.sharpened }
-        var lines: [String] = []
-        if known > 0 { lines.append("\(known) were already in the library from other products.") }
-        if sharpened > 0 { lines.append("\(sharpened) pawns now use the sharper art from Battle Cards.") }
-        return lines
+        return known > 0 ? ["\(known) were already in the library from other products."] : []
     }
 
     // MARK: Editing
