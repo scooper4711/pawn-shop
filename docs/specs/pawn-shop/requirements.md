@@ -28,7 +28,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
   names, tags and corrections, and gains only the pawns found anew, each product listed once per pawn.
 - R1.8 Importing shows progress, then a report of the pawns added, the pawns whose art was already in the
   library, and the outlines with no name printed.
-- R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved.
+- R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved. A PDF
+  another app read from where it is gains a copy when Pawn Shop imports it.
 - R1.10 Pawns with no name printed are imported as "Unknown <product title>" and marked as needing a name.
 - R1.11 Heroes & Villains is the one product known to print no names. Its pawns take the name of the same art
   in another product, whichever is imported first; the rest need naming.
@@ -67,13 +68,20 @@ is cut out and folded at the heads, giving a two-ply pawn.
   summary.
 
 ## R2 The library
-- R2.1 The library is kept between launches and shared by every sheet.
+- R2.1 The library is kept between launches and shared by every sheet. It is the art library Pawn Shop,
+  Turnkeeper and Field Guide share (tabletop-kit shared libraries R1, R3): a PDF any of them read shows its pawns
+  here without importing it again, and what another app changes shows while Pawn Shop is open, within a second.
+- R2.1.1 Names, tags and tag corrections are kept with the shared art, so they help the other apps, and theirs
+  show here (shared libraries R3.3). Custom pawns, sheets and settings stay Pawn Shop's own (R3.5 there).
+- R2.1.2 A pawn whose PDF Pawn Shop can't reach (another app read it from a file Pawn Shop wasn't given) shows
+  and prints from the picture saved with the art; importing the PDF here prints it at full resolution again (R5.4).
 - R2.2 Search finds the pawns whose name, product titles, traits (R1.14) and tags (R2.7) together contain every
   word typed, anywhere in a word and ignoring case and accents, so "sword" also finds "longsword".
 - R2.3 Results can be filtered by size and by product.
 - R2.4 Pawns with the same name are shown next to each other with their product, so the art can be compared.
 - R2.5 A pawn can be removed from the library, or renamed: Rename… is in its context menu and its preview
-  (R2.8). A blank name changes nothing.
+  (R2.8). A blank name changes nothing. Removing a pawn read from a PDF hides it in Pawn Shop and leaves the art
+  to the other apps; removing a custom pawn deletes it.
 - R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
 - R2.7 Each pawn is tagged in the background with keywords for what its art adds to its name and traits
   (weapons, shields, armor, notable gear and clothing, animals with it, striking features) by a vision model
@@ -114,7 +122,13 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R2.15 The first launch of this version gives the library's pawns their IDs in place, without reading a PDF
   again. Each pawn keeps its old ID as an alias, so sheets saved before still find it, and the library file
   as it was is kept beside it (`library-v1.json`). Pawns whose art and name turn out to be the same merge, such as
-  "Planetoid, Beetle" and "Planetoid Beetle". Moving into the shared library (#27) carries the aliases with it.
+  "Planetoid, Beetle" and "Planetoid Beetle". Moving into the shared library (R2.16) carries the aliases with it.
+- R2.16 The first launch of the version using the shared library moves Pawn Shop's library into it once
+  (shared libraries R6): every pawn keeps its ID and old IDs, its name, tags, corrections and products, and the kept
+  PDFs and token pictures move rather than copy. Custom pawns stay in Pawn Shop's folder. The PDFs whose other
+  products' pawns Pawn Shop doesn't record by place are then read again in the background, with progress, so each
+  pawn lists every product again; nothing the user sees changes otherwise. Until a move finishes, Pawn Shop keeps
+  using its own library and tries again at the next launch.
 
 ## R3 Custom pawns
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied
