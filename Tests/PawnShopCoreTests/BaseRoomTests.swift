@@ -63,7 +63,7 @@ import ArtExtractionTestSupport
         let canvas = Canvas(size: CGSize(width: 81, height: 316))
         let placed = PlacedStrip(entryID: UUID(), copy: 0, rect: CGRect(x: 0, y: 0, width: 81, height: 316),
                                  sideways: false)
-        PawnRenderer(library: library).drawStrip(hero, in: placed, settings: settings, context: canvas.context)
+        PawnRenderer(library: library).drawStrip(.found(hero), in: placed, settings: settings, context: canvas.context)
         // Blank room at both ends, then each face's foot (blue) and head (red) meeting at the fold.
         #expect(canvas.color(atX: 40, y: 10) == "other" && canvas.color(atX: 40, y: 306) == "other")
         #expect(canvas.color(atX: 40, y: 30) == "blue" && canvas.color(atX: 40, y: 286) == "blue")

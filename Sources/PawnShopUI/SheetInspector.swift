@@ -80,7 +80,7 @@ struct SheetEntryRow: View {
                 PawnThumbnail(pawn: pawn).frame(width: 28, height: 40)
             }
             VStack(alignment: .leading) {
-                Text(pawn?.name ?? "Missing pawn").lineLimit(1)
+                Text(pawn?.name ?? entry.missingDescription).lineLimit(1)
                 Text(pawn?.size.displayName ?? "").font(.caption).foregroundStyle(.secondary)
             }
         case .item(let itemID):

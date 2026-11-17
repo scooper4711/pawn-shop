@@ -92,23 +92,23 @@ public final class PawnRenderer {
     }
 
     /// Draws a folded strip where `placed` says: the front below the fold, the back above it turned 180°, each
-    /// above the blank room left for a base (`SheetSettings.footRoom`). A missing pawn is drawn as a gray
-    /// placeholder.
-    public func drawStrip(_ pawn: Pawn?, in placed: PlacedStrip, settings: SheetSettings, context: CGContext) {
+    /// above the blank room left for a base (`SheetSettings.footRoom`). A missing pawn is a gray placeholder.
+    public func drawStrip(_ strip: StripPawn, in placed: PlacedStrip, settings: SheetSettings, context: CGContext) {
         let upright = placed.sideways ? CGSize(width: placed.rect.height, height: placed.rect.width) : placed.rect.size
         let room = min(settings.footRoom, upright.height / 2)
         let half = CGRect(x: 0, y: room, width: upright.width, height: upright.height / 2 - room)
         context.saveGState()
         context.concatenate(Self.stripTransform(for: placed))
-        if let pawn {
+        switch strip {
+        case .found(let pawn):
             drawFace(of: pawn, side: .front, in: half, context: context)
             context.saveGState()
             context.translateBy(x: upright.width, y: upright.height)
             context.rotate(by: .pi)
             drawFace(of: pawn, side: .back, in: half, context: context)
             context.restoreGState()
-        } else {
-            drawPlaceholder(in: CGRect(origin: .zero, size: upright), context: context)
+        case .missing(let label):
+            drawPlaceholder(in: CGRect(origin: .zero, size: upright), label: label, context: context)
         }
         drawCutMarks(stripSize: upright, settings: settings, context: context)
         context.restoreGState()
@@ -266,7 +266,7 @@ public final class PawnRenderer {
                        fontSize: rect.height * nameBandFraction * 0.6)
     }
 
-    func drawPlaceholder(in rect: CGRect, label: String = "Missing pawn", context: CGContext) {
+    func drawPlaceholder(in rect: CGRect, label: String = SheetEntry.missingPawn, context: CGContext) {
         context.setFillColor(gray: 0.9, alpha: 1)
         context.fill(rect)
         let size = NameLayout.fit(label, width: rect.width * Self.nameWidthFraction,

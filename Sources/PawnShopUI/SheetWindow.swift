@@ -43,6 +43,8 @@ struct SheetWindow: View {
             }
         }
         .focusedSceneValue(\.sheetActions, actions)
+        // Saved sheets name the pawns they print, so a device without one can say which is missing.
+        .onChange(of: document.sheet.entries, initial: true) { relabel() }
         // The print panel opens on the sheet's window once the options sheet is gone: started from the closing
         // options sheet, it never showed and the job printed at once with the printer's defaults.
         .sheet(item: $outputRequest, onDismiss: performPendingOutput) { kind in
@@ -210,6 +212,12 @@ struct SheetWindow: View {
                      addCustomPawn: { addingCustomPawn = true },
                      reviewNames: { reviewingNames = true },
                      hasPawns: !document.sheet.entries.isEmpty)
+    }
+
+    /// Updates the sheet's pawn IDs and labels; an unchanged sheet isn't touched, so it isn't marked as edited.
+    private func relabel() {
+        let labeled = library.labeled(document.sheet)
+        if labeled != document.sheet { document.sheet = labeled }
     }
 
     private func pageSetup() {

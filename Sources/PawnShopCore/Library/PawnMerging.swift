@@ -28,50 +28,59 @@ extension ArtFingerprint {
 }
 
 extension PawnLibrary {
-    /// Adds an extracted pawn: as another product printing art the library has, by giving its name to
-    /// nameless art, as a Battle Card or pawn showing the same painting as one in the library, or as a new pawn.
-    func merge(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) throws {
-        let appearance = Appearance(sourceID: source.id, copies: found.copies)
+    /// Adds an extracted pawn: as a print of art the library has by its key, as another product printing art the
+    /// library has, by giving its name to nameless art, as a Battle Card or pawn showing the same painting as one in
+    /// the library, or as a new pawn. A print merged into a pawn under another key leaves that key as an alias.
+    func merge(_ print: FoundPrint, into report: inout ImportReport) throws {
+        let found = print.pawn
         if found.shape.isItem {
-            try mergeItem(found, from: source, into: &report)
+            try mergeItem(found, from: print.source, into: &report)
+        } else if let index = pawnIndex(answeringTo: print.key) {
+            addPrint(print, to: index)
+            report.alreadyKnown += 1
         } else if found.name.isEmpty {
-            try mergeNameless(found, from: source, into: &report)
+            try mergeNameless(print, into: &report)
         } else if let index = pawns.firstIndex(where: {
             $0.name == found.name && $0.size == found.size && $0.printsSameArt(as: found)
         }) {
-            pawns[index].add(appearance)
-            pawns[index].traits = Self.combined(pawns[index].traits, found.traits)
+            addPrint(print, to: index)
             report.alreadyKnown += 1
         } else if let index = waitingForName(sameArtAs: found) {
             pawns[index].name = found.name
             pawns[index].needsName = false
-            pawns[index].add(appearance)
+            addPrint(print, to: index)
             paintingIndex = nil
             report.alreadyKnown += 1
-        } else if let match = samePainting(as: found, from: source) {
+        } else if let match = samePainting(as: print) {
             try merge(match, into: &report)
         } else {
-            try add(found, from: source, into: &report)
+            try add(print, into: &report)
         }
     }
 
-    private func mergeNameless(_ found: ExtractedPawn, from source: PawnSource,
-                               into report: inout ImportReport) throws {
-        let appearance = Appearance(sourceID: source.id, copies: found.copies)
-        if NamelessProducts.contains(source), let index = pawns.firstIndex(where: {
+    /// Adds another product printing a library pawn's art, its traits, and its key as an alias.
+    private func addPrint(_ print: FoundPrint, to index: Int) {
+        pawns[index].add(print.appearance)
+        pawns[index].traits = Self.combined(pawns[index].traits, print.pawn.traits)
+        recordKey(print.key, of: index)
+    }
+
+    private func mergeNameless(_ print: FoundPrint, into report: inout ImportReport) throws {
+        let found = print.pawn
+        if NamelessProducts.contains(print.source), let index = pawns.firstIndex(where: {
             !$0.needsName && !$0.isCustom && $0.size == found.size && $0.fingerprint.isSameArt(as: found.fingerprint)
         }) {
-            pawns[index].add(appearance)
+            addPrint(print, to: index)
             report.namedFromOtherProducts += 1
         } else if let index = pawns.firstIndex(where: {
             $0.needsName && $0.size == found.size && $0.fingerprint.matches(found.fingerprint)
         }) {
-            pawns[index].add(appearance)
+            addPrint(print, to: index)
             report.alreadyKnown += 1
         } else {
-            var nameless = found
-            nameless.name = NamelessProducts.standInName(for: source)
-            try add(nameless, from: source, into: &report)
+            var nameless = print
+            nameless.pawn.name = NamelessProducts.standInName(for: print.source)
+            try add(nameless, into: &report)
         }
     }
 
@@ -85,12 +94,12 @@ extension PawnLibrary {
         }
     }
 
-    /// Adds a new pawn; one carrying a stand-in name is marked as needing a name.
-    private func add(_ found: ExtractedPawn, from source: PawnSource, into report: inout ImportReport) throws {
-        let needsName = found.name == NamelessProducts.standInName(for: source)
-        let appearance = Appearance(sourceID: source.id, copies: found.copies)
-        var pawn = Pawn(name: found.name, size: found.size, art: try art(of: found, from: source),
-                        fingerprint: found.fingerprint, appearances: [appearance], needsName: needsName)
+    /// Adds a new pawn, with its print's key as its ID; one carrying a stand-in name is marked as needing a name.
+    private func add(_ print: FoundPrint, into report: inout ImportReport) throws {
+        let found = print.pawn
+        let needsName = found.name == NamelessProducts.standInName(for: print.source)
+        var pawn = Pawn(id: print.key, name: found.name, size: found.size, art: try art(of: found, from: print.source),
+                        fingerprint: found.fingerprint, appearances: [print.appearance], needsName: needsName)
         pawn.traits = found.traits
         pawns.append(pawn)
         indexPainting(at: pawns.count - 1)

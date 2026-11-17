@@ -29,8 +29,9 @@ extension PawnLibrary {
             figures.forgetPages()
             paintingIndex = nil
         }
-        for found in prepared.extraction.pawns where !hasPawn(found, from: source) {
-            try merge(found, from: source, into: &report)
+        let prints = FoundPrint.prints(of: prepared.extraction, from: source)
+        for print in prints where !hasPawn(print.pawn, from: source) {
+            try merge(print, into: &report)
         }
         try save()
         return report
