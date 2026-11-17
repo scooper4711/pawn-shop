@@ -31,25 +31,53 @@ final class LibraryModel {
     @ObservationIgnored private(set) var library: PawnLibrary?
     @ObservationIgnored private(set) var renderer: PawnRenderer?
     @ObservationIgnored private(set) var backgroundRenderer: BackgroundRenderer?
+    /// Hears of other apps' changes to the shared library (R2.1).
+    @ObservationIgnored private var changeObserver: LibraryChangeObserver?
     /// Every Pathfinder and Starfinder item, bundled with the app; empty in a build without `Generated`.
     @ObservationIgnored let catalog = ItemCatalog.bundled()
 
     private init() {
         do {
-            let library = try PawnLibrary(folder: Self.libraryFolder)
+            let library = try Self.openLibrary()
             self.library = library
             renderer = PawnRenderer(library: library)
             backgroundRenderer = BackgroundRenderer(folders: library.folders)
             refresh()
+            changeObserver = PawnLibrary.observeChanges { [weak self] in self?.libraryChanged() }
+            readAgainAfterMove()
         } catch {
             errorMessage = "Opening the pawn library failed: \(error)"
         }
     }
 
-    /// The library folder; `PAWN_SHOP_LIBRARY` points the app at another one, for trying things out.
-    static var libraryFolder: URL {
-        ProcessInfo.processInfo.environment["PAWN_SHOP_LIBRARY"].map { URL(fileURLWithPath: $0) }
-            ?? PawnLibrary.defaultFolder
+    /// The library; `PAWN_SHOP_LIBRARY` points the app at another folder, with a shared library of its own, for
+    /// trying things out.
+    private static func openLibrary() throws -> PawnLibrary {
+        guard let path = ProcessInfo.processInfo.environment["PAWN_SHOP_LIBRARY"] else { return try PawnLibrary() }
+        return try PawnLibrary.local(folder: URL(fileURLWithPath: path))
+    }
+
+    /// Reads what another app changed in the shared library, or what changed while the app was in the background.
+    func libraryChanged() {
+        do {
+            if try library?.refresh() == true { refresh() }
+        } catch {
+            errorMessage = "Reading the shared library failed: \(error)"
+        }
+    }
+
+    /// Lets go of the shared library's file as the app goes to the background on the iPad.
+    func close() { library?.close() }
+
+    /// Reads again, from Scrollkeeper's folder, the PDFs whose pawns the moved library listed by product only
+    /// (R2.16), in the background with progress; the summary only tells of failures.
+    private func readAgainAfterMove() {
+        guard let library, library.hasFilesToReadAgain else { return }
+        // The files are in Scrollkeeper's folder, readable while its access is held, until the app quits.
+        _ = ScrollkeeperFolder().open()
+        let files = library.filesToReadAgain
+        guard !files.isEmpty else { return }
+        Task { await runImports(files, isReadingAgain: true) }
     }
 
     var isImporting: Bool { importProgress != nil }
@@ -164,7 +192,7 @@ final class LibraryModel {
         }
     }
 
-    private func runImports(_ urls: [URL]) async {
+    private func runImports(_ urls: [URL], isReadingAgain: Bool = false) async {
         var reports: [ImportReport] = []
         var failures: [String] = []
         for (index, url) in urls.enumerated() {
@@ -178,46 +206,12 @@ final class LibraryModel {
             refresh()
         }
         importProgress = nil
-        importSummary = Self.summary(of: reports, failures: failures)
+        if isReadingAgain {
+            if !failures.isEmpty { importSummary = "Could not read again: \(failures.joined(separator: "; "))." }
+        } else {
+            importSummary = Self.summary(of: reports, failures: failures)
+        }
         PawnTaggingModel.shared.tagNewPawns()
-    }
-
-    static func summary(of reports: [ImportReport], failures: [String]) -> String {
-        let added = reports.reduce(0) { $0 + $1.added }
-        let borrowed = reports.reduce(0) { $0 + $1.namedFromOtherProducts }
-        let needingNames = reports.reduce(0) { $0 + $1.needingNames }
-        let itemArt = reports.reduce(0) { $0 + $1.itemArtAdded }
-        let empty = reports.filter { !$0.reread && $0.added + $0.alreadyKnown + $0.itemArtAdded == 0 }
-            .map(\.sourceTitle)
-        let reread = reports.filter(\.reread).count
-        let flattened = reports.filter { !$0.unreadablePages.isEmpty }
-            .map { "\($0.sourceTitle) (\($0.unreadablePages.count) pages)" }
-        var lines = ["Added \(added) pawns from \(reports.count) PDF\(reports.count == 1 ? "" : "s")."]
-        if itemArt > 0 { lines.append("Kept the art of \(itemArt) items for their cards.") }
-        lines += mergingNotes(of: reports)
-        if borrowed > 0 {
-            lines.append("\(borrowed) pawns with no name printed took the name of the same art elsewhere.")
-        }
-        if needingNames > 0 {
-            lines.append("\(needingNames) pawns have no name yet; name them with Library › Review Unnamed Pawns.")
-        }
-        if reread > 0 {
-            lines.append("\(reread) PDF\(reread == 1 ? " was" : "s were") read again by the newer reader, adding only "
-                         + "the pawns it found anew.")
-        }
-        if !empty.isEmpty { lines.append("No pawns were found in: \(empty.joined(separator: ", ")).") }
-        if !flattened.isEmpty {
-            lines.append("Some pages print their pawns as one flat picture, which can't be split into pawns: "
-                         + "\(flattened.joined(separator: ", ")).")
-        }
-        if !failures.isEmpty { lines.append("Could not import: \(failures.joined(separator: "; ")).") }
-        return lines.joined(separator: "\n")
-    }
-
-    /// What the reports say about art the library had already, from other products.
-    private static func mergingNotes(of reports: [ImportReport]) -> [String] {
-        let known = reports.reduce(0) { $0 + $1.alreadyKnown }
-        return known > 0 ? ["\(known) were already in the library from other products."] : []
     }
 
     // MARK: Editing
