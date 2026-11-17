@@ -85,6 +85,27 @@ import ArtExtraction
         #expect(few.pages[0].allSatisfy { !$0.sideways })
     }
 
+    @Test func stacksStripsInColumnsWhenRowsTakeMorePages() throws {
+        // On A4 with room for a base, a huge, two large and a medium strip are 13 pt too wide for one row, but
+        // fit side by side as three columns, the two large strips stacked.
+        var settings = SheetSettings(paper: NamedPaper.a4.setup)
+        settings.leavesRoomForBase = true
+        let strip = { (size: PawnSize) in
+            LayoutItem.stripSize(forPawn: size.outlineSize, footRoom: settings.footRoom)
+        }
+        let large = UUID()
+        let items = [LayoutItem(entryID: UUID(), stripSize: strip(.huge), count: 1),
+                     LayoutItem(entryID: large, stripSize: strip(.large), count: 2),
+                     LayoutItem(entryID: UUID(), stripSize: strip(.medium), count: 1)]
+        let layout = SheetLayout.arrange(items, settings: settings)
+        let page = try #require(layout.pages.first)
+        #expect(layout.pages.count == 1)
+        #expect(page.allSatisfy { !$0.sideways })
+        let larges = page.filter { $0.entryID == large }.map(\.rect)
+        #expect(larges.map(\.minX) == [larges[0].minX, larges[0].minX])
+        #expect(larges[0].minY == larges[1].maxY)
+    }
+
     @Test func leavesGapsBetweenStrips() {
         let layout = SheetLayout.arrange([LayoutItem(entryID: UUID(), stripSize: medium, count: 2)],
                                          settings: SheetSettings(cutStyle: .gaps(10)))
