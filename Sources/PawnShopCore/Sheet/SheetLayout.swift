@@ -44,21 +44,48 @@ public struct SheetLayout: Equatable, Sendable {
         self.pages = pages
     }
 
-    /// Packs every copy into the printable area in rows, largest strips first, over as many pages as needed.
-    /// Strips are laid out upright or sideways, whichever takes fewer pages; a strip that only fits the other
-    /// way is turned.
+    /// Packs every copy into the printable area, largest strips first, over as many pages as needed. Strips are
+    /// laid out upright or sideways, in rows or in columns, whichever takes fewest pages, preferring upright rows
+    /// on a tie; a strip that only fits the other way is turned.
     public static func arrange(_ items: [LayoutItem], settings: SheetSettings) -> SheetLayout {
-        let upright = ShelfPacker(area: settings.paper.imageableRect, spacing: settings.cutStyle.spacing,
-                                  sideways: false).pack(items)
-        let sideways = ShelfPacker(area: settings.paper.imageableRect, spacing: settings.cutStyle.spacing,
-                                   sideways: true).pack(items)
-        return SheetLayout(pages: sideways.count < upright.count ? sideways : upright)
+        let area = settings.paper.imageableRect
+        let spacing = settings.cutStyle.spacing
+        let candidates = [false, true].map { sideways in
+            ShelfPacker(area: area, spacing: spacing, sideways: sideways).pack(items)
+        } + [true, false].map { sideways in
+            columns(of: items, in: area, spacing: spacing, sideways: sideways)
+        }
+        return SheetLayout(pages: candidates.min { $0.count < $1.count } ?? [])
+    }
+
+    /// Packs in columns: rows on the area turned a quarter, transposed back onto the page. A strip sideways on the
+    /// turned area stands upright on the page, so `sideways` is the preferred way on the turned area.
+    private static func columns(of items: [LayoutItem], in area: CGRect, spacing: CGFloat,
+                                sideways: Bool) -> [[PlacedStrip]] {
+        let turned = CGRect(x: 0, y: 0, width: area.height, height: area.width)
+        return ShelfPacker(area: turned, spacing: spacing, sideways: sideways).pack(items).map { page in
+            page.map { $0.transposed(from: turned, onto: area) }
+        }
     }
 
     /// The strip at `point` on page `pageIndex`, if any.
     public func strip(at point: CGPoint, onPage pageIndex: Int) -> PlacedStrip? {
         guard pages.indices.contains(pageIndex) else { return nil }
         return pages[pageIndex].first { $0.rect.contains(point) }
+    }
+}
+
+private extension PlacedStrip {
+    /// The strip moved from `turned` onto `area`, its distance from the top becoming its distance from the left
+    /// and the other way round; it lies the other way.
+    func transposed(from turned: CGRect, onto area: CGRect) -> PlacedStrip {
+        let fromLeft = rect.minX - turned.minX, fromTop = turned.maxY - rect.maxY
+        let size = CGSize(width: rect.height, height: rect.width)
+        let origin = CGPoint(x: area.minX + fromTop, y: area.maxY - fromLeft - size.height)
+        var strip = self
+        strip.rect = CGRect(origin: origin, size: size)
+        strip.sideways.toggle()
+        return strip
     }
 }
 
