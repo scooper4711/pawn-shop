@@ -1,41 +1,7 @@
 import ArtExtraction
 import Foundation
-
-/// A PDF read and ready to add to the library.
-public struct PreparedImport: Sendable {
-    /// The PDF the library keeps: for a two-file deck of Battle Cards, the one with the art.
-    public let file: URL
-    /// The product's title.
-    public let title: String
-    public let digest: String
-    public let byteCount: Int
-    public let extraction: ExtractionResult
-}
-
-/// What an import added.
-public struct ImportReport: Equatable, Sendable {
-    public var sourceTitle: String
-    /// New pawns.
-    public var added = 0
-    /// Pawns whose art was already in the library from another product.
-    public var alreadyKnown = 0
-    /// Outlines with no name printed.
-    public var unnamed: [UnnamedOutline] = []
-    /// Pawns now drawn from a sharper picture of the same painting, from Battle Cards.
-    public var sharpened = 0
-    /// Pawns with no name printed that took the name of the same art in another product.
-    public var namedFromOtherProducts = 0
-    /// Pawns added with a stand-in name, waiting to be named.
-    public var needingNames = 0
-    /// True when the PDF had been imported before, so nothing changed.
-    public var wasImported = false
-    /// True when a PDF imported before was read again by a newer reader, adding only the pawns it found anew.
-    public var reread = false
-    /// Pages printed as one flattened picture, whose pawns can't be read (zero-based).
-    public var unreadablePages: [Int] = []
-    /// Items' pictures from an item deck, kept for their cards (`ItemArtwork`).
-    public var itemArtAdded = 0
-}
+import SharedLibraries
+import TablesideShared
 
 public enum PawnLibraryError: Error, Equatable, CustomStringConvertible {
     case unreadableFile(String)
@@ -49,249 +15,202 @@ public enum PawnLibraryError: Error, Equatable, CustomStringConvertible {
     }
 }
 
-/// The pawns collected from every imported PDF, kept in a folder between launches.
+/// The pawns of every imported PDF, kept in the art library Pawn Shop shares with Turnkeeper and Field Guide
+/// (R2.1), and the custom pawns, kept in a folder of Pawn Shop's own.
 public final class PawnLibrary {
+    /// Pawn Shop's library before the shared one, moved into it once (`LibraryMoving.swift`).
     static let indexFile = "library.json"
-    /// The library as version 1 saved it, kept when its pawns are given their keys.
+    /// The library as version 1 saved it, kept when its pawns were given their keys.
     static let version1File = "library-v1.json"
 
+    /// Pawn Shop's own folder: custom pawns' art and `OwnLibrary`.
     public let folder: URL
+    public let shared: SharedLibrary
     public internal(set) var sources: [PawnSource] = []
     public internal(set) var pawns: [Pawn] = []
     /// The items' pictures from imported item decks.
     public internal(set) var itemArt: [ItemArtwork] = []
-    /// Other IDs pawns answer to (see `StoredLibrary.aliases`).
-    public internal(set) var aliases: [UUID: UUID] = [:]
-    /// Reads pawns' pictures to compare them while importing.
-    private(set) lazy var figures = FigureReader(folders: folders)
-    /// Pawn indexes by name (see `nameKey`), while importing; nil until needed.
-    var paintingIndex: [String: [Int]]?
+    var own = OwnLibrary()
+    /// The shared library's art, notes and sources as last read, and its change counter then.
+    var entries: [UUID: SharedArtEntry] = [:]
+    var notes: [UUID: ArtNote] = [:]
+    var sharedSources: [String: SharedSource] = [:]
+    var counter: Int64 = 0
+    /// Each print's key, with the ID of its art.
+    var printKeys: [UUID: UUID] = [:]
+    /// Pawns by ID, as indexes into `pawns`.
+    var pawnIndexes: [UUID: Int] = [:]
+    /// Pawns whose notes changed and aren't saved yet (`setTags`, `setSuggestedName`).
+    var unsavedNotes: Set<UUID> = []
 
     /// `~/Library/Application Support/Pawn Shop`.
     public static var defaultFolder: URL {
         URL.applicationSupportDirectory.appendingPathComponent("Pawn Shop", isDirectory: true)
     }
 
-    /// Opens the library in `folder`, creating it when it doesn't exist yet.
-    public init(folder: URL = PawnLibrary.defaultFolder) throws {
-        self.folder = folder
-        try FileManager.default.createDirectory(at: sourcesFolder, withIntermediateDirectories: true)
-        try FileManager.default.createDirectory(at: customFolder, withIntermediateDirectories: true)
-        try FileManager.default.createDirectory(at: folders.tokens, withIntermediateDirectories: true)
-        try FileManager.default.createDirectory(at: folders.items, withIntermediateDirectories: true)
-        let index = folder.appendingPathComponent(Self.indexFile)
-        guard FileManager.default.fileExists(atPath: index.path) else { return }
-        let stored = try JSONDecoder().decode(StoredLibrary.self, from: Data(contentsOf: index))
-        sources = stored.sources
-        pawns = stored.pawns
-        itemArt = stored.itemArt
-        aliases = stored.aliases
-        if stored.version < StoredLibrary.currentVersion { try upgrade(from: index) }
+    /// Opens the library in `folder`, over the shared library in the App Group, or else in `folder`'s `Shared`
+    /// folder (shared libraries R1.2).
+    public convenience init(folder: URL = PawnLibrary.defaultFolder) throws {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let shared = try SharedLibrary.standard(app: .pawnShop, fallback: Self.sharedFallback(in: folder))
+        try self.init(folder: folder, shared: shared)
     }
 
-    /// Gives a version 1 library's pawns their keys and saves it, keeping the old file beside it.
-    private func upgrade(from index: URL) throws {
-        let kept = folder.appendingPathComponent(Self.version1File)
-        if !FileManager.default.fileExists(atPath: kept.path) {
-            do {
-                try FileManager.default.copyItem(at: index, to: kept)
-            } catch {
-                throw PawnLibraryError.saveFailed("keeping \(Self.version1File): \(error.localizedDescription)")
-            }
-        }
-        rekeyPawns()
-        try save()
+    /// Opens the library in `folder` over `shared`, moving Pawn Shop's old library into it first (R2.16).
+    public init(folder: URL, shared: SharedLibrary) throws {
+        self.folder = folder
+        self.shared = shared
+        try FileManager.default.createDirectory(at: folders.custom, withIntermediateDirectories: true)
+        own = try OwnLibrary.read(from: folder)
+        try moveInIfNeeded()
+        try reload()
+    }
+
+    /// Where the shared library is kept outside the App Group.
+    public static func sharedFallback(in folder: URL) -> URL {
+        folder.appendingPathComponent("Shared", isDirectory: true)
     }
 
     /// Where the library keeps its files; safe to hand to other threads.
-    public var folders: LibraryFolders { LibraryFolders(root: folder) }
-    var sourcesFolder: URL { folders.sources }
+    public var folders: LibraryFolders { LibraryFolders(root: folder, shared: shared.folder) }
     public var customFolder: URL { folders.custom }
 
-    /// The library's copy of an imported PDF.
+    /// The kept copy of an imported PDF.
     public func fileURL(forSource id: String) -> URL { folders.sourceFile(id: id) }
 
-    public func source(id: String) -> PawnSource? { sources.first { $0.id == id } }
+    public func source(id: String) -> PawnSource? { sharedSources[id].map(PawnSource.init) }
 
-    /// True when the PDF at `url` was imported before: recognized by its path and size, or else its contents.
-    /// Either PDF of a two-file deck stands for the deck, and any picture of a deck sold as pictures for its
-    /// folder. A PDF in which an older reader found nothing is not counted, so that it is tried again (see
-    /// `isWorthRereading`).
-    public func hasImported(_ file: URL) -> Bool {
-        let url = Self.libraryFile(for: file)
-        let size = Self.byteCount(of: url) ?? -1
-        let imported = sources.filter { !isWorthRereading($0) }
-        if imported.contains(where: { $0.originalPath == url.path && $0.byteCount == size }) { return true }
-        return (try? Self.digest(of: url)).map { digest in imported.contains { $0.id == digest } } ?? false
+    /// The pawn answering to `id`: by its own ID, a print's key, or an old ID (R2.14).
+    public func pawn(id: UUID) -> Pawn? {
+        if let index = pawnIndexes[id] { return pawns[index] }
+        if let entryID = printKeys[id], let index = pawnIndexes[entryID] { return pawns[index] }
+        guard let entry = try? shared.artEntry(id: id) else { return nil }
+        return pawnIndexes[entry.id].map { pawns[$0] }
     }
 
-    /// The files to import for `urls`: each once, a two-file deck as its art PDF, and a deck sold as pictures as
-    /// its folder.
-    public static func importableFiles(_ urls: [URL]) -> [URL] {
-        var files: [URL] = []
-        for url in urls.map(libraryFile(for:)) where !files.contains(url) {
-            files.append(url)
-        }
-        return files
+    // MARK: Reading the shared library
+
+    /// Reads the whole shared library again.
+    func reload() throws {
+        counter = try shared.changeCounter()
+        entries = Dictionary(uniqueKeysWithValues: try shared.artEntries().map { ($0.id, $0) })
+        notes = try shared.notes()
+        try readSources()
+        rebuild()
     }
 
-    /// Reads a PDF's pawns. It touches nothing in the library, so it can run off the main thread.
-    public static func prepareImport(of url: URL) throws -> PreparedImport {
-        let file = libraryFile(for: url)
-        let digest = try digest(of: file)
-        let extraction = try PawnExtractor.extract(from: file)
-        return PreparedImport(file: file, title: title(of: url), digest: digest, byteCount: byteCount(of: file) ?? 0,
-                              extraction: extraction)
-    }
-
-    /// Adds a prepared PDF's pawns, merging art the library already has, and saves.
+    /// Reads what the shared library changed since it was last read, by this app or another (R2.1): the art and
+    /// notes changed, and those deleted. False when nothing changed.
     @discardableResult
-    public func commit(_ prepared: PreparedImport) throws -> ImportReport {
-        let title = prepared.title
-        var report = ImportReport(sourceTitle: title, unnamed: prepared.extraction.unnamed,
-                                  unreadablePages: prepared.extraction.unreadablePages)
-        if let known = source(id: prepared.digest) {
-            guard isWorthRereading(known) else {
-                report.wasImported = true
-                return report
-            }
-            if hasArt(from: known) { return try reread(known, as: prepared, into: report) }
+    public func refresh() throws -> Bool {
+        let changes = try shared.changes(since: counter)
+        guard !changes.isEmpty else { return false }
+        for entry in try shared.artEntries(changedSince: counter) { entries[entry.id] = entry }
+        for (id, note) in try shared.notes(changedSince: counter) { notes[id] = note }
+        for key in changes.deletions[.art] ?? [] {
+            UUID(uuidString: key).map { entries[$0] = nil }
         }
-        sources.filter { ($0.id == prepared.digest || $0.originalPath == prepared.file.path) && isWorthRereading($0) }
-            .forEach(forget)
-        // A PDF with no pawns is not kept: nothing would be drawn from it. Nor is a deck of pictures, whose
-        // items' pictures are kept on their own.
-        if !prepared.extraction.pawns.isEmpty && !Self.isFolder(prepared.file) { try copySource(prepared) }
-        sources.append(PawnSource(id: prepared.digest, title: title, importedAt: Date(),
-                                  originalPath: prepared.file.path, byteCount: prepared.byteCount,
-                                  pawnsFound: prepared.extraction.pawns.count, readerVersion: PawnExtractor.version))
-        let source = sources[sources.count - 1]
-        defer {
-            figures.forgetPages()
-            paintingIndex = nil
+        for key in changes.deletions[.notes] ?? [] {
+            UUID(uuidString: key).map { notes[$0] = nil }
         }
-        for print in FoundPrint.prints(of: prepared.extraction, from: source) {
-            try merge(print, into: &report)
+        try readEntries(losingPrints: changes.deletions[.prints] ?? [])
+        if !changes.changedTables.isDisjoint(with: [.sources, .sourceAccess]) || changes.deletions[.sources] != nil {
+            try readSources()
         }
-        try save()
-        return report
+        counter = changes.counter
+        rebuild()
+        return true
     }
 
-    /// Imports one PDF on the calling thread.
-    @discardableResult
-    public func importPDF(at url: URL) throws -> ImportReport {
-        try commit(Self.prepareImport(of: url))
+    /// Reads again the art that lost prints (named `<key>|<source>`), which may now be other art's or gone.
+    private func readEntries(losingPrints rows: [String]) throws {
+        let keys = rows.compactMap { $0.split(separator: "|").first.flatMap { UUID(uuidString: String($0)) } }
+        for entryID in Set(keys.compactMap { printKeys[$0] }) {
+            entries[entryID] = try shared.artEntry(id: entryID).flatMap { $0.id == entryID ? $0 : nil }
+        }
     }
 
-    /// Adds a pawn made from the user's own art and saves.
-    public func add(_ pawn: Pawn) throws {
-        pawns.append(pawn)
-        try save()
+    private func readSources() throws {
+        sharedSources = Dictionary(uniqueKeysWithValues: try shared.sources().map { ($0.id, $0) })
     }
 
-    /// Replaces the pawn with the same id and saves.
-    public func update(_ pawn: Pawn) throws {
-        guard let index = pawns.firstIndex(where: { $0.id == pawn.id }) else { return }
-        pawns[index] = pawn
-        try save()
-    }
-
-    /// Renames a pawn and saves; a blank name is ignored.
-    public func rename(_ id: UUID, to name: String) throws {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, var pawn = pawn(id: id) else { return }
-        pawn.name = trimmed
-        pawn.needsName = false
-        pawn.suggestedName = ""
-        try update(pawn)
-    }
-
-    /// Records the tags `model` chose for a pawn, without saving, since tagging a whole library would otherwise
-    /// write it out once per pawn; call `save()` after a batch. Tags the user corrected are kept.
-    public func setTags(_ tags: [String], by model: String, of id: UUID) {
-        guard let index = pawns.firstIndex(where: { $0.id == id }), !pawns[index].tagsCorrected else { return }
-        pawns[index].tags = tags
-        pawns[index].tagModel = model
-    }
-
-    /// Replaces a pawn's tags with the user's own, which tagging then keeps, and saves.
-    public func correctTags(_ tags: [String], of id: UUID) throws {
-        guard var pawn = pawn(id: id) else { return }
-        pawn.tags = PawnTags.cleaned(tags)
-        pawn.tagsCorrected = true
-        try update(pawn)
-    }
-
-    /// Records the name the model suggests for a pawn needing one, without saving, like `setTags`.
-    public func setSuggestedName(_ name: String, of id: UUID) {
-        guard let index = pawns.firstIndex(where: { $0.id == id }) else { return }
-        pawns[index].suggestedName = name
-    }
-
-    /// Removes pawns, and any custom art and token pictures only they used, and saves.
-    public func remove(_ ids: Set<UUID>) throws {
-        for pawn in pawns where ids.contains(pawn.id) {
-            switch pawn.art {
-            case .custom(let art):
-                try? FileManager.default.removeItem(at: customFolder.appendingPathComponent(art.imageFile))
-            case .token(let art):
-                for file in art.pictures {
-                    try? FileManager.default.removeItem(at: folders.tokens.appendingPathComponent(file))
-                }
-            case .pdf, .card:
-                break
+    /// Makes the pawns, item art and sources from the art and notes read, with the custom pawns.
+    func rebuild() {
+        let reachable = Set(sharedSources.values.filter(\.isKept).map(\.id))
+        var extracted: [Pawn] = []
+        var items: [ItemArtwork] = []
+        printKeys = [:]
+        for entry in entries.values {
+            entry.prints.forEach { printKeys[$0.key] = entry.id }
+            if entry.artEntry.isItem {
+                ItemArtwork(entry: entry).map { items.append($0) }
+            } else if !isHidden(entry) {
+                extracted.append(Pawn(entry: entry, note: notes[entry.id], reachable: reachable))
             }
         }
-        pawns.removeAll { ids.contains($0.id) }
-        forgetAliases(of: ids)
-        try save()
+        extracted.sort(by: Self.isOrdered)
+        pawns = extracted + own.customPawns
+        itemArt = items.sorted { $0.name == $1.name ? $0.id.uuidString < $1.id.uuidString : $0.name < $1.name }
+        pawnIndexes = Dictionary(uniqueKeysWithValues: pawns.enumerated().map { ($1.id, $0) })
+        let used = Set(pawns.flatMap { $0.appearances.map(\.sourceID) } + itemArt.map(\.sourceID))
+        sources = sharedSources.values.filter { used.contains($0.id) }.map(PawnSource.init)
+            .sorted { $0.title < $1.title }
     }
 
-    /// Drops a source in which nothing was found, and its copy, before its PDF is read again.
-    private func forget(_ source: PawnSource) {
-        sources.removeAll { $0.id == source.id }
-        try? FileManager.default.removeItem(at: fileURL(forSource: source.id))
+    /// The library's order: by name, then ID, the same on every launch.
+    private static func isOrdered(_ first: Pawn, _ second: Pawn) -> Bool {
+        first.name == second.name ? first.id.uuidString < second.id.uuidString : first.name < second.name
     }
 
-    private func copySource(_ prepared: PreparedImport) throws {
-        let destination = fileURL(forSource: prepared.digest)
-        guard !FileManager.default.fileExists(atPath: destination.path) else { return }
-        do {
-            // Copy the PDF itself, not a link to it, so the library survives the original moving.
-            try FileManager.default.copyItem(at: prepared.file.resolvingSymlinksInPath(), to: destination)
-        } catch {
-            let file = prepared.file.lastPathComponent
-            throw PawnLibraryError.saveFailed("copying \(file): \(error.localizedDescription)")
-        }
-    }
-
-    public func save() throws {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        do {
-            let data = try encoder.encode(StoredLibrary(sources: sources, pawns: pawns, itemArt: itemArt,
-                                                           aliases: aliases))
-            try data.write(to: folder.appendingPathComponent(Self.indexFile), options: .atomic)
-        } catch {
-            throw PawnLibraryError.saveFailed(error.localizedDescription)
-        }
+    /// True when the user removed the art from Pawn Shop (R2.5), by its ID or any print's key.
+    private func isHidden(_ entry: SharedArtEntry) -> Bool {
+        guard !own.hidden.isEmpty else { return false }
+        return own.hidden.contains(entry.id) || entry.prints.contains { own.hidden.contains($0.key) }
     }
 }
 
-/// The folders inside a library folder.
+/// The folders the library's files are in: Pawn Shop's own, and the shared library's.
 public struct LibraryFolders: Hashable, Sendable {
+    /// Pawn Shop's folder.
     public let root: URL
+    /// The shared library's folder.
+    public let shared: URL
 
-    public init(root: URL) { self.root = root }
+    public init(root: URL, shared: URL) {
+        self.root = root
+        self.shared = shared
+    }
 
-    /// Copies of the imported PDFs, named by their digest.
-    public var sources: URL { root.appendingPathComponent("Sources", isDirectory: true) }
+    /// The kept PDFs, named by their digest.
+    public var sources: URL { shared.appendingPathComponent("Sources", isDirectory: true) }
     /// Images for custom pawns.
     public var custom: URL { root.appendingPathComponent("Custom", isDirectory: true) }
+    /// Tokens' art drawn alone, items' pictures cut out of decks sold as pictures, and each art's picture.
+    public var pictures: URL { shared.appendingPathComponent("Pictures", isDirectory: true) }
     /// Tokens' art drawn alone (see `TokenArt`).
-    public var tokens: URL { root.appendingPathComponent("Tokens", isDirectory: true) }
+    public var tokens: URL { pictures }
     /// Items' pictures cut out of decks sold as pictures (see `ItemPicture.drawn`).
-    public var items: URL { root.appendingPathComponent("Items", isDirectory: true) }
+    public var items: URL { pictures }
 
     public func sourceFile(id: String) -> URL { sources.appendingPathComponent("\(id).pdf") }
+}
+
+/// Opening the library for trying things out, following other apps' changes, and the iPad's background.
+extension PawnLibrary {
+    /// Opens the library in `folder` with a shared library of its own, never the App Group's, for trying things out
+    /// (`PAWN_SHOP_LIBRARY`).
+    public static func local(folder: URL) throws -> PawnLibrary {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let shared = try SharedLibrary(folder: sharedFallback(in: folder), app: .pawnShop)
+        return try PawnLibrary(folder: folder, shared: shared)
+    }
+
+    /// Calls `onChange` on the main thread whenever an app changes the shared library, this one included.
+    public static func observeChanges(_ onChange: @escaping @MainActor @Sendable () -> Void) -> LibraryChangeObserver {
+        SharedLibraryChange.observe(onChange)
+    }
+
+    /// Lets go of the shared library's file, as the app goes to the background on the iPad (shared libraries R5.4);
+    /// the next read or write opens it again.
+    public func close() { shared.close() }
 }

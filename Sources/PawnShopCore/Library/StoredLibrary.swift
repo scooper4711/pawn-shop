@@ -1,6 +1,6 @@
 import Foundation
 
-/// The library file's contents.
+/// The contents of Pawn Shop's library file before the shared library (`library.json`), read once to move it in.
 struct StoredLibrary: Codable {
     /// Version 2 keys extracted pawns by their art (`ArtKey`); version 1 gave them random UUIDs.
     static let currentVersion = 2
@@ -18,6 +18,14 @@ struct StoredLibrary: Codable {
         self.pawns = pawns
         self.itemArt = itemArt
         self.aliases = aliases
+    }
+
+    static func read(from file: URL) throws -> StoredLibrary {
+        do {
+            return try JSONDecoder().decode(StoredLibrary.self, from: Data(contentsOf: file))
+        } catch {
+            throw PawnLibraryError.unreadableFile("\(file.lastPathComponent): \(error.localizedDescription)")
+        }
     }
 
     private enum CodingKeys: String, CodingKey { case version, sources, pawns, itemArt, aliases }

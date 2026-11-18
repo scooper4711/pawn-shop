@@ -57,7 +57,7 @@ import ArtExtractionTestSupport
         try library.importPDF(at: writePawnPDF([namelessFighter, copy], named: Self.heroesAndVillains, in: folder))
         try library.importPDF(at: writePawnPDF([namelessFighter], named: "Mystery Box PDF.pdf", in: folder))
         #expect(library.pawnsNeedingNames.count == 1)
-        #expect(library.pawnsNeedingNames.first?.appearances.map(\.copies) == [2, 1])
+        #expect(library.pawnsNeedingNames.first?.appearances.map(\.copies).sorted() == [1, 2])
     }
 
     @Test func renamingFinishesThePawn() throws {

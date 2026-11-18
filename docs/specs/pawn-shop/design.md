@@ -9,67 +9,71 @@ Finding pawns, tokens and Battle Cards creatures in Paizo's PDFs, and the measur
 (`docs/specs/tabletop-kit/design.md`). Pawn Shop's library uses its figures to compare paintings (below).
 
 ## Library (`PawnShopCore/Library`)
-- Stored under `~/Library/Application Support/Pawn Shop/`:
-  - `Sources/<sha256>.pdf`: a copy of each imported PDF;
-  - `Custom/<file>`: custom pawn art;
-  - `Tokens/<file>`: tokens' art drawn alone (PNG), written when an import is committed;
-  - `library.json`: sources, pawns and aliases (`StoredLibrary`, version 2). Thumbnails are stored as
-    base64 data; the whole collection (about 9,800 pawns from 85 PDFs) is about 14 MB;
-  - `library-v1.json`: the version 1 file, kept when its pawns were given their keys.
-- `PawnSource`: id (SHA-256 of the file), title (from the file name, without product codes and " PDF"),
-  import date, original path and byte count (to recognize a file again without hashing it), the game, read
-  from the title, and how many pawns the import found with which `PawnExtractor.version`. A source read by an
-  older version is not counted as imported (`PawnRereading.swift`), so importing from Scrollkeeper reads it
-  again once per improvement (1: credited card art; 2: pawns without cut outlines), not on every import. One no
-  pawn comes from is dropped and read afresh; one with pawns is reread in place: its record takes the new version
-  and count, and each pawn found is merged unless a pawn from that source already has its size and art, so
-  names, tags and corrections stay. `Pawn.add(_:)` and `merge(_ match:)` never list a product twice on one pawn.
-  A PDF with no pawns is not copied.
-- `Pawn`: id, name, size, fingerprint, `needsName`, `traits` (from Battle Cards), `art` (`.pdf(sourceID, front,
-  back)`, `.custom(CustomArt)`, `.token(TokenArt)`: source id and front and optional back picture files, or
-  `.card(CardArt)`: source id, the art page and creature bounds as a face (with the rotation that turns a
-  sideways outline-less pawn upright), and the image's index in drawing order, drawn straight from the kept PDF rather than stored as a picture, since PNGs of every deck's creatures
-  would take over a gigabyte) and
-  `appearances` (each product printing the art, with its copies; the first supplies the faces).
-  `CustomArt`: image file name, scaling (`.fill` covers the face; `.fit` shows the whole picture in the area
-  above the name band), focus point (where the image sits within its room to move: the overflow when filling,
-  the free space when fitting), and whether the name is printed.
-- Pawn IDs (`PawnKeys.swift`, R2.14): an extracted pawn's ID is tabletop-kit's `ArtKey` of its print. On import
-  `FoundPrint.prints(of:from:)` keys every pawn of the PDF together (so a picture the PDF prints in two sizes gets
-  two keys) from the name as printed, empty for a nameless product, before any stand-in name. `merge` first looks
-  for a pawn answering to the key (`pawnIndex(answeringTo:)`), then applies the rules below; a print merged into a
-  pawn under another key records that key in `aliases` (key → pawn ID), so another device that imported the
-  products in the other order, and gave the pawn the other key, still finds it. `pawn(id:)` looks in `aliases`
-  too, and `remove` drops a removed pawn's aliases.
+Pawns read from PDFs live in tabletop-kit's shared art library (`SharedLibraries`, its
+`docs/specs/shared-libraries/`), which Turnkeeper and Field Guide read and write too. `PawnLibrary` keeps its API and
+is a view over it, so the app above it changes little.
+
+- **Where.** `SharedLibrary.standard(app: .pawnShop, fallback:)`: `Tableside/` in the App Group, or the library
+  folder outside it (tests, `PAWN_SHOP_LIBRARY`). The store keeps the PDFs (`Sources/<sha256>.pdf`), each entry's
+  picture and tokens' and drawn items' pictures (`Pictures/`), in `Library.sqlite`. Pawn Shop's own folder
+  (`~/Library/Application Support/Pawn Shop/`, in the container) keeps `Custom/` (custom pawns' art) and
+  `pawn-shop.json` (`OwnLibrary`: the custom pawns, and the IDs of pawns removed from Pawn Shop only).
+- **Pawns** (`SharedPawns.swift`). Each creature entry (not an item) becomes a `Pawn`: its ID, size, traits,
+  fingerprint and `needsName`; `appearances` from its prints (one per source, with copies, the drawn print's first).
+  Its note (`ArtNote`) gives the name the user chose (`userName`, else the entry's name), tags, tag model,
+  suggested name and `tagsCorrected` (`isCorrected`); a pawn needs a name while the entry does and no `userName` is
+  set. `art` comes from the print it is drawn from, the sharpest Pawn Shop can reach: a figure (`.card`, from a
+  Battle Card), else a pawn print (`.pdf` with its back, or the front mirrored), else a token (`.token`, its
+  pictures in `Pictures/`). Without a reachable PDF, a pawn is drawn as a token is, from the entry's picture
+  (R2.1.2). Item entries become `ItemArtwork` the same way (`.figure` or `.drawn`).
+- **Sources.** `PawnSource` from `SharedSource`: id, title, byte count, art found and reader version; the
+  original path is the PDF's location for Pawn Shop when it has one. Only sources with pawns or items are listed.
+- **Writing.** `rename`, `correctTags`, `setTags` and `setSuggestedName` write the pawn's note
+  (`setNote(_:forArt:)`, which finds the art by any of its IDs). Custom pawns (`add`, `update`, `addCustomPawn`)
+  and removals save `pawn-shop.json`; removing a pawn read from a PDF records its ID there and hides it.
+- **Importing.** `prepareImport(of:)` is `ArtLibrary.prepare` (off the main thread); `commit(_:)` is the store's
+  `commit(_:location: .kept)`, which claims the PDF, keys and merges its art (by key, then the same name and
+  fingerprint or palette, then nameless art's rules: shared libraries R2.3a) and draws new pictures. Its
+  `ArtImportReport` becomes an `ImportReport`; the outlines with no name printed come from the extraction.
+  `hasImported` is the store's `contains`, unless the source was read by an older reader.
+- **Following changes** (R2.1). `LibraryModel` observes `SharedLibraryChange` and calls `refresh()`, which reads
+  `changes(since:)` the last counter it saw: changed entries and notes are read again
+  (`artEntries(changedSince:)`, `notes(changedSince:)`) and deleted art dropped, so a change doesn't read the
+  whole library. On the iPad the app calls `close()` when it goes to the background (shared libraries R5.4).
+- **Pawn IDs** (R2.14) are the store's: an entry's ID is its first print's `ArtKey`, pawns first, and any print
+  key or alias finds it (`artEntry(id:)`), so sheets saved with an old ID still open (`labeled`). Before the move a
+  version 1 library is still keyed in place first (`PawnKeys.swift`, R2.15), as below.
   - Version 1 libraries (`rekeyPawns`, R2.15): each extracted pawn is keyed from its art's source, its
     fingerprint, its front face, and its name, empty when the pawn needs a name or its first product is nameless,
     so a name it took later doesn't count. Pawns sharing a key merge into the first (products and traits); every
-    old ID becomes an alias. A pawn renamed by the user before this keys by its new name, so it may differ from
-    another device's until the libraries sync (#30). On a copy of the real library (9,848 pawns, 78 custom, 4
-    without pictures, on flattened pages, keyed by place), one pair merged, and every pawn on the sheets saved
-    with it was found (`RealLibraryUpgradeTests`, run when `TestData/library-v1.json` is there).
-  - Only the first print of a version 1 pawn is keyed, as the library keeps no faces or fingerprints for the
-    others; its other products answer to the key when they print the same picture and name.
-- `PawnLibrary`:
-  - `prepareImport(of:)` hashes and extracts a PDF without touching the library, so it can run off the main
-    thread; `commit(_:)` copies the file, adds the source, and merges each pawn into an existing one with the
-    same name, size and matching art (adding an appearance) or adds it; then saves. A known file is a no-op.
-  - `add`, `update`, `rename` (which clears `needsName`) and `remove` (deleting custom art and token pictures) save
-    immediately.
-  - Battle Cards (`SharperArt.swift`): when either the extracted pawn or a library pawn is a card, only equal
-    digests merge them directly. Otherwise a named pawn is compared with the library pawns whose names match
-    (`namesMatch`, found through an index by the part after the last comma, built for the import) by their
-    figures' palettes; `FigureReader` finds a card's creature, or a printed pawn's largest image inside its front,
-    in the kept PDFs, keeping the last 24 figures. A match adds the appearance (first when the imported picture
-    has more pixels and becomes the art), takes a printed pawn's size and adds the traits. Into a copy of the
-    real library (8,620 pawns), the Bestiary deck merged 340 of its 398 cards, 339 of them now drawn from the
-    card; Monster Core, Bestiary 2 and Alien Archive 1 & 2 merged 318, 291 and 163.
-  - Nameless pawns (`PawnMerging.swift`): an extracted pawn with no name merges into a pawn with the same art
-    when its product is in `NamelessProducts` (Heroes & Villains) and `ArtFingerprint.isSameArt(as:)` holds:
-    equal digests or a thumbnail distance of at most 15, stricter than the 20 used with equal names because
-    across the whole library 16 and up were different figures. Otherwise it is added as
-    "Unknown <product title>" with `needsName`. A named pawn imported later that matches such a pawn gives it
-    its name. `pawnsNeedingNames` lists them in library order.
+    old ID becomes an alias. On a copy of the real library (9,848 pawns, 78 custom, 4 without pictures, on
+    flattened pages, keyed by place), one pair merged, and every pawn on the sheets saved with it was found
+    (`RealLibraryUpgradeTests`, run when `TestData/library-v1.json` is there).
+- **The move** (`LibraryMoving.swift`, `PawnShopMove.swift`, R2.16). At launch, while `library.json` exists and the
+  store hasn't recorded Pawn Shop's move as finished, `PawnLibrary` reads it (keying a version 1 file first) and
+  calls `moveIn` with a `LibraryMove`: each extracted pawn as keyed art (`keyedArt`) with one print, its ID as the
+  key, from its art (a pawn's faces, a card's face and image index, a token's pictures renamed `<id>.png` and
+  `<id>-back.png`); item art keyed by `ArtKey` as an import keys it, a drawn item's picture renamed `<key>.png`; the
+  sources (`keyedSources`), kept when their PDF is, else referenced where they were imported from, a file that is
+  gone as a reference that never resolves, so it is listed as missing; `aliases`; a note per pawn with its tags,
+  tag model, suggested name and corrections; the kept PDFs (`keptPDFs`) and token and item pictures
+  (`pictureFiles`). The name is the pawn's current one (the printed name isn't recorded). Art from a product
+  printing no names keeps its stand-in name and `needsName`, and a name the user gave it is the note's
+  `userName`. Custom pawns and the imported files' paths, sizes and digests go to `pawn-shop.json`, then
+  `library.json` becomes `library.json.moved`.
+  - A version 2 library records the faces of a pawn's first product only: 2,710 other prints in 65 of the 85
+    PDFs have none. The sources of every pawn printed by more than one product move in with reader version 0 and
+    are listed in `pawn-shop.json` (`readAgain`) with their original files. `LibraryModel` reads those again in
+    the background, from Scrollkeeper's folder, pawn PDFs before Battle Cards (`filesToReadAgain`), like an
+    import but telling only of failures; a file it can't reach is read again at the next Import from
+    Scrollkeeper, which counts a source read by an older reader as not imported. A kept copy can't be read
+    instead: a Battle Cards deck or a deck of pictures is recognized by its files' names. Each print then joins
+    its pawn by key, or by name and fingerprint or colors as on any import, and the pawn lists every product
+    again; a pawn whose ID was its art's other print's key keeps its note through the store's `retire`.
+  - On the real library (`RealLibraryUpgradeTests`) the move takes about 5 seconds in a debug build; every
+    pawn is found by its old ID, its tags and corrections and the names given to nameless art are kept, and the
+    saved sheets open.
+  - A move cut short finishes at the next launch (the store records its rows first, and moves files it hasn't).
   - `search(_:)`: every word must appear (case- and diacritic-insensitive) in the name, a product title, a
     trait or a tag;
     filters by size, game, product and custom; ordered by name, then product, so same-name art sits together.
