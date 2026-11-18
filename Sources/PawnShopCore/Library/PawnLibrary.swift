@@ -6,11 +6,13 @@ import TablesideShared
 public enum PawnLibraryError: Error, Equatable, CustomStringConvertible {
     case unreadableFile(String)
     case saveFailed(String)
+    case nothingFoundAgain(String)
 
     public var description: String {
         switch self {
         case .unreadableFile(let file): "Pawn import failed: \(file) could not be read"
         case .saveFailed(let reason): "Saving the pawn library failed: \(reason)"
+        case .nothingFoundAgain(let file): "Reading \(file) again found nothing, so its pawns were left as they were"
         }
     }
 }

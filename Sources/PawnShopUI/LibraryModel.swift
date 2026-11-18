@@ -44,7 +44,7 @@ final class LibraryModel {
             backgroundRenderer = BackgroundRenderer(folders: library.folders)
             refresh()
             changeObserver = PawnLibrary.observeChanges { [weak self] in self?.libraryChanged() }
-            readAgainAfterMove()
+            readAgainAtLaunch()
         } catch {
             errorMessage = "Opening the pawn library failed: \(error)"
         }
@@ -69,9 +69,10 @@ final class LibraryModel {
     /// Lets go of the shared library's file as the app goes to the background on the iPad.
     func close() { library?.close() }
 
-    /// Reads again, from Scrollkeeper's folder, the PDFs whose pawns the moved library listed by product only
-    /// (R2.16), in the background with progress; the summary only tells of failures.
-    private func readAgainAfterMove() {
+    /// Reads again, from where they were imported, the PDFs an older reader read (R1.7) and those whose pawns the
+    /// moved library listed by product only (R2.16), in the background with progress; the summary only tells of
+    /// failures.
+    private func readAgainAtLaunch() {
         guard let library, library.hasFilesToReadAgain else { return }
         // The files are in Scrollkeeper's folder, readable while its access is held, until the app quits.
         _ = ScrollkeeperFolder().open()
@@ -199,7 +200,8 @@ final class LibraryModel {
             importProgress = ImportProgress(fileName: url.lastPathComponent, done: index, total: urls.count)
             do {
                 let prepared = try await Task.detached { try PawnLibrary.prepareImport(of: url) }.value
-                if let report = try library?.commit(prepared) { reports.append(report) }
+                let report = try isReadingAgain ? library?.commitReadAgain(prepared) : library?.commit(prepared)
+                if let report { reports.append(report) }
             } catch {
                 failures.append("\(url.lastPathComponent): \(error)")
             }

@@ -27,18 +27,6 @@ extension PawnLibrary {
         try retire(index)
     }
 
-    /// True while PDFs moved in wait to be read again (`filesToReadAgain`).
-    public var hasFilesToReadAgain: Bool { !own.readAgain.isEmpty }
-
-    /// The original files of PDFs to read again since the move, pawn PDFs before Battle Cards (R2.16): readable
-    /// here and not yet read by the current reader.
-    public var filesToReadAgain: [URL] {
-        own.readAgain.filter { sourceID, _ in (sharedSources[sourceID]?.readerVersion ?? 0) < PawnExtractor.version }
-            .map { URL(fileURLWithPath: $0.value) }
-            .filter { FileManager.default.isReadableFile(atPath: $0.path) }
-            .sorted { ($0.isBattleCards ? 1 : 0, $0.path) < ($1.isBattleCards ? 1 : 0, $1.path) }
-    }
-
     // MARK: Helpers
 
     private func keepVersion1(of index: URL) throws {
@@ -61,8 +49,4 @@ extension PawnLibrary {
             throw PawnLibraryError.saveFailed("renaming \(Self.indexFile): \(error.localizedDescription)")
         }
     }
-}
-
-private extension URL {
-    var isBattleCards: Bool { lastPathComponent.localizedCaseInsensitiveContains("Battle Cards") }
 }

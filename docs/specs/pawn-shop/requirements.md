@@ -25,7 +25,10 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R1.7 Importing a PDF that is already in the library changes nothing, except a PDF read by an older version of
   the reader: it is read again once by each newer version, so improvements reach it. A PDF that gave no pawns is
   imported afresh, with no copy of it kept (R1.9) while it gives none; one that gave pawns keeps them, with their
-  names, tags and corrections, and gains only the pawns found anew, each product listed once per pawn.
+  names, tags and corrections, gains the pawns found anew and loses those the newer reader no longer finds, each
+  product listed once per pawn. At launch, the PDFs an older reader read are read again without being asked, in
+  the background with progress, from the files they were imported from; one whose file can't be reached waits
+  for its next import. A reading that finds nothing where pawns were found changes nothing and says so.
 - R1.8 Importing shows progress, then a report of the pawns added, the pawns whose art was already in the
   library, and the outlines with no name printed.
 - R1.9 The library keeps its own copy of each imported PDF, so pawns survive the original being moved. A PDF

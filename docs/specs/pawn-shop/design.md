@@ -36,6 +36,13 @@ is a view over it, so the app above it changes little.
   fingerprint or palette, then nameless art's rules: shared libraries R2.3a) and draws new pictures. Its
   `ArtImportReport` becomes an `ImportReport`; the outlines with no name printed come from the extraction.
   `hasImported` is the store's `contains`, unless the source was read by an older reader.
+- **Reading again** (`ReadingAgain.swift`, R1.7). At launch `LibraryModel` reads again, in the background with
+  progress, each PDF whose `readerVersion` is below `PawnExtractor.version`: from the path it was imported from
+  (`OwnLibrary.importedFiles`, and `readAgain` for PDFs moved in), where that can be read, pawn PDFs before Battle
+  Cards. It never reads the library's own copy: of a deck in two PDFs that is the art alone, and read without its
+  stat blocks the deck's creatures would be taken out. `commitReadAgain` refuses a reading that finds nothing
+  where the last one found art, and the summary says so. A PDF whose file can't be reached waits; a PDF another
+  app took out of the library is not read.
 - **Following changes** (R2.1). `LibraryModel` observes `SharedLibraryChange` and calls `refresh()`, which reads
   `changes(since:)` the last counter it saw: changed entries and notes are read again
   (`artEntries(changedSince:)`, `notes(changedSince:)`) and deleted art dropped, so a change doesn't read the
