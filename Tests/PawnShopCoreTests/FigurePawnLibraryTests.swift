@@ -35,4 +35,23 @@ import Testing
         let picture = try #require(PawnRenderer(library: library).pictureAlone(of: figure, height: 200))
         #expect(picture.height > picture.width)
     }
+
+    /// A page's pictures are read from their PDF, which once closed too early and crashed the app.
+    @Test func readsAPageAgainAfterMorePDFsThanAreKeptOpen() throws {
+        let folders = LibraryFolders(root: temporaryFolder(), shared: temporaryFolder())
+        try FileManager.default.createDirectory(at: folders.sources, withIntermediateDirectories: true)
+        let rects = [CGRect(x: 20, y: 600, width: 100, height: 146), CGRect(x: 130, y: 600, width: 100, height: 146)]
+        let sources = (0...FigureReader.keptDocuments).map { "source\($0)" }
+        for source in sources {
+            let pawns = rects.map { DrawnFigurePawn(rect: $0, name: source.uppercased()) }
+            try figurePawnPDF(pages: [pawns]).write(to: folders.sourceFile(id: source))
+        }
+        let reader = FigureReader(folders: folders)
+        func art(_ source: String, picture: Int) -> CardArt {
+            CardArt(sourceID: source, face: PawnFace(pageIndex: 0, rect: rects[picture], rotation: 0),
+                    imageIndex: picture)
+        }
+        for source in sources { #expect(reader.figure(of: art(source, picture: 0)) != nil) }
+        #expect(reader.figure(of: art(sources[0], picture: 1)) != nil)
+    }
 }
