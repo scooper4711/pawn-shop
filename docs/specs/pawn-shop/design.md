@@ -300,7 +300,8 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   `Pawn.pictureFiles` names the files a pawn is drawn from (a token's too). `PictureRequests` gathers the names
   asked for within 50 ms into one `LibrarySync.fetchPictures(named:)`, which downloads those missing and notes
   all of them as shown, so a device with a limit keeps what is in use; names here and noted in the last half hour
-  aren't asked again. `PawnThumbnail` asks before it draws, `SheetWindow` when a sheet opens or its entries change
+  aren't asked again, nor is a picture that didn't arrive within a minute (no device may have uploaded it yet),
+  except by an export or a print. `PawnThumbnail` asks before it draws, `SheetWindow` when a sheet opens or its entries change
   and before an export or a print. `LibraryModel.picturesFetched` counts the batches that brought something, and
   is part of the pages' render key; a thumbnail's cache key says whether its pictures are here, so a placeholder
   drawn without a connection isn't kept for the picture.

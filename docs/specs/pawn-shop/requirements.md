@@ -254,7 +254,8 @@ The library is the same on the user's Macs, iPads and iPhones, so a sheet made o
   suite's apps is open. The PDFs never leave the device, and nothing is sent to anyone but the user's own iCloud.
 - R10.2 Custom pawns sync as well, each with its image, name, size, the image's placement and its tags, under the
   ID it has, so a sheet finds it on every device. Removing one removes it everywhere. Of two changes to one custom
-  pawn on two devices the later wins; a pawn changed on one device and removed on another stays.
+  pawn on two devices the later wins; a pawn removed on one device stays on another that has a change to it still
+  to send, and comes back.
 - R10.3 A device without a pawn's PDF draws the pawn from its saved picture (R2.1.2), on screen, in exported PDFs
   and in print. The picture is the figure as its PDF embeds it, about 300 pixels per inch at the pawn's size, up to
   1,024 pixels on its long side, which only the largest figures pass; so it prints about as sharply as from the

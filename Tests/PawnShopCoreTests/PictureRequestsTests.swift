@@ -78,7 +78,9 @@ final class FakePictureCloud: Sendable {
 
         #expect(await !requests.show(["missing.heic"]))
         #expect(await !requests.show(["missing.heic"]))
-        #expect(cloud.asked.count == 3, "a picture that didn't arrive is asked for again")
+        #expect(cloud.asked.count == 2, "a picture that didn't arrive isn't asked for again at once")
+        await requests.show(["missing.heic", "a.heic"], givingUpAfter: .milliseconds(30))
+        #expect(cloud.asked.last == ["missing.heic"], "but an export asks for it whenever it was last tried")
     }
 
     @Test func notesAPictureThatIsHereAsShown() async throws {

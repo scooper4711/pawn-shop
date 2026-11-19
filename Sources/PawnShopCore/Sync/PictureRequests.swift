@@ -14,6 +14,9 @@ public final class PictureRequests {
     public static let batchSize = 25
     /// How long a picture counts as noted (half the toolkit's hour of grace).
     static let notedFor: TimeInterval = 1_800
+    /// How long a picture that didn't arrive isn't asked for again as tiles come and go: no device may have
+    /// uploaded it yet, and a library's worth of those would otherwise be asked for at every scroll.
+    static let retryAfter: TimeInterval = 60
 
     private let folder: URL
     private let window: Duration
@@ -21,6 +24,8 @@ public final class PictureRequests {
     private var waiting: Set<String> = []
     private var round: Task<Set<String>, Never>?
     private var noted: [String: Date] = [:]
+    /// When each picture that didn't arrive was last asked for.
+    private var tried: [String: Date] = [:]
     /// Called each time a request brought pictures, so what shows them is drawn again.
     public var onArrival: (@MainActor () -> Void)?
 
@@ -41,24 +46,23 @@ public final class PictureRequests {
     /// arrived, and what shows it should be drawn again.
     @discardableResult
     public func show(_ names: [String]) async -> Bool {
-        let asked = names.filter(needsAsking)
-        guard !asked.isEmpty else { return false }
-        waiting.formUnion(asked)
-        let fetched = await (round ?? startRound()).value
-        return !fetched.isDisjoint(with: asked)
+        await ask(for: names.filter { needsAsking($0) || isDue($0) })
     }
 
     /// Shows pictures and waits for those the device lacks, as an export or a print does, but only for as long as
     /// they keep arriving: once `stall` passes with none, as without a connection, it returns and leaves the
     /// rest to arrive later.
     public func show(_ names: [String], givingUpAfter stall: Duration) async {
-        guard !missing(among: names).isEmpty else {
+        let lacking = missing(among: names)
+        guard !lacking.isEmpty else {
             await show(names)
             return
         }
+        // Asked for whenever they were last tried: an export is worth a request.
+        let asked = names.filter(needsAsking) + lacking
         let (finished, continuation) = AsyncStream.makeStream(of: Void.self)
         Task {
-            await show(names)
+            _ = await ask(for: asked)
             continuation.yield()
         }
         Task {
@@ -76,11 +80,24 @@ public final class PictureRequests {
 
     // MARK: Helpers
 
-    /// True for a picture that isn't here, or that hasn't been noted as shown for a while.
+    /// Sends `names` with the round that is gathering, or a new one. True when any of them arrived.
+    private func ask(for names: [String]) async -> Bool {
+        guard !names.isEmpty else { return false }
+        waiting.formUnion(names)
+        let fetched = await (round ?? startRound()).value
+        return !fetched.isDisjoint(with: names)
+    }
+
+    /// True for a picture that is here and hasn't been noted as shown for a while.
     private func needsAsking(_ name: String) -> Bool {
-        guard !name.isEmpty else { return false }
-        guard isHere(name), let last = noted[name] else { return true }
-        return Date().timeIntervalSince(last) > Self.notedFor
+        guard !name.isEmpty, isHere(name) else { return false }
+        return Date().timeIntervalSince(noted[name] ?? .distantPast) > Self.notedFor
+    }
+
+    /// True for a picture that isn't here and wasn't asked for in the last minute.
+    private func isDue(_ name: String) -> Bool {
+        guard !name.isEmpty, !isHere(name) else { return false }
+        return Date().timeIntervalSince(tried[name] ?? .distantPast) > Self.retryAfter
     }
 
     private func isHere(_ name: String) -> Bool {
@@ -106,7 +123,13 @@ public final class PictureRequests {
             let batch = Array(names[start..<min(start + Self.batchSize, names.count)])
             let arrived = await fetch(batch)
             let now = Date()
-            for name in batch where isHere(name) { noted[name] = now }
+            for name in batch {
+                if isHere(name) {
+                    noted[name] = now
+                } else {
+                    tried[name] = now
+                }
+            }
             fetched.formUnion(arrived)
             if !arrived.isEmpty { onArrival?() }
         }
