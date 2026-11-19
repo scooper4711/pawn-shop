@@ -24,8 +24,8 @@ is a view over it, so the app above it changes little.
   suggested name and `tagsCorrected` (`isCorrected`); a pawn needs a name while the entry does and no `userName` is
   set. `art` comes from the print it is drawn from, the sharpest Pawn Shop can reach: a figure (`.card`, from a
   Battle Card), else a pawn print (`.pdf` with its back, or the front mirrored), else a token (`.token`, its
-  pictures in `Pictures/`). Without a reachable PDF, a pawn is drawn as a token is, from the entry's picture
-  (R2.1.2). Item entries become `ItemArtwork` the same way (`.figure` or `.drawn`).
+  pictures in `Pictures/`). Without a reachable PDF, a pawn is drawn from the entry's picture (`.picture`,
+  R2.1.2), as a card's creature is. Item entries become `ItemArtwork` the same way (`.figure` or `.drawn`).
 - **Sources.** `PawnSource` from `SharedSource`: id, title, byte count, art found and reader version; the
   original path is the PDF's location for Pawn Shop when it has one. Only sources with pawns or items are listed.
 - **Writing.** `rename`, `correctTags`, `setTags` and `setSuggestedName` write the pawn's note
@@ -253,6 +253,72 @@ is a view over it, so the app above it changes little.
   come out blank in window drawings, hence the separate panels).
 - The About panel is Tabletop Kit's (`AppNotices`): `AboutCommands` replaces the app menu's About item and
   `AboutInfo.pawnShop` (`About.swift`) fills in the app's name, credits and contact link.
+
+## Syncing (`PawnShopCore/Sync`, R10)
+The shared art library syncs itself: tabletop-kit's `TablesideSync` puts a `CKSyncEngine` on the store
+(`LibrarySync`, its `docs/specs/library-sync/`), and names, tags and corrections are the store's notes, so they go
+with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, and asks for pictures.
+
+| Question | Decision |
+|---|---|
+| Where custom pawns sync | A zone `PawnShop` in the suite's container, on the toolkit's engine (CloudKit wants one `CKSyncEngine` per database), owned by `CustomPawnSync`, a `SyncZoneHandler`. |
+| Record | One `CustomPawn` per pawn, named `pawn-<UUID>`: `format` Int64 (1), `title` String (the name, for the CloudKit Console), `payload` Bytes (`CustomPawnPayload` as JSON with sorted keys), `image` Asset (the PNG in `Custom/`). This is the record type to deploy to Production with the toolkit's. |
+| Payload | The pawn's ID, name, size, the image's focus and scaling, whether the name prints, tags, tag model, whether the tags were corrected, and `modified`. Not the image's file name: a device names the file `<ID>.png`. Fields are only added, as optionals. |
+| What needs uploading | `pawn-shop-sync.json` (`CustomPawnLedger`), the device's note of what the server holds: each record's archived system fields and the digest of its payload, and the iCloud account they describe. A pawn whose payload's digest isn't the noted one is saved; a noted record whose pawn is gone is deleted. |
+| The image | Sent with every save of its record, as the toolkit sends custom art's: a custom pawn's image never changes, and leaving it out of a save isn't worth finding out the hard way what CloudKit does with a field a save doesn't name. |
+| Conflicts | A record from another device replaces the pawn here, unless the pawn has changes still to send and its `modified` is later; then the pawn here stays and is sent. A deletion from another device removes the pawn unless it has changes still to send. `modified` is kept in `pawn-shop.json` (`customPawnsModified`). |
+| Pause | The store's (`SharedLibrary.isSyncPaused`): deleting the app's iCloud data purges every zone of the container, so one switch covers both handlers, and `LibrarySync.resume()` turns both back on. |
+| A device without the PDF | Prints as well as previews (R10.3): the saved picture is sharp enough, and a device that only previewed would be of little use at the table. |
+| Picture policy | The toolkit's default, on demand with no limit, on every kind of device: the setting is the device's and the suite's three apps share it. |
+| Removed pawns | Not synced (R10.9): `OwnLibrary.hidden` stays the device's. Adding it later is one more record type in the zone, and moves nothing. |
+
+- **The store's side** (`CustomPawnRecords.swift`, `CustomPawnSyncing.swift`, no CloudKit), on `PawnLibrary`:
+  `customPawnCandidates()` (what to save and delete), `outgoingCustomPawn(_:)` (the payload, its digest, the image
+  and the server's last known fields; nil when the server holds this content), `markSent`, `markDeleted`,
+  `forgetSystemFields(of:)`, `forgetCustomPawnServer()` and `applyRemote(_:)`, which merges saved and deleted
+  records in as the table says. A saved record whose digest is the noted one only renews the noted fields, even
+  with its pawn gone: the pawn was removed here since, and merging the record in would undo a deletion still to
+  send. A record without an image for a pawn this device doesn't have is left out. A payload this version can't
+  read is noted as unreadable and its pawn isn't sent until a record it can read arrives; the version that raises
+  `CustomPawnSync.format` must make devices fetch again, as the toolkit's rule for its own `format` says.
+- **The handler** (`CustomPawnSync.swift`), on the main actor, as `PawnLibrary` is: it turns the above into
+  `CKRecord`s and back. `settle` merges the server's record of a refused save (`serverRecordChanged`; it comes
+  without its image, so the image here stays), forgets the fields of a record the server doesn't know
+  (`unknownItem`), forgets the server and has the zone saved again (`zoneNotFound`), pauses (`userDeletedZone`) and
+  holds back while iCloud is full (`quotaExceeded`) until a fetch or a change here. A purged zone pauses; a zone
+  deleted any other way is uploaded again. An account that isn't the noted one forgets the server. Nothing is
+  offered while syncing is paused. While the app is in the background on the iPad the handler closes the shared
+  library after each call (shared libraries R5.4).
+- **Starting** (`LibraryModel+Sync.swift`). At launch the app calls `LibrarySync.start(app:fallback:handlers:)` with
+  the handler, unless `PAWN_SHOP_LIBRARY` is set; it gives nothing in a build that names no container or without
+  an iCloud account, and `SyncStatus.withoutSync` then says which. The model follows `statusUpdates()`. A change to
+  a custom pawn has no Darwin notification, so the model tells `LibrarySync.libraryChanged()` itself, which queues
+  what every handler has to send; changes to notes reach it through the store's notification. Records merged in
+  refresh the model. On the iPad the engine's library closes and opens with the app's.
+- **Pictures** (R10.3, R10.4). `PawnArt.picture` is the entry's picture in `Pictures/`, drawn by
+  `PawnRenderer+Pictures` as large as fits above the name band, standing on it, mirrored for the back.
+  `Pawn.pictureFiles` names the files a pawn is drawn from (a token's too). `PictureRequests` gathers the names
+  asked for within 50 ms into one `LibrarySync.fetchPictures(named:)`, which downloads those missing and notes
+  all of them as shown, so a device with a limit keeps what is in use; names here and noted in the last half hour
+  aren't asked again. `PawnThumbnail` asks before it draws, `SheetWindow` when a sheet opens or its entries change
+  and before an export or a print. `LibraryModel.picturesFetched` counts the batches that brought something, and
+  is part of the pages' render key; a thumbnail's cache key says whether its pictures are here, so a placeholder
+  drawn without a connection isn't kept for the picture.
+- **Settings** (`SyncSettingsView`, R10.5 to R10.7), a Sync tab on the Mac and a row on the iPad: the status in
+  words (`SyncSettingsText`), a picker of `PictureKeeping` (the choices of R10.6 over `PicturePolicy`; a limit
+  another app set that isn't one of them is listed as it is), the downloaded pictures' size with Remove Downloaded
+  Pictures, and Turn Syncing Back On while paused.
+- **Builds** (R10.10). `ios/PawnShop.entitlements` has the container, CloudKit and push; `ios/Info.plist` names the
+  container as `$(TABLESIDE_SYNC_CONTAINER)`, set in `Signing.xcconfig` and emptied by the simulator scripts, whose
+  unsigned builds CloudKit would stop. `build-app.sh` runs the toolkit's `add-icloud-entitlements.sh` when
+  `PROVISIONING_PROFILE` names a profile (Developer ID, or the Mac App Store's with `CHANNEL=appstore`);
+  `release.yml` takes it from the `DEVELOPER_ID_PROVISIONING_PROFILE` secret, and builds without iCloud when there
+  is none.
+- **Known limits.** Two devices tagging with different models tag each other's pawns again for as long as both
+  run: a pawn needs tagging when its tags aren't the device's model's (`Pawn.needsTagging`). The ledger is in Pawn
+  Shop's folder and the engine's state in the shared library's, so restoring one without the other leaves them out
+  of step until the records next change. Nothing here has run against iCloud yet: the end-to-end check is the
+  toolkit's (library sync design), with a custom pawn added, renamed and removed on each side.
 
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
