@@ -103,13 +103,16 @@ final class BackgroundRenderer: @unchecked Sendable {
         }
     }
 
-    /// Changes with what the face shows (its name, size and art, which sharper art from Battle Cards replaces),
-    /// not with tags.
+    /// Changes with what the face shows (its name, size and art, which sharper art from Battle Cards replaces,
+    /// and whether the pictures it is drawn from are on the device yet, R10.4), not with tags.
     private func key(_ pawn: Pawn, _ side: PawnSide, _ height: Int) -> NSString {
         var looks = Hasher()
         looks.combine(pawn.name)
         looks.combine(pawn.size)
         looks.combine(pawn.art)
+        looks.combine(pawn.pictureFiles.allSatisfy { name in
+            FileManager.default.fileExists(atPath: folders.pictures.appendingPathComponent(name).path)
+        })
         return "\(pawn.id)-\(looks.finalize())-\(side == .front ? "front" : "back")-\(height)" as NSString
     }
 }

@@ -102,7 +102,7 @@ struct PageView: View {
         let contents = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.content) })
         let strips = page.map { "\(contents[$0.entryID].map { "\($0)" } ?? "-")#\($0.card)@\($0.rect)\($0.sideways)" }
         return strips.joined(separator: ";") + "|\(sheet.settings)|\(library.pawns.count)|\(library.itemArt.count)"
-            + "|\(artOpacity)|\(printsBackgrounds)|\(smallestTextSize)"
+            + "|\(artOpacity)|\(printsBackgrounds)|\(smallestTextSize)|\(library.picturesFetched)"
     }
 
     private func render() async {
