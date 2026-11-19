@@ -280,9 +280,9 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   with its pawn gone: the pawn was removed here since, and merging the record in would undo a deletion still to
   send. A record without an image for a pawn this device doesn't have is left out. A payload this version can't
   read is noted as unreadable and its pawn isn't sent until a record it can read arrives; the version that raises
-  `CustomPawnSync.format` must make devices fetch again, as the toolkit's rule for its own `format` says.
-- **The handler** (`CustomPawnSync.swift`), on the main actor, as `PawnLibrary` is: it turns the above into
-  `CKRecord`s and back. `settle` merges the server's record of a refused save (`serverRecordChanged`; it comes
+  `CustomPawnRecordCoder.format` must make devices fetch again, as the toolkit's rule for its own `format` says.
+- **The handler** (`CustomPawnSync.swift`), on the main actor, as `PawnLibrary` is, hands records between the
+  above and the engine; `CustomPawnRecordCoder` turns them into `CKRecord`s and back. `settle` merges the server's record of a refused save (`serverRecordChanged`; it comes
   without its image, so the image here stays), forgets the fields of a record the server doesn't know
   (`unknownItem`), forgets the server and has the zone saved again (`zoneNotFound`), pauses (`userDeletedZone`) and
   holds back while iCloud is full (`quotaExceeded`) until a fetch or a change here. A purged zone pauses; a zone
@@ -301,8 +301,9 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   asked for within 50 ms into one `LibrarySync.fetchPictures(named:)`, which downloads those missing and notes
   all of them as shown, so a device with a limit keeps what is in use; names here and noted in the last half hour
   aren't asked again, nor is a picture that didn't arrive within a minute (no device may have uploaded it yet),
-  except by an export or a print. `PawnThumbnail` asks before it draws, `SheetWindow` when a sheet opens or its entries change
-  and before an export or a print. `LibraryModel.picturesFetched` counts the batches that brought something, and
+  except by an export or a print. `PawnThumbnail` draws what is here, asks, and draws again when its pictures
+  arrive; `SheetWindow` asks when a sheet opens or its entries change, and an export or a print waits
+  (`show(_:givingUpAfter:)`) for as long as pictures keep arriving. `LibraryModel.picturesFetched` counts the batches that brought something, and
   is part of the pages' render key; a thumbnail's cache key says whether its pictures are here, so a placeholder
   drawn without a connection isn't kept for the picture.
 - **Settings** (`SyncSettingsView`, R10.5 to R10.7), a Sync tab on the Mac and a row on the iPad: the status in
