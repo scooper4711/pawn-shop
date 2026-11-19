@@ -14,12 +14,13 @@ public final class PictureRequests {
     public static let batchSize = 25
     /// How long a picture counts as noted (half the toolkit's hour of grace).
     static let notedFor: TimeInterval = 1_800
-    /// How long a picture that didn't arrive isn't asked for again as tiles come and go: no device may have
-    /// uploaded it yet, and a library's worth of those would otherwise be asked for at every scroll.
-    static let retryAfter: TimeInterval = 60
+    /// How long a picture that didn't arrive isn't asked for again: no device may have uploaded it yet, and a
+    /// library's worth of those would otherwise be asked for at every scroll.
+    public static let retryInterval: TimeInterval = 60
 
     private let folder: URL
     private let window: Duration
+    private let retryAfter: TimeInterval
     private let fetch: Fetch
     private var waiting: Set<String> = []
     private var round: Task<Set<String>, Never>?
@@ -30,10 +31,12 @@ public final class PictureRequests {
     public var onArrival: (@MainActor () -> Void)?
 
     /// Requests for the pictures in `folder`, the library's pictures folder, gathered for `window` before they are
-    /// sent.
-    public init(pictures folder: URL, window: Duration = .milliseconds(50), fetch: @escaping Fetch) {
+    /// sent. A picture that didn't arrive is asked for again `retryAfter` seconds later at the earliest.
+    public init(pictures folder: URL, window: Duration = .milliseconds(50),
+                retryAfter: TimeInterval = PictureRequests.retryInterval, fetch: @escaping Fetch) {
         self.folder = folder
         self.window = window
+        self.retryAfter = retryAfter
         self.fetch = fetch
     }
 
@@ -47,6 +50,18 @@ public final class PictureRequests {
     @discardableResult
     public func show(_ names: [String]) async -> Bool {
         await ask(for: names.filter { needsAsking($0) || isDue($0) })
+    }
+
+    /// Shows pictures for as long as something shows them, such as a tile on screen or an open sheet: those that
+    /// didn't arrive are asked for again, `retryAfter` apart, until all are here or the task is cancelled. A picture
+    /// no device had uploaded yet then turns up once one has, without the pawn having to leave the screen and come
+    /// back. `draw` is called each time some arrive.
+    public func keepShowing(_ names: [String], whenSomeArrive draw: @MainActor () async -> Void = {}) async {
+        while !Task.isCancelled {
+            if await show(names) { await draw() }
+            guard !missing(among: names).isEmpty else { return }
+            try? await Task.sleep(for: .seconds(retryAfter) + .milliseconds(50))
+        }
     }
 
     /// Shows pictures and waits for those the device lacks, as an export or a print does, but only for as long as
@@ -94,10 +109,10 @@ public final class PictureRequests {
         return Date().timeIntervalSince(noted[name] ?? .distantPast) > Self.notedFor
     }
 
-    /// True for a picture that isn't here and wasn't asked for in the last minute.
+    /// True for a picture that isn't here and wasn't asked for in the last `retryAfter` seconds.
     private func isDue(_ name: String) -> Bool {
         guard !name.isEmpty, !isHere(name) else { return false }
-        return Date().timeIntervalSince(tried[name] ?? .distantPast) > Self.retryAfter
+        return Date().timeIntervalSince(tried[name] ?? .distantPast) > retryAfter
     }
 
     private func isHere(_ name: String) -> Bool {

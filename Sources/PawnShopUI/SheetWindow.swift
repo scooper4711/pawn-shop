@@ -43,12 +43,11 @@ struct SheetWindow: View {
             }
         }
         .focusedSceneValue(\.sheetActions, actions)
-        // Saved sheets name the pawns they print, so a device without one can say which is missing. A device
-        // without a pawn's PDF asks iCloud for its picture (R10.4).
-        .onChange(of: document.sheet.entries, initial: true) {
-            relabel()
-            library.showPictures(of: document.sheet)
-        }
+        // Saved sheets name the pawns they print, so a device without one can say which is missing.
+        .onChange(of: document.sheet.entries, initial: true) { relabel() }
+        // A device without a pawn's PDF asks iCloud for its picture (R10.4), and keeps asking while the sheet is
+        // open: no device may have uploaded it yet.
+        .task(id: document.sheet.entries) { await library.keepShowingPictures(of: document.sheet) }
         // The print panel opens on the sheet's window once the options sheet is gone: started from the closing
         // options sheet, it never showed and the job printed at once with the printer's defaults.
         .sheet(item: $outputRequest, onDismiss: performPendingOutput) { kind in

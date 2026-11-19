@@ -59,18 +59,18 @@ extension LibraryModel {
 
     // MARK: Pictures
 
-    /// Asks iCloud for the pictures the pawns are drawn from that this device lacks, and notes the rest as shown
-    /// (R10.4). True when any arrived, and the pawns should be drawn again.
-    func showPictures(of pawns: [Pawn]) async -> Bool {
-        let names = pawns.flatMap(\.pictureFiles)
-        guard !names.isEmpty, let pictureRequests else { return false }
-        return await pictureRequests.show(names)
+    /// Asks iCloud for the pictures a pawn is drawn from that this device lacks, and notes the rest as shown
+    /// (R10.4), for as long as the task showing the pawn runs: a picture no device has uploaded yet is asked for
+    /// again every minute. `draw` is called each time some arrive.
+    func keepShowingPictures(of pawn: Pawn, whenSomeArrive draw: @MainActor () async -> Void) async {
+        guard !pawn.pictureFiles.isEmpty, let pictureRequests else { return }
+        await pictureRequests.keepShowing(pawn.pictureFiles, whenSomeArrive: draw)
     }
 
-    /// Asks for every picture a sheet lacks at once, as it opens or changes.
-    func showPictures(of sheet: PawnSheet) {
+    /// Asks for every picture a sheet lacks at once, for as long as the task showing the sheet runs.
+    func keepShowingPictures(of sheet: PawnSheet) async {
         guard let pictureRequests, let names = library?.pictureFiles(of: sheet), !names.isEmpty else { return }
-        Task { await pictureRequests.show(names) }
+        await pictureRequests.keepShowing(names)
     }
 
     /// Waits for the pictures a sheet lacks before it is exported or printed, for as long as they keep arriving.

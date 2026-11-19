@@ -47,12 +47,15 @@ struct PawnThumbnail: View {
             let renderer = library.backgroundRenderer
             image = renderer?.cachedThumbnail(of: pawn, side: side, height: pixelHeight)
             if image == nil { image = await renderer?.thumbnail(of: pawn, side: side, height: pixelHeight) }
-            // A pawn drawn from pictures asks iCloud for those this device lacks (R10.4): it shows its
-            // placeholder until they are here, and is then drawn again. A task that was replaced meanwhile, as
-            // when the tile scrolled away, leaves the image to the one that replaced it.
-            guard !pawn.pictureFiles.isEmpty, !Task.isCancelled else { return }
-            guard await library.showPictures(of: [pawn]), !Task.isCancelled else { return }
-            image = await renderer?.thumbnail(of: pawn, side: side, height: pixelHeight)
+            // A pawn drawn from pictures asks iCloud for those this device lacks (R10.4), and again every minute
+            // while it is on screen: it shows its placeholder until they are here, and is then drawn again. A
+            // task that was replaced meanwhile, as when the tile scrolled away, leaves the image to the one that
+            // replaced it.
+            await library.keepShowingPictures(of: pawn) {
+                guard !Task.isCancelled else { return }
+                let drawn = await renderer?.thumbnail(of: pawn, side: side, height: pixelHeight)
+                if !Task.isCancelled { image = drawn }
+            }
         }
     }
 

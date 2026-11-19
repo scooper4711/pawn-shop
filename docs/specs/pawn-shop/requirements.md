@@ -262,7 +262,8 @@ The library is the same on the user's Macs, iPads and iPhones, so a sheet made o
   PDF, without the frame and label printed around it there.
 - R10.4 A picture the device doesn't have downloads from iCloud when its pawn is first shown (library sync R4.2).
   Opening a sheet, exporting and printing ask for every picture the sheet lacks at once. Until a picture arrives
-  its pawn shows a placeholder, and tiles and pages are drawn again when it does. Without a connection the
+  its pawn shows a placeholder, and tiles and pages are drawn again when it does. A picture no device has uploaded
+  yet is asked for again every minute while its pawn is on screen or its sheet is open. Without a connection the
   placeholder stays, and an export or a print goes ahead with it.
 - R10.5 Settings › Sync says whether the library syncs and, when it doesn't, why: the build has no iCloud, nobody
   is signed in to iCloud, iCloud is full, syncing is paused (R10.7), or it stopped after an error until the app

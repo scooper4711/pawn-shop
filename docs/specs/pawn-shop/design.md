@@ -297,15 +297,17 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   refresh the model. On the iPad the engine's library closes and opens with the app's.
 - **Pictures** (R10.3, R10.4). `PawnArt.picture` is the entry's picture in `Pictures/`, drawn by
   `PawnRenderer+Pictures` as large as fits above the name band, standing on it, mirrored for the back.
-  `Pawn.pictureFiles` names the files a pawn is drawn from (a token's too). `PictureRequests` gathers the names asked
-  for within 50 ms into one `LibrarySync.fetchPictures(named:)`, which downloads those missing and notes all of them
-  as shown, so a device with a limit keeps what is in use; names here and noted in the last half hour aren't asked
-  again, nor is a picture that didn't arrive within a minute (no device may have uploaded it yet), except by an export
-  or a print. `PawnThumbnail` draws what is here, asks, and draws again when its pictures arrive; `SheetWindow` asks
-  when a sheet opens or its entries change, and an export or a print waits (`show(_:givingUpAfter:)`) for as long as
-  pictures keep arriving. `LibraryModel.picturesFetched` counts the batches that brought something, and is part of the
-  pages' render key; a thumbnail's cache key says whether its pictures are here, so a placeholder drawn without a
-  connection isn't kept for the picture.
+  `Pawn.pictureFiles` names the files a pawn is drawn from (a token's too). `PictureRequests` gathers the names
+  asked for within 50 ms into one `LibrarySync.fetchPictures(named:)`, which downloads those missing and notes all
+  of them as shown, so a device with a limit keeps what is in use; names here and noted in the last half hour
+  aren't asked again, nor is a picture that didn't arrive within a minute (no device may have uploaded it yet),
+  except by an export or a print. What shows pictures keeps asking (`keepShowing`): `PawnThumbnail` draws what is
+  here, then asks every minute while its tile is on screen and draws again when its pictures arrive, and
+  `SheetWindow` does the same for an open sheet's pictures; on the first sync of a large library most pictures
+  aren't in iCloud yet when they are first asked for. An export or a print waits (`show(_:givingUpAfter:)`) for as
+  long as pictures keep arriving. `LibraryModel.picturesFetched` counts the batches that brought something, and is
+  part of the pages' render key; a thumbnail's cache key says whether its pictures are here, so a placeholder
+  drawn without a connection isn't kept for the picture.
 - **Settings** (`SyncSettingsView`, R10.5 to R10.7), a Sync tab on the Mac and a row on the iPad: the status in
   words (`SyncSettingsText`), a picker of `PictureKeeping` (the choices of R10.6 over `PicturePolicy`; a limit
   another app set that isn't one of them is listed as it is), the downloaded pictures' size with Remove Downloaded

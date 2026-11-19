@@ -41,6 +41,16 @@ final class FakePictureCloud: Sendable {
     }
 }
 
+/// Waits up to three seconds for `condition`; false when it never held.
+@MainActor
+func eventually(_ condition: @MainActor () -> Bool) async -> Bool {
+    for _ in 0..<300 {
+        if condition() { return true }
+        try? await Task.sleep(for: .milliseconds(10))
+    }
+    return false
+}
+
 /// Asking iCloud for pictures a few at a time (R10.4).
 @MainActor
 @Suite struct PictureRequestsTests {
@@ -116,6 +126,30 @@ final class FakePictureCloud: Sendable {
         let start = ContinuousClock.now
         await slow.show(["never.heic"], givingUpAfter: .milliseconds(30))
         #expect(ContinuousClock.now - start < .seconds(2), "it gives up once nothing arrives")
+    }
+
+    @Test func keepsAskingForAPictureUntilADeviceHasUploadedIt() async {
+        let patient = PictureRequests(pictures: cloud.folder, window: .milliseconds(5), retryAfter: 0.05) { [cloud] in
+            cloud.fetch($0)
+        }
+        var arrivals = 0
+        let showing = Task { await patient.keepShowing(["late.heic", "never.heic"]) { arrivals += 1 } }
+        #expect(await eventually { cloud.asked.count > 1 }, "it asks again while the picture isn't in iCloud")
+        #expect(arrivals == 0)
+
+        cloud.hold(["late.heic"])
+        #expect(await eventually { arrivals == 1 })
+        #expect(patient.missing(among: ["late.heic", "never.heic"]) == ["never.heic"])
+
+        showing.cancel()
+        await showing.value
+        let asked = cloud.asked.count
+        try? await Task.sleep(for: .milliseconds(300))
+        #expect(cloud.asked.count == asked, "it stops when nothing shows the pictures any more")
+
+        cloud.hold(["here.heic"])
+        await patient.keepShowing(["here.heic"])
+        #expect(patient.missing(among: ["here.heic"]).isEmpty, "it returns once every picture is here")
     }
 
     @Test func listsThePicturesASheetIsDrawnFrom() throws {
