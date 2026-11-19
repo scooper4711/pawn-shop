@@ -18,7 +18,7 @@ extension PawnRenderer {
     func drawTokenPicture(_ art: TokenArt, side: PawnSide, in square: CGRect, context: CGContext) {
         let file = side == .back ? art.backPicture ?? art.frontPicture : art.frontPicture
         guard let image = image(folders.tokens.appendingPathComponent(file)) else {
-            drawPlaceholder(in: square, context: context)
+            drawPlaceholder(in: square, label: Self.missingPicture, context: context)
             return
         }
         context.saveGState()
