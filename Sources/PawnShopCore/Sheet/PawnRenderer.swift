@@ -179,14 +179,6 @@ public final class PawnRenderer {
         context.restoreGState()
     }
 
-    /// Maps the upright strip (origin at its foot's left corner) onto its place on the page.
-    static func stripTransform(for placed: PlacedStrip) -> CGAffineTransform {
-        guard placed.sideways else { return CGAffineTransform(translationX: placed.rect.minX, y: placed.rect.minY) }
-        // Turned a quarter clockwise: the foot goes to the left, the fold to the right.
-        return CGAffineTransform(rotationAngle: -.pi / 2)
-            .concatenating(CGAffineTransform(translationX: placed.rect.minX, y: placed.rect.maxY))
-    }
-
     // MARK: Faces
 
     private func drawPDFFace(_ face: PawnFace, sourceID: String, in rect: CGRect, context: CGContext) {
