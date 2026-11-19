@@ -73,6 +73,13 @@ extension LibraryModel {
         await pictureRequests.keepShowing(names)
     }
 
+    /// How many of the pictures a sheet's pawns are drawn from aren't on the device; it changes as they arrive.
+    func missingPictureCount(of sheet: PawnSheet) -> Int {
+        _ = picturesFetched
+        guard let pictureRequests, let names = library?.pictureFiles(of: sheet) else { return 0 }
+        return pictureRequests.missing(among: names).count
+    }
+
     /// Waits for the pictures a sheet lacks before it is exported or printed, for as long as they keep arriving.
     func waitForPictures(of sheet: PawnSheet) async {
         guard let pictureRequests, let names = library?.pictureFiles(of: sheet), !names.isEmpty else { return }

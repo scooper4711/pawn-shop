@@ -50,6 +50,9 @@ final class LibraryModel {
     @ObservationIgnored var pictureRequests: PictureRequests?
     /// The library's count of changes to custom pawns that syncing was last told of.
     @ObservationIgnored private var customPawnChangesTold = 0
+    /// The reading of the shared library's changes that is waiting, so a run of changes is read once.
+    @ObservationIgnored private var changesToRead: Task<Void, Never>?
+    static let changeReadingInterval: Duration = .milliseconds(500)
     /// Every Pathfinder and Starfinder item, bundled with the app; empty in a build without `Generated`.
     @ObservationIgnored let catalog = ItemCatalog.bundled()
 
@@ -76,7 +79,19 @@ final class LibraryModel {
     }
 
     /// Reads what another app changed in the shared library, or what changed while the app was in the background.
+    /// A run of changes is read at most twice a second: a first sync merges a library in over hundreds of
+    /// changes, and reading ten thousand pawns again for each kept the window from answering.
     func libraryChanged() {
+        guard changesToRead == nil else { return }
+        changesToRead = Task {
+            try? await Task.sleep(for: Self.changeReadingInterval)
+            guard !Task.isCancelled else { return }
+            changesToRead = nil
+            readLibraryChanges()
+        }
+    }
+
+    private func readLibraryChanges() {
         do {
             if try library?.refresh() == true { refresh() }
         } catch {
@@ -87,6 +102,9 @@ final class LibraryModel {
     /// Lets go of the shared library's file as the app goes to the background on the iPad; syncing lets go of it
     /// too, after each thing it still does there.
     func close() {
+        // A reading still waiting would open the file again after it was let go; `open()` reads what was missed.
+        changesToRead?.cancel()
+        changesToRead = nil
         library?.close()
         syncClosed(true)
     }

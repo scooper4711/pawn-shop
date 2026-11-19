@@ -46,7 +46,9 @@ is a view over it, so the app above it changes little.
 - **Following changes** (R2.1). `LibraryModel` observes `SharedLibraryChange` and calls `refresh()`, which reads
   `changes(since:)` the last counter it saw: changed entries and notes are read again
   (`artEntries(changedSince:)`, `notes(changedSince:)`) and deleted art dropped, so a change doesn't read the
-  whole library. On the iPad the app calls `close()` when it goes to the background (shared libraries R5.4).
+  whole library. A run of changes is read at most twice a second (`changeReadingInterval`): a first sync merges a
+  library in over hundreds of changes, and reading it again for each kept the window from answering. On the iPad
+  the app calls `close()` when it goes to the background (shared libraries R5.4).
 - **Pawn IDs** (R2.14) are the store's: an entry's ID is its first print's `ArtKey`, pawns first, and any print
   key or alias finds it (`artEntry(id:)`), so sheets saved with an old ID still open (`labeled`). Before the move a
   version 1 library is still keyed in place first (`PawnKeys.swift`, R2.15), as below.
@@ -305,9 +307,11 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   here, then asks every minute while its tile is on screen and draws again when its pictures arrive, and
   `SheetWindow` does the same for an open sheet's pictures; on the first sync of a large library most pictures
   aren't in iCloud yet when they are first asked for. An export or a print waits (`show(_:givingUpAfter:)`) for as
-  long as pictures keep arriving. `LibraryModel.picturesFetched` counts the batches that brought something, and is
-  part of the pages' render key; a thumbnail's cache key says whether its pictures are here, so a placeholder
-  drawn without a connection isn't kept for the picture.
+  long as pictures keep arriving. `LibraryModel.picturesFetched` counts the batches that brought something. A
+  page is drawn again when pictures its own sheet lacked arrive (`missingPictureCount(of:)` in its render key),
+  not at every batch, and `BackgroundRenderer` skips a page drawing whose task was cancelled before its turn, so
+  the page that is wanted doesn't wait behind ones that aren't. A thumbnail's cache key says whether its pictures
+  are here, so a placeholder drawn without a connection isn't kept for the picture.
 - **Settings** (`SyncSettingsView`, R10.5 to R10.7), a Sync tab on the Mac and a row on the iPad: the status in
   words (`SyncSettingsText`), a picker of `PictureKeeping` (the choices of R10.6 over `PicturePolicy`; a limit
   another app set that isn't one of them is listed as it is), the downloaded pictures' size with Remove Downloaded
