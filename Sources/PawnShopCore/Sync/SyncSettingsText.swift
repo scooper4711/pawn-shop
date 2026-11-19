@@ -10,7 +10,8 @@ public enum SyncSettingsText {
         case .unsupported:
             "This copy of Pawn Shop was built without iCloud, so its library stays on this device."
         case .unavailable:
-            "Not syncing. Sign in to iCloud, and turn iCloud on for Pawn Shop, in the system's settings."
+            "Not syncing. Sign in to iCloud and turn iCloud on for Pawn Shop in the system's settings, then open "
+                + "Pawn Shop again."
         case .syncing:
             "Syncing…"
         case .upToDate:
