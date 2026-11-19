@@ -42,13 +42,13 @@ func leftRedImage(side: Int = 60) -> CGImage {
         #expect(library.sourceTitles(of: ogre) == ["Starfinder Test Tokens"] && !ogre.isCustom)
     }
 
-    @Test func removesATokensPicturesWithIt() throws {
+    @Test func keepsATokensPicturesForTheOtherAppsWhenRemoved() throws {
         let library = try importTokens()
         let ogre = try #require(library.pawns.first { $0.name == "Ogre" })
         guard case .token(let art) = ogre.art else { Issue.record("not a token"); return }
         try library.remove([ogre.id])
         #expect(art.pictures.allSatisfy {
-            !FileManager.default.fileExists(atPath: library.folders.tokens.appendingPathComponent($0).path)
+            FileManager.default.fileExists(atPath: library.folders.tokens.appendingPathComponent($0).path)
         })
         let reopened = try PawnLibrary(folder: library.folder)
         #expect(reopened.pawns.map(\.name) == ["Nitpick"])
@@ -59,7 +59,7 @@ func leftRedImage(side: Int = 60) -> CGImage {
         try FileManager.default.removeItem(at: library.folders.tokens)
         let url = folder.appendingPathComponent("Tokens.pdf")
         try tokenPDF(pages: [[DrawnToken(center: CGPoint(x: 100, y: 600), rimName: "NITPICK")]]).write(to: url)
-        #expect(throws: PawnLibraryError.self) { try library.importPDF(at: url) }
+        #expect(throws: (any Error).self) { try library.importPDF(at: url) }
     }
 
     @Test func namesTheSourceOfEachKindOfArt() {

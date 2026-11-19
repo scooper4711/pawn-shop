@@ -7,6 +7,7 @@ import SwiftUI
 /// pawn library.
 public struct PawnShopApp: App {
     @State private var library = LibraryModel.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     public init() {
         PawnTaggingModel.shared.tagNewPawns()
@@ -20,6 +21,15 @@ public struct PawnShopApp: App {
         .commands {
             LibraryCommands(library: library)
             AboutCommands(info: .pawnShop)
+        }
+        // A suspended app holding the shared library's file open is ended by the system (shared libraries R5.4);
+        // back in the foreground, it reads what other apps changed meanwhile.
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .background: library.close()
+            case .active: library.libraryChanged()
+            default: break
+            }
         }
 
         AboutWindow(info: .pawnShop)

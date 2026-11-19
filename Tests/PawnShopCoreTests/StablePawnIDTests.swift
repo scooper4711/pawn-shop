@@ -48,7 +48,11 @@ func printedPawn(_ name: String, digest: String, source: String, size: PawnSize 
         try iPad.importPDF(at: pdf)
         #expect(ids(mac) == ids(iPad))
         let source = try #require(mac.sources.first)
-        let expected = FoundPrint.prints(of: try PawnExtractor.extract(from: pdf), from: source).map(\.key)
+        let found = try PawnExtractor.extract(from: pdf).pawns
+        let expected = ArtKey.keys(for: found.map { pawn in
+            ArtKeyInput(sourceID: source.id, name: pawn.name, size: pawn.size, fingerprint: pawn.fingerprint,
+                        face: pawn.front)
+        })
         #expect(Set(mac.pawns.map(\.id)) == Set(expected))
     }
 
@@ -84,23 +88,21 @@ func printedPawn(_ name: String, digest: String, source: String, size: PawnSize 
         }
     }
 
-    @Test func keepsTheIDsAndAliasesBetweenLaunches() throws {
+    @Test func keepsTheIDsBetweenLaunches() throws {
         let mac = try library("Mac")
         try mac.importPDF(at: writePawnPDF([goblin], named: "Box.pdf", in: folder))
-        mac.aliases[UUID()] = try #require(mac.pawns.first).id
-        try mac.save()
         let reopened = try library("Mac")
-        #expect(reopened.pawns.map(\.id) == mac.pawns.map(\.id) && reopened.aliases == mac.aliases)
+        #expect(reopened.pawns.map(\.id) == mac.pawns.map(\.id))
     }
 
-    @Test func forgetsTheAliasesOfRemovedPawns() throws {
+    @Test func removesExtractedPawnsFromPawnShopOnly() throws {
         let mac = try library("Mac")
         try mac.importPDF(at: writePawnPDF([goblin, ogre], named: "Box.pdf", in: folder))
-        let goblinID = try #require(ids(mac)["Goblin Warrior"]), ogreID = try #require(ids(mac)["Ogre"])
-        let old = UUID(), other = UUID()
-        mac.aliases = [old: goblinID, other: ogreID]
+        let goblinID = try #require(ids(mac)["Goblin Warrior"])
         try mac.remove([goblinID])
-        #expect(mac.aliases == [other: ogreID] && mac.pawn(id: old) == nil)
+        #expect(mac.pawns.map(\.name) == ["Ogre"] && mac.pawn(id: goblinID) == nil)
+        #expect(try mac.shared.artEntry(id: goblinID) != nil)
+        #expect(try library("Mac").pawns.map(\.name) == ["Ogre"])
     }
 }
 
@@ -119,7 +121,6 @@ func printedPawn(_ name: String, digest: String, source: String, size: PawnSize 
         let input = ArtKeyInput(sourceID: box.id, name: "Goblin Warrior", size: .medium,
                                 fingerprint: goblin.fingerprint, face: goblin.art.front)
         #expect(keyed.id == ArtKey.keys(for: [input]).first)
-        #expect(library.aliases == [goblin.id: keyed.id])
         #expect(library.pawn(id: goblin.id)?.id == keyed.id)
         #expect(library.pawn(id: custom.id) == custom)
     }
@@ -133,8 +134,10 @@ func printedPawn(_ name: String, digest: String, source: String, size: PawnSize 
         let library = try PawnLibrary(folder: folder)
         let merged = try #require(library.pawns.first)
         #expect(library.pawns.count == 1 && merged.name == "Planetoid, Beetle")
-        #expect(merged.appearances.map(\.sourceID) == [box.id, cards.id] && merged.traits == ["beast", "huge"])
+        #expect(merged.traits == ["beast", "huge"])
         #expect(library.pawn(id: beetle.id)?.id == merged.id && library.pawn(id: card.id)?.id == merged.id)
+        // Only the first product's print is recorded by place: both are read again from their files (R2.16).
+        #expect(Set(library.own.readAgain.keys) == [box.id, cards.id])
     }
 
     @Test func keysANamelessProductsPawnWithoutTheNameItWasGiven() throws {
@@ -147,20 +150,20 @@ func printedPawn(_ name: String, digest: String, source: String, size: PawnSize 
             ArtKey.keys(for: [ArtKeyInput(sourceID: heroes.id, name: "", size: .medium,
                                           fingerprint: pawn.fingerprint, face: pawn.art.front)])[0]
         }
-        #expect(library.pawns.map(\.id) == unnamedKeys)
+        #expect(Set(library.pawns.map(\.id)) == Set(unnamedKeys))
+        #expect(library.pawns.map(\.name).sorted() == ["Unknown Pathfinder Pawns: Heroes & Villains", "Warrior"])
     }
 
-    @Test func savesTheUpgradeOnceAndKeepsTheOldFile() throws {
+    @Test func movesTheUpgradeOnceAndKeepsTheOldFile() throws {
         try saveVersion1Library(sources: [box], pawns: [printedPawn("Ogre", digest: "ee", source: box.id)],
                                 in: folder)
         let old = try Data(contentsOf: folder.appendingPathComponent(PawnLibrary.indexFile))
         let upgraded = try PawnLibrary(folder: folder)
         #expect(try Data(contentsOf: folder.appendingPathComponent(PawnLibrary.version1File)) == old)
-        let saved = try Data(contentsOf: folder.appendingPathComponent(PawnLibrary.indexFile))
-        let stored = try JSONDecoder().decode(StoredLibrary.self, from: saved)
-        #expect(stored.version == StoredLibrary.currentVersion && stored.aliases == upgraded.aliases)
+        let moved = folder.appendingPathComponent(PawnLibrary.indexFile + PawnLibrary.movedSuffix)
+        #expect(try Data(contentsOf: moved) == old)
         let reopened = try PawnLibrary(folder: folder)
-        #expect(reopened.pawns == upgraded.pawns && reopened.aliases == upgraded.aliases)
+        #expect(reopened.pawns == upgraded.pawns)
     }
 
     @Test func reportsAnOldFileItCannotKeep() throws {

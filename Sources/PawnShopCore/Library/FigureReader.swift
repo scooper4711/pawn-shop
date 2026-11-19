@@ -10,9 +10,16 @@ final class FigureReader {
     static let keptPages = 24
     static let keptFigures = 24
 
+    /// A page's pictures with the PDF they were read from. A picture's stream is part of its PDF and gone once
+    /// that closes, so a kept page keeps its PDF open, however few PDFs are kept open for reading new pages.
+    private struct ReadPage {
+        let document: CGPDFDocument
+        let images: [ImagePlacement]
+    }
+
     private let folders: LibraryFolders
     private let documents = BoundedCache<CGPDFDocument>(countLimit: keptDocuments)
-    private let pages = BoundedCache<[ImagePlacement]>(countLimit: keptPages)
+    private let pages = BoundedCache<ReadPage>(countLimit: keptPages)
     private let figures = BoundedCache<Figure>(countLimit: keptFigures)
 
     init(folders: LibraryFolders) {
@@ -60,9 +67,13 @@ final class FigureReader {
     private func figure(source: String, face: PawnFace, imageIndex: Int?) -> Figure? {
         let key = "\(source)/\(face.pageIndex)/\(imageIndex.map(String.init) ?? "\(face.rect)")"
         return figures.value(for: key) {
-            let images = images(source: source, pageIndex: face.pageIndex)
-            guard let imageIndex else { return Figure.largest(inside: face.rect, among: images) }
-            return images.indices.contains(imageIndex) ? Self.figure(images[imageIndex], bounds: face.rect) : nil
+            guard let page = page(source: source, pageIndex: face.pageIndex) else { return nil }
+            // The figure is decoded from its picture's stream, so the PDF stays open until it is made.
+            return withExtendedLifetime(page.document) {
+                let images = page.images
+                guard let imageIndex else { return Figure.largest(inside: face.rect, among: images) }
+                return images.indices.contains(imageIndex) ? Self.figure(images[imageIndex], bounds: face.rect) : nil
+            }
         }
     }
 
@@ -72,10 +83,11 @@ final class FigureReader {
             .map { Figure(placement: placement, image: $0, bounds: bounds) }
     }
 
-    private func images(source: String, pageIndex: Int) -> [ImagePlacement] {
+    private func page(source: String, pageIndex: Int) -> ReadPage? {
         pages.value(for: "\(source)/\(pageIndex)") {
-            document(source)?.page(at: pageIndex + 1).map(PageScanner.images(on:))
-        } ?? []
+            guard let document = document(source), let page = document.page(at: pageIndex + 1) else { return nil }
+            return ReadPage(document: document, images: PageScanner.images(on: page))
+        }
     }
 
     private func document(_ source: String) -> CGPDFDocument? {

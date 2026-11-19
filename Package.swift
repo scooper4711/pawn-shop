@@ -17,6 +17,7 @@ let package = Package(
     targets: [
         .target(name: "PawnShopCore", dependencies: [
             .product(name: "ArtExtraction", package: "tabletop-kit"),
+            .product(name: "SharedLibraries", package: "tabletop-kit"),
             .product(name: "TablesideShared", package: "tabletop-kit")
         ]),
         .target(name: "PawnShopUI", dependencies: [
@@ -31,6 +32,7 @@ let package = Package(
         .executableTarget(name: "ItemImport", dependencies: ["ItemCatalogImport"]),
         .testTarget(name: "PawnShopCoreTests", dependencies: [
             "PawnShopCore", .product(name: "ArtExtractionTestSupport", package: "tabletop-kit"),
+            .product(name: "SharedLibraries", package: "tabletop-kit"),
             .product(name: "TablesideShared", package: "tabletop-kit")
         ]),
         .testTarget(name: "ItemCatalogImportTests", dependencies: ["ItemCatalogImport"])
