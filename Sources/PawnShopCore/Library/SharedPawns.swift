@@ -40,7 +40,7 @@ extension Pawn {
     private static func art(of entry: SharedArtEntry, drawnFrom print: SharedPrint?) -> PawnArt {
         guard let print else {
             let sourceID = entry.prints.first?.print.sourceID ?? ""
-            return .token(TokenArt(sourceID: sourceID, frontPicture: entry.picture ?? ""))
+            return .picture(PictureArt(sourceID: sourceID, picture: entry.picture ?? ""))
         }
         let face = print.print.face
         switch print.print.kind {

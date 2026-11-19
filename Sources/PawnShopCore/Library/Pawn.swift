@@ -54,6 +54,8 @@ public enum PawnArt: Codable, Hashable, Sendable {
     case token(TokenArt)
     /// A creature on a Battle Card in an imported PDF, drawn in a pawn's outline.
     case card(CardArt)
+    /// The art's saved picture, drawn in a pawn's outline, for art whose PDF this device can't reach.
+    case picture(PictureArt)
 
     /// The imported PDF the faces come from; nil for custom art.
     public var sourceID: String? {
@@ -61,8 +63,23 @@ public enum PawnArt: Codable, Hashable, Sendable {
         case .pdf(let sourceID, _, _): sourceID
         case .token(let art): art.sourceID
         case .card(let art): art.sourceID
+        case .picture(let art): art.sourceID
         case .custom: nil
         }
+    }
+}
+
+/// The picture saved with a piece of art, its figure alone, for a pawn whose PDF this device can't reach because
+/// another app or another device read it (R2.1.2): drawn as large as it fits above the name, standing on it, on
+/// white; the back is the front mirrored.
+public struct PictureArt: Codable, Hashable, Sendable {
+    public var sourceID: String
+    /// The file in the library's pictures folder; empty until a device has drawn the art's picture.
+    public var picture: String
+
+    public init(sourceID: String, picture: String) {
+        self.sourceID = sourceID
+        self.picture = picture
     }
 }
 
@@ -219,6 +236,16 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
 }
 
 extension Pawn {
+    /// The files in the library's pictures folder the pawn is drawn from: a token's pictures, or the art's saved
+    /// picture. None for a pawn drawn from a PDF or from the user's own image.
+    public var pictureFiles: [String] {
+        switch art {
+        case .token(let art): art.pictures.filter { !$0.isEmpty }
+        case .picture(let art): art.picture.isEmpty ? [] : [art.picture]
+        case .pdf, .custom, .card: []
+        }
+    }
+
     /// Lists a product printing the pawn's art, unless it is listed already (a PDF read again by a newer reader).
     mutating func add(_ appearance: Appearance) {
         guard !appearances.contains(where: { $0.sourceID == appearance.sourceID }) else { return }

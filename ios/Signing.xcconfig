@@ -12,6 +12,10 @@
 DEVELOPMENT_TEAM = 9SWRBY8HN9
 PRODUCT_BUNDLE_IDENTIFIER = io.github.scooper4711.PawnShop
 
+// The iCloud container the library syncs through, which Info.plist names (TablesideSyncContainer). It belongs to
+// the team above: with another team, empty it in Local.xcconfig and the app keeps its library on the device alone.
+TABLESIDE_SYNC_CONTAINER = iCloud.io.github.scooper4711.tableside
+
 // The version and build number come from git (scripts/version.sh): the PawnShop-iPad scheme's build pre-action
 // writes them to Version.xcconfig before every build, Product > Archive included. These are the fallbacks for a
 // build that skips the scheme.

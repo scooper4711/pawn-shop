@@ -61,9 +61,21 @@ final class BackgroundRenderer: @unchecked Sendable {
         await onQueue { $0.artImage(of: pawn, height: height) }
     }
 
-    /// A page `width` pixels wide.
+    /// A page `width` pixels wide; nil when the task asking was cancelled before its turn came. Pages are the
+    /// slow drawings, and one that is no longer wanted, as when its sheet changed again or more pictures arrived,
+    /// would otherwise keep the page that is wanted waiting behind it.
     func image(of page: PageDrawing, width: Int) async -> CGImage? {
+        let request = RenderRequest()
+        return await withTaskCancellationHandler {
+            await drawPage(page, width: width, unless: request)
+        } onCancel: {
+            request.cancel()
+        }
+    }
+
+    private func drawPage(_ page: PageDrawing, width: Int, unless request: RenderRequest) async -> CGImage? {
         await onQueue { renderer in
+            guard !request.isCancelled else { return nil }
             let paper = page.settings.paper.paperSize
             let height = Int((CGFloat(width) * paper.height / paper.width).rounded())
             guard width > 0, height > 0,
@@ -103,13 +115,26 @@ final class BackgroundRenderer: @unchecked Sendable {
         }
     }
 
-    /// Changes with what the face shows (its name, size and art, which sharper art from Battle Cards replaces),
-    /// not with tags.
+    /// Changes with what the face shows (its name, size and art, which sharper art from Battle Cards replaces,
+    /// and whether the pictures it is drawn from are on the device yet, R10.4), not with tags.
     private func key(_ pawn: Pawn, _ side: PawnSide, _ height: Int) -> NSString {
         var looks = Hasher()
         looks.combine(pawn.name)
         looks.combine(pawn.size)
         looks.combine(pawn.art)
+        looks.combine(pawn.pictureFiles.allSatisfy { name in
+            FileManager.default.fileExists(atPath: folders.pictures.appendingPathComponent(name).path)
+        })
         return "\(pawn.id)-\(looks.finalize())-\(side == .front ? "front" : "back")-\(height)" as NSString
     }
+}
+
+/// Whether the task waiting for a drawing still wants it, asked from the rendering queue.
+private final class RenderRequest: @unchecked Sendable {
+    private let lock = NSLock()
+    private var cancelled = false
+
+    var isCancelled: Bool { lock.withLock { cancelled } }
+
+    func cancel() { lock.withLock { cancelled = true } }
 }

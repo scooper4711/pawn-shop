@@ -32,12 +32,12 @@ final class FigureReader {
     }
 
     /// The figure a pawn shows: a card's creature, or the largest picture on a printed pawn's front. Nil for
-    /// custom art and tokens, whose pictures are cut round or framed by the user.
+    /// custom art, tokens and saved pictures, which are drawn from files and not from a PDF.
     func figure(of pawn: Pawn) -> Figure? {
         switch pawn.art {
         case .card(let art): figure(of: art)
         case .pdf(let sourceID, let front, _): figure(source: sourceID, face: front, imageIndex: nil)
-        case .custom, .token: nil
+        case .custom, .token, .picture: nil
         }
     }
 
