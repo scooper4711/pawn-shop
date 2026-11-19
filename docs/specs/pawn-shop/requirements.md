@@ -256,8 +256,9 @@ The library is the same on the user's Macs, iPads and iPhones, so a sheet made o
   ID it has, so a sheet finds it on every device. Removing one removes it everywhere. Of two changes to one custom
   pawn on two devices the later wins; a pawn changed on one device and removed on another stays.
 - R10.3 A device without a pawn's PDF draws the pawn from its saved picture (R2.1.2), on screen, in exported PDFs
-  and in print. The picture is at most 1,024 pixels on its long side, which prints a medium pawn at about 600
-  pixels per inch and a gargantuan one at about 230.
+  and in print. The picture is the figure as its PDF embeds it, about 300 pixels per inch at the pawn's size, up to
+  1,024 pixels on its long side, which only the largest figures pass; so it prints about as sharply as from the
+  PDF, without the frame and label printed around it there.
 - R10.4 A picture the device doesn't have downloads from iCloud when its pawn is first shown (library sync R4.2).
   Opening a sheet, exporting and printing ask for every picture the sheet lacks at once. Until a picture arrives
   its pawn shows a placeholder, and tiles and pages are drawn again when it does. Without a connection the

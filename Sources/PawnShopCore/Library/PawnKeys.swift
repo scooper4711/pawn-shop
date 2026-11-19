@@ -56,12 +56,12 @@ extension Pawn {
 }
 
 extension PawnArt {
-    /// The front face on the page; a token's art is kept as pictures, so it has none.
+    /// The front face on the page; a token's art and a saved picture are kept as pictures, so they have none.
     var front: PawnFace {
         switch self {
         case .pdf(_, let front, _): front
         case .card(let art): art.face
-        case .token, .custom: PawnFace(pageIndex: 0, rect: .zero, rotation: 0)
+        case .token, .custom, .picture: PawnFace(pageIndex: 0, rect: .zero, rotation: 0)
         }
     }
 }

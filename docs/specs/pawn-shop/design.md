@@ -268,7 +268,7 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
 | The image | Sent with every save of its record, as the toolkit sends custom art's: a custom pawn's image never changes, and leaving it out of a save isn't worth finding out the hard way what CloudKit does with a field a save doesn't name. |
 | Conflicts | A record from another device replaces the pawn here, unless the pawn has changes still to send and its `modified` is later; then the pawn here stays and is sent. A deletion from another device removes the pawn unless it has changes still to send. `modified` is kept in `pawn-shop.json` (`customPawnsModified`). |
 | Pause | The store's (`SharedLibrary.isSyncPaused`): deleting the app's iCloud data purges every zone of the container, so one switch covers both handlers, and `LibrarySync.resume()` turns both back on. |
-| A device without the PDF | Prints as well as previews (R10.3): the saved picture is sharp enough, and a device that only previewed would be of little use at the table. |
+| A device without the PDF | Prints as well as previews (R10.3). On the Monster Core and Bestiary pawn boxes (672 pawns read by another app, none reachable) the saved pictures' long sides have medians of 272 pixels for small pawns, 465 for medium, 596 for large and 623 for huge, the size their PDFs embed them at; only the largest reach the 1,024 cap. A device that only previewed would be of little use at the table. |
 | Picture policy | The toolkit's default, on demand with no limit, on every kind of device: the setting is the device's and the suite's three apps share it. |
 | Removed pawns | Not synced (R10.9): `OwnLibrary.hidden` stays the device's. Adding it later is one more record type in the zone, and moves nothing. |
 
