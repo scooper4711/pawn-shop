@@ -97,18 +97,22 @@ struct PageView: View {
         .task(id: renderKey) { await render() }
     }
 
-    /// Changes whenever the page would look different.
+    /// Changes whenever the page would look different: also when pictures its sheet lacked arrive, but not for
+    /// pictures arriving for other pawns, which would draw every open page again at each batch.
     private var renderKey: String {
         let contents = Dictionary(uniqueKeysWithValues: sheet.entries.map { ($0.id, $0.content) })
         let strips = page.map { "\(contents[$0.entryID].map { "\($0)" } ?? "-")#\($0.card)@\($0.rect)\($0.sideways)" }
         return strips.joined(separator: ";") + "|\(sheet.settings)|\(library.pawns.count)|\(library.itemArt.count)"
-            + "|\(artOpacity)|\(printsBackgrounds)|\(smallestTextSize)"
+            + "|\(artOpacity)|\(printsBackgrounds)|\(smallestTextSize)|\(library.missingPictureCount(of: sheet))"
     }
 
     private func render() async {
         guard let renderer = library.backgroundRenderer, let exporter = library.exporter(for: sheet) else { return }
         let drawing = PageDrawing(strips: page, contents: exporter.contents(of: page), settings: sheet.settings)
-        image = await renderer.image(of: drawing, width: Int(Self.maximumWidth * 2))
+        // A drawing that was overtaken comes back empty: the page keeps what it shows until the next one is in.
+        guard let drawn = await renderer.image(of: drawing, width: Int(Self.maximumWidth * 2)), !Task.isCancelled
+        else { return }
+        image = drawn
     }
 }
 

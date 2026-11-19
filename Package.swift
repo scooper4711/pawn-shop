@@ -18,11 +18,14 @@ let package = Package(
         .target(name: "PawnShopCore", dependencies: [
             .product(name: "ArtExtraction", package: "tabletop-kit"),
             .product(name: "SharedLibraries", package: "tabletop-kit"),
-            .product(name: "TablesideShared", package: "tabletop-kit")
+            .product(name: "TablesideShared", package: "tabletop-kit"),
+            .product(name: "TablesideSync", package: "tabletop-kit")
         ]),
         .target(name: "PawnShopUI", dependencies: [
             "PawnShopCore", .product(name: "AppNotices", package: "tabletop-kit"),
-            .product(name: "TablesideShared", package: "tabletop-kit")
+            .product(name: "SharedLibraries", package: "tabletop-kit"),
+            .product(name: "TablesideShared", package: "tabletop-kit"),
+            .product(name: "TablesideSync", package: "tabletop-kit")
         ]),
         .executableTarget(name: "PawnShop", dependencies: ["PawnShopUI"]),
         .target(name: "ItemCatalogImport", dependencies: [
@@ -33,7 +36,8 @@ let package = Package(
         .testTarget(name: "PawnShopCoreTests", dependencies: [
             "PawnShopCore", .product(name: "ArtExtractionTestSupport", package: "tabletop-kit"),
             .product(name: "SharedLibraries", package: "tabletop-kit"),
-            .product(name: "TablesideShared", package: "tabletop-kit")
+            .product(name: "TablesideShared", package: "tabletop-kit"),
+            .product(name: "TablesideSync", package: "tabletop-kit")
         ]),
         .testTarget(name: "ItemCatalogImportTests", dependencies: ["ItemCatalogImport"])
     ]

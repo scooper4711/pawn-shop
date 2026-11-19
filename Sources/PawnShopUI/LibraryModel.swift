@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import PawnShopCore
 import TablesideShared
+import TablesideSync
 
 /// Progress of a batch of imports.
 struct ImportProgress: Equatable {
@@ -27,12 +28,31 @@ final class LibraryModel {
     /// On the iPad, the file browser for Import PDF… and for Scrollkeeper's folder; the Mac uses open panels.
     var isChoosingPDFs = false
     var isChoosingScrollkeeperFolder = false
+    /// Whether the library syncs through iCloud (R10.5).
+    var syncStatus = SyncStatus.withoutSync(containerIdentifier: LibrarySync.bundleContainer)
+    /// True once syncing has started: the build names the container and the device has an iCloud account.
+    var syncs = false
+    /// Why custom pawns from another device couldn't all be merged in; nil when they could.
+    var syncProblem: String?
+    /// Counts the times pictures arrived from iCloud, so that what shows them is drawn again (R10.4).
+    var picturesFetched = 0
+    /// True while an export or a print waits for its sheet's pictures.
+    var isWaitingForPictures = false
 
     @ObservationIgnored private(set) var library: PawnLibrary?
     @ObservationIgnored private(set) var renderer: PawnRenderer?
     @ObservationIgnored private(set) var backgroundRenderer: BackgroundRenderer?
     /// Hears of other apps' changes to the shared library (R2.1).
     @ObservationIgnored private var changeObserver: LibraryChangeObserver?
+    /// Syncing, while the build and the device have iCloud (`LibraryModel+Sync.swift`).
+    @ObservationIgnored var sync: LibrarySync?
+    @ObservationIgnored var customPawnSync: CustomPawnSync?
+    @ObservationIgnored var pictureRequests: PictureRequests?
+    /// The library's count of changes to custom pawns that syncing was last told of.
+    @ObservationIgnored private var customPawnChangesTold = 0
+    /// The reading of the shared library's changes that is waiting, so a run of changes is read once.
+    @ObservationIgnored private var changesToRead: Task<Void, Never>?
+    static let changeReadingInterval: Duration = .milliseconds(500)
     /// Every Pathfinder and Starfinder item, bundled with the app; empty in a build without `Generated`.
     @ObservationIgnored let catalog = ItemCatalog.bundled()
 
@@ -45,6 +65,7 @@ final class LibraryModel {
             refresh()
             changeObserver = PawnLibrary.observeChanges { [weak self] in self?.libraryChanged() }
             readAgainAtLaunch()
+            startSync()
         } catch {
             errorMessage = "Opening the pawn library failed: \(error)"
         }
@@ -58,7 +79,19 @@ final class LibraryModel {
     }
 
     /// Reads what another app changed in the shared library, or what changed while the app was in the background.
+    /// A run of changes is read at most twice a second: a first sync merges a library in over hundreds of
+    /// changes, and reading ten thousand pawns again for each kept the window from answering.
     func libraryChanged() {
+        guard changesToRead == nil else { return }
+        changesToRead = Task {
+            try? await Task.sleep(for: Self.changeReadingInterval)
+            guard !Task.isCancelled else { return }
+            changesToRead = nil
+            readLibraryChanges()
+        }
+    }
+
+    private func readLibraryChanges() {
         do {
             if try library?.refresh() == true { refresh() }
         } catch {
@@ -66,8 +99,15 @@ final class LibraryModel {
         }
     }
 
-    /// Lets go of the shared library's file as the app goes to the background on the iPad.
-    func close() { library?.close() }
+    /// Lets go of the shared library's file as the app goes to the background on the iPad; syncing lets go of it
+    /// too, after each thing it still does there.
+    func close() {
+        // A reading still waiting would open the file again after it was let go; `open()` reads what was missed.
+        changesToRead?.cancel()
+        changesToRead = nil
+        library?.close()
+        syncClosed(true)
+    }
 
     /// Reads again, from where they were imported, the PDFs an older reader read (R1.7) and those whose pawns the
     /// moved library listed by product only (R2.16), in the background with progress; the summary only tells of
@@ -104,30 +144,6 @@ final class LibraryModel {
         var exporter = SheetExporter(sheet: sheet, library: library, renderer: renderer)
         exporter.catalog = catalog
         return exporter
-    }
-
-    func searchItems(_ query: ItemQuery) -> [CatalogItem] { catalog.search(query) }
-
-    /// How many cards the item's or spell's text takes (R8.3.1).
-    func cardCount(for item: CatalogItem) -> Int {
-        guard let renderer else { return 1 }
-        ItemCardPreferences.apply(to: renderer)
-        return renderer.cardCount(for: item)
-    }
-
-    /// An item's card, with the art an imported item deck prints for it.
-    func card(for item: CatalogItem) -> ItemCardContent {
-        ItemCardContent(item: item, artwork: ItemArtMatcher(artwork: itemArt, renames: catalog.renames)
-            .artwork(for: item))
-    }
-
-    /// A card to show the art setting on: the first item an imported deck has art for, or else the first
-    /// consumable; nil without a catalog.
-    var sampleCard: ItemCardContent? {
-        let matcher = ItemArtMatcher(artwork: itemArt, renames: catalog.renames)
-        let item = catalog.items.first { matcher.artwork(for: $0) != nil }
-            ?? catalog.items.first { $0.kind == .consumable }
-        return item.map(card(for:))
     }
 
     func sourceTitle(of pawn: Pawn) -> String { library?.sourceTitle(of: pawn) ?? "" }
@@ -268,9 +284,13 @@ final class LibraryModel {
             errorMessage = "\(error)"
         }
         refresh()
+        if library.customPawnChanges != customPawnChangesTold {
+            customPawnChangesTold = library.customPawnChanges
+            customPawnsChanged()
+        }
     }
 
-    private func refresh() {
+    func refresh() {
         pawns = library?.pawns ?? []
         itemArt = library?.itemArt ?? []
         sources = library?.sources.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending } ?? []

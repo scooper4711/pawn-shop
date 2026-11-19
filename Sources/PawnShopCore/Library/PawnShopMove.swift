@@ -89,7 +89,8 @@ struct PawnShopMove {
             return SharedPrint(key: pawn.id, print: ArtPrint(sourceID: art.sourceID, kind: .token, face: pawn.art.front,
                                                              tokenFile: front, copies: copies),
                                backPicture: back)
-        case .custom:
+        case .custom, .picture:
+            // A saved picture stands in for a PDF another app or device read: a library of Pawn Shop's own has none.
             return nil
         }
     }

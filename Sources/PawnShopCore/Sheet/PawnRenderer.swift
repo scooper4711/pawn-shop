@@ -65,7 +65,7 @@ public final class PawnRenderer {
     public func uprightSize(of pawn: Pawn) -> CGSize {
         switch pawn.art {
         case .pdf(_, let front, _): front.uprightSize
-        case .custom, .token, .card: pawn.size.outlineSize
+        case .custom, .token, .card, .picture: pawn.size.outlineSize
         }
     }
 
@@ -87,6 +87,8 @@ public final class PawnRenderer {
             drawToken(of: pawn, side: side, in: rect, context: context)
         case .card:
             drawCard(of: pawn, side: side, in: rect, context: context)
+        case .picture:
+            drawPicture(of: pawn, side: side, in: rect, context: context)
         }
         context.restoreGState()
     }
@@ -125,7 +127,7 @@ public final class PawnRenderer {
     /// pixels tall upright. Art printed on its side, as the words along it show, is turned to read level.
     public func artImage(of pawn: Pawn, height: Int) -> CGImage? {
         switch pawn.art {
-        case .token, .card: return pictureAlone(of: pawn, height: height)
+        case .token, .card, .picture: return pictureAlone(of: pawn, height: height)
         case .pdf, .custom: break
         }
         var artOnly = pawn
@@ -177,14 +179,6 @@ public final class PawnRenderer {
             context.fill(line.bounds(for: page).insetBy(dx: -1, dy: -1))
         }
         context.restoreGState()
-    }
-
-    /// Maps the upright strip (origin at its foot's left corner) onto its place on the page.
-    static func stripTransform(for placed: PlacedStrip) -> CGAffineTransform {
-        guard placed.sideways else { return CGAffineTransform(translationX: placed.rect.minX, y: placed.rect.minY) }
-        // Turned a quarter clockwise: the foot goes to the left, the fold to the right.
-        return CGAffineTransform(rotationAngle: -.pi / 2)
-            .concatenating(CGAffineTransform(translationX: placed.rect.minX, y: placed.rect.maxY))
     }
 
     // MARK: Faces

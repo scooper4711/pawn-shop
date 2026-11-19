@@ -45,6 +45,9 @@ struct SheetWindow: View {
         .focusedSceneValue(\.sheetActions, actions)
         // Saved sheets name the pawns they print, so a device without one can say which is missing.
         .onChange(of: document.sheet.entries, initial: true) { relabel() }
+        // A device without a pawn's PDF asks iCloud for its picture (R10.4), and keeps asking while the sheet is
+        // open: no device may have uploaded it yet.
+        .task(id: document.sheet.entries) { await library.keepShowingPictures(of: document.sheet) }
         // The print panel opens on the sheet's window once the options sheet is gone: started from the closing
         // options sheet, it never showed and the job printed at once with the printer's defaults.
         .sheet(item: $outputRequest, onDismiss: performPendingOutput) { kind in
@@ -191,14 +194,18 @@ struct SheetWindow: View {
     static let inspectorWidth: (min: CGFloat, ideal: CGFloat) = (240, 280)
     #endif
 
-    /// Writes or prints the sheet as laid out, at 100% scale.
+    /// Writes or prints the sheet as laid out, at 100% scale, once the pictures it lacks have come from iCloud
+    /// or have stopped coming (R10.4).
     private func performPendingOutput() {
         guard let output = pendingOutput else { return }
         pendingOutput = nil
-        guard let data = library.exporter(for: output.sheet)?.pdfData() else { return }
-        switch output.kind {
-        case .export: exportedPDF = SheetPDF(data: data, name: title)
-        case .print: SheetOutput.print(data, title: title, paper: output.sheet.settings.paper)
+        Task {
+            await library.waitForPictures(of: output.sheet)
+            guard let data = library.exporter(for: output.sheet)?.pdfData() else { return }
+            switch output.kind {
+            case .export: exportedPDF = SheetPDF(data: data, name: title)
+            case .print: SheetOutput.print(data, title: title, paper: output.sheet.settings.paper)
+            }
         }
     }
 
@@ -244,12 +251,20 @@ struct SheetWindow: View {
     }
 }
 
-/// Shows which PDF is being imported.
+/// Shows which PDF is being imported, or that an export or a print waits for pictures from iCloud.
 struct ImportStatusBanner: View {
     @Environment(LibraryModel.self) private var library
 
     var body: some View {
-        if let progress = library.importProgress {
+        if library.isWaitingForPictures {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text("Getting pictures from iCloud…")
+            }
+            .padding(12)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+            .padding()
+        } else if let progress = library.importProgress {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Importing \(progress.fileName)").lineLimit(1)
                 ProgressView(value: Double(progress.done), total: Double(progress.total))

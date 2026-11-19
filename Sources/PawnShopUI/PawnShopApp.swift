@@ -42,6 +42,9 @@ public struct PawnShopApp: App {
                 ItemCardSettingsView()
                     .environment(library)
                     .tabItem { Label("Item Cards", systemImage: "rectangle.portrait.on.rectangle.portrait") }
+                SyncSettingsView()
+                    .environment(library)
+                    .tabItem { Label("Sync", systemImage: "arrow.triangle.2.circlepath.icloud") }
             }
         }
     }

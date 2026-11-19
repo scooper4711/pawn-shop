@@ -43,10 +43,25 @@ struct PawnThumbnail: View {
                 RoundedRectangle(cornerRadius: 4).fill(.quaternary)
             }
         }
-        .task(id: pawn) {
+        .task(id: Drawing(pawn: pawn, picturesFetched: library.picturesFetched)) {
             let renderer = library.backgroundRenderer
             image = renderer?.cachedThumbnail(of: pawn, side: side, height: pixelHeight)
             if image == nil { image = await renderer?.thumbnail(of: pawn, side: side, height: pixelHeight) }
+            // A pawn drawn from pictures asks iCloud for those this device lacks (R10.4), and again every minute
+            // while it is on screen: it shows its placeholder until they are here, and is then drawn again. A
+            // task that was replaced meanwhile, as when the tile scrolled away, leaves the image to the one that
+            // replaced it.
+            await library.keepShowingPictures(of: pawn) {
+                guard !Task.isCancelled else { return }
+                let drawn = await renderer?.thumbnail(of: pawn, side: side, height: pixelHeight)
+                if !Task.isCancelled { image = drawn }
+            }
         }
+    }
+
+    /// What the thumbnail shows: drawn again when the pawn changes or pictures arrive from iCloud.
+    private struct Drawing: Hashable {
+        let pawn: Pawn
+        let picturesFetched: Int
     }
 }

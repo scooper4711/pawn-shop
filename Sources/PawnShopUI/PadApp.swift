@@ -27,7 +27,7 @@ public struct PawnShopApp: App {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .background: library.close()
-            case .active: library.libraryChanged()
+            case .active: library.open()
             default: break
             }
         }
@@ -102,6 +102,7 @@ struct PadSettingsView: View {
             List {
                 NavigationLink("Tagging") { TaggingSettingsView(tagging: .shared).navigationTitle("Tagging") }
                 NavigationLink("Item Cards") { ItemCardSettingsView().navigationTitle("Item Cards") }
+                NavigationLink("Sync") { SyncSettingsView().navigationTitle("Sync") }
                 NavigationLink("About Pawn Shop") { ScrollView { AboutView(info: .pawnShop) }.navigationTitle("About") }
             }
             .navigationTitle("Settings")

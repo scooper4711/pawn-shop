@@ -76,8 +76,10 @@ is cut out and folded at the heads, giving a two-ply pawn.
   here without importing it again, and what another app changes shows while Pawn Shop is open, within a second.
 - R2.1.1 Names, tags and tag corrections are kept with the shared art, so they help the other apps, and theirs
   show here (shared libraries R3.3). Custom pawns, sheets and settings stay Pawn Shop's own (R3.5 there).
-- R2.1.2 A pawn whose PDF Pawn Shop can't reach (another app read it from a file Pawn Shop wasn't given) shows
-  and prints from the picture saved with the art; importing the PDF here prints it at full resolution again (R5.4).
+- R2.1.2 A pawn whose PDF Pawn Shop can't reach (another app read it from a file Pawn Shop wasn't given, or
+  another device read it, R10) shows and prints from the picture saved with the art: the figure alone, as large as
+  it fits above the pawn's name on white, standing on it, like a Battle Card's creature (R1.14), with the back the
+  front mirrored. Importing the PDF here prints it at full resolution again (R5.4).
 - R2.2 Search finds the pawns whose name, product titles, traits (R1.14) and tags (R2.7) together contain every
   word typed, anywhere in a word and ignoring case and accents, so "sword" also finds "longsword".
 - R2.3 Results can be filtered by size and by product.
@@ -243,3 +245,41 @@ reminder at the table, whatever holds the spell.
   Heightened entries, and the source book.
 - R9.3 A spell prints at its own rank: formulas on its rank are worked out ("1d6", not
   "floor(@item.level/2)d6"), and links that only apply effects in Foundry are left out.
+
+## R10 Syncing between devices
+The library is the same on the user's Macs, iPads and iPhones, so a sheet made on one opens complete on another
+(issue #30). The shared art library's side is tabletop-kit's library sync; this is what Pawn Shop adds to it.
+- R10.1 The art read from PDFs, with the names, tags and tag corrections given to pawns, syncs through the
+  Tableside Toolkit's container in the user's private iCloud database (library sync R1, R2), whichever of the
+  suite's apps is open. The PDFs never leave the device, and nothing is sent to anyone but the user's own iCloud.
+- R10.2 Custom pawns sync as well, each with its image, name, size, the image's placement and its tags, under the
+  ID it has, so a sheet finds it on every device. Removing one removes it everywhere. Of two changes to one custom
+  pawn on two devices the later wins; a pawn removed on one device stays on another that has a change to it still
+  to send, and comes back.
+- R10.3 A device without a pawn's PDF draws the pawn from its saved picture (R2.1.2), on screen, in exported PDFs
+  and in print. The picture is the figure as its PDF embeds it, about 300 pixels per inch at the pawn's size, up to
+  1,024 pixels on its long side, which only the largest figures pass; so it prints about as sharply as from the
+  PDF, without the frame and label printed around it there.
+- R10.4 A picture the device doesn't have downloads from iCloud when its pawn is first shown (library sync R4.2).
+  Opening a sheet, exporting and printing ask for every picture the sheet lacks at once. Until a picture arrives
+  its pawn shows a placeholder, and tiles and pages are drawn again when it does. A picture no device has uploaded
+  yet is asked for again every minute while its pawn is on screen or its sheet is open. Without a connection the
+  placeholder stays, and an export or a print goes ahead with it.
+- R10.5 Settings › Sync says whether the library syncs and, when it doesn't, why: the build has no iCloud, nobody
+  is signed in to iCloud, iCloud is full, syncing is paused (R10.7), or it stopped after an error until the app
+  next opens.
+- R10.6 Settings › Sync sets how many downloaded pictures the device keeps (library sync R4.7, R4.9): those shown,
+  with no limit (the default) or up to 250 MB, 500 MB, 1 GB or 2 GB, the least recently shown going first; or every
+  picture, downloaded ahead of time, for use without a connection. It shows the size of the downloaded pictures and
+  removes them on request; each comes back when next shown. The setting is the device's: Turnkeeper and Field Guide
+  share it, so Pawn Shop sets no default of its own.
+- R10.7 After the user deletes the library's iCloud data in the system's settings, syncing pauses on that device.
+  Settings › Sync says so and offers to turn it back on, which uploads the library again (library sync R5.3).
+- R10.8 Without iCloud the app works on the device alone, as before (library sync R2.4). A library opened with
+  `PAWN_SHOP_LIBRARY` never syncs.
+- R10.9 Not synced: pawns removed from Pawn Shop only (R2.5), which stay removed on that device alone; sheets,
+  which are documents (issue #29); and settings. An item deck's art (R8.5) shows only on a device that has the
+  deck.
+- R10.10 A build syncs only when it is signed with the iCloud entitlements and names the container in its
+  `Info.plist` (library sync R6): the iPad and iPhone app, the Mac App Store app, and a Developer ID build given a
+  provisioning profile. Any other build works on the device alone.

@@ -12,7 +12,7 @@ extension PawnRenderer {
         drawNameBand(pawn.name, in: rect, context: context)
     }
 
-    /// A token's or card's picture alone, without the name, `height` pixels tall; nil for other pawns.
+    /// A token's, card's or saved picture alone, without the name, `height` pixels tall; nil for other pawns.
     func pictureAlone(of pawn: Pawn, height: Int) -> CGImage? {
         switch pawn.art {
         case .token(let art):
@@ -22,6 +22,10 @@ extension PawnRenderer {
         case .card(let art):
             bitmap(of: pawn, height: height) { context, rect in
                 self.drawCardFigure(art, in: rect, mirrored: false, context: context)
+            }
+        case .picture(let art):
+            bitmap(of: pawn, height: height) { context, rect in
+                self.drawSavedPicture(art, in: rect, mirrored: false, context: context)
             }
         case .pdf, .custom:
             nil
