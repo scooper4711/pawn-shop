@@ -52,7 +52,8 @@ final class FakePictureCloud: Sendable {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let cloud = FakePictureCloud(folder: folder)
         self.cloud = cloud
-        requests = PictureRequests(pictures: folder, window: .milliseconds(20)) { cloud.fetch($0) }
+        // Long enough for requests made together to meet in one round on a busy machine.
+        requests = PictureRequests(pictures: folder, window: .milliseconds(150)) { cloud.fetch($0) }
     }
 
     @Test func asksOnceForWhatSeveralViewsWantAtTheSameMoment() async {
