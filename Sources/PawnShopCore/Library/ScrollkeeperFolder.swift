@@ -42,17 +42,22 @@ public struct ScrollkeeperFolder {
     }
 
     /// Remembers the folder the user picked, so `open()` finds it after the app restarts.
+    /// The bookmark is security-scoped where the system makes one; otherwise plain, which still follows the folder.
+    /// The scoped kind comes from ScopedBookmarkAgent, which runs only in a desktop session.
     public func remember(_ folder: URL) throws {
-        let bookmark = try folder.bookmarkData(options: Self.bookmarkCreation, includingResourceValuesForKeys: nil,
-                                               relativeTo: nil)
+        let scoped = try? folder.bookmarkData(options: Self.bookmarkCreation, includingResourceValuesForKeys: nil,
+                                              relativeTo: nil)
+        let bookmark = try scoped ?? folder.bookmarkData(options: [], includingResourceValuesForKeys: nil,
+                                                         relativeTo: nil)
         defaults.set(bookmark, forKey: Self.bookmarkKey)
     }
 
     private func rememberedFolder() -> URL? {
         guard let bookmark = defaults.data(forKey: Self.bookmarkKey) else { return nil }
         var isStale = false
-        guard let folder = try? URL(resolvingBookmarkData: bookmark, options: Self.bookmarkResolution, relativeTo: nil,
-                                    bookmarkDataIsStale: &isStale)
+        guard let folder = [Self.bookmarkResolution, []].lazy.compactMap({
+            try? URL(resolvingBookmarkData: bookmark, options: $0, relativeTo: nil, bookmarkDataIsStale: &isStale)
+        }).first
         else { return nil }
         let isAccessing = folder.startAccessingSecurityScopedResource()
         guard Self.canList(folder) else {
