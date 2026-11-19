@@ -7,6 +7,7 @@ extension PawnLibrary {
     /// Adds a pawn made from the user's own art and saves.
     public func add(_ pawn: Pawn) throws {
         own.customPawns.append(pawn)
+        noteChange(toCustomPawn: pawn.id)
         try saveOwn()
     }
 
@@ -15,6 +16,7 @@ extension PawnLibrary {
     public func update(_ pawn: Pawn) throws {
         if let index = own.customPawns.firstIndex(where: { $0.id == pawn.id }) {
             own.customPawns[index] = pawn
+            noteChange(toCustomPawn: pawn.id)
             try saveOwn()
         } else if let entry = entries[pawn.id] {
             try shared.setNote(pawn.note(printedName: entry.name), forArt: entry.id)
@@ -58,12 +60,7 @@ extension PawnLibrary {
 
     /// Removes pawns and saves: custom pawns with their art, extracted ones from Pawn Shop only (R2.5).
     public func remove(_ ids: Set<UUID>) throws {
-        for pawn in own.customPawns where ids.contains(pawn.id) {
-            if case .custom(let art) = pawn.art {
-                try? FileManager.default.removeItem(at: customFolder.appendingPathComponent(art.imageFile))
-            }
-        }
-        own.customPawns.removeAll { ids.contains($0.id) }
+        if removeCustomPawns(ids) { customPawnChanges += 1 }
         own.hidden.formUnion(ids.compactMap { pawn(id: $0)?.id }.filter { entries[$0] != nil })
         try saveOwn()
     }
@@ -79,7 +76,28 @@ extension PawnLibrary {
         try refresh()
     }
 
+    /// Takes custom pawns out with their art and the times of their changes, without saving. True when any of
+    /// `ids` was one.
+    @discardableResult
+    func removeCustomPawns(_ ids: Set<UUID>) -> Bool {
+        let removed = own.customPawns.filter { ids.contains($0.id) }
+        for pawn in removed {
+            if case .custom(let art) = pawn.art {
+                try? FileManager.default.removeItem(at: customFolder.appendingPathComponent(art.imageFile))
+            }
+            own.customPawnsModified[pawn.id.uuidString] = nil
+        }
+        own.customPawns.removeAll { ids.contains($0.id) }
+        return !removed.isEmpty
+    }
+
     // MARK: Helpers
+
+    /// Notes that the user changed a custom pawn now, which syncing sends (R10.2).
+    private func noteChange(toCustomPawn id: UUID) {
+        own.customPawnsModified[id.uuidString] = Date().timeIntervalSinceReferenceDate
+        customPawnChanges += 1
+    }
 
     /// Changes a pawn in memory, to be saved by `save()`.
     private func change(_ id: UUID, _ edit: (inout Pawn) -> Void) {
@@ -87,6 +105,7 @@ extension PawnLibrary {
         edit(&pawns[index])
         if let custom = own.customPawns.firstIndex(where: { $0.id == current.id }) {
             own.customPawns[custom] = pawns[index]
+            noteChange(toCustomPawn: current.id)
         } else {
             notes[current.id] = pawns[index].note(printedName: entries[current.id]?.name ?? pawns[index].name)
             unsavedNotes.insert(current.id)

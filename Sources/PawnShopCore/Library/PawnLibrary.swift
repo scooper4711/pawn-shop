@@ -33,6 +33,11 @@ public final class PawnLibrary {
     /// The items' pictures from imported item decks.
     public internal(set) var itemArt: [ItemArtwork] = []
     var own = OwnLibrary()
+    /// What this device knows iCloud holds of the custom pawns (R10.2).
+    var ledger = CustomPawnLedger()
+    /// Counts the user's changes to custom pawns, so the app can tell syncing there is something to send; the
+    /// shared library tells of its own changes itself.
+    public internal(set) var customPawnChanges = 0
     /// The shared library's art, notes and sources as last read, and its change counter then.
     var entries: [UUID: SharedArtEntry] = [:]
     var notes: [UUID: ArtNote] = [:]
@@ -64,6 +69,7 @@ public final class PawnLibrary {
         self.shared = shared
         try FileManager.default.createDirectory(at: folders.custom, withIntermediateDirectories: true)
         own = try OwnLibrary.read(from: folder)
+        ledger = CustomPawnLedger.read(from: folder)
         try moveInIfNeeded()
         try reload()
     }
