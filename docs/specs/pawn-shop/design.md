@@ -310,11 +310,16 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   Pictures, and Turn Syncing Back On while paused.
 - **Builds** (R10.10). `ios/PawnShop.entitlements` has the container, CloudKit and push; `ios/Info.plist` names the
   container as `$(TABLESIDE_SYNC_CONTAINER)`, set in `Signing.xcconfig` and emptied by the simulator scripts, whose
-  unsigned builds CloudKit would stop. `build-app.sh` runs the toolkit's `add-icloud-entitlements.sh` when
-  `PROVISIONING_PROFILE` names a profile (Developer ID, or the Mac App Store's with `CHANNEL=appstore`);
-  `release.yml` takes it from the `DEVELOPER_ID_PROVISIONING_PROFILE` secret, and builds without iCloud when there
-  is none.
-- **Known limits.** Two devices tagging with different models tag each other's pawns again for as long as both
+  unsigned builds CloudKit would stop, and has the `remote-notification` background mode for the engine's silent
+  pushes. `build-app.sh` runs the toolkit's `add-icloud-entitlements.sh` (from `.build/checkouts`, or
+  `ICLOUD_ENTITLER`) when `PROVISIONING_PROFILE` names a profile (Developer ID, or the Mac App Store's with
+  `CHANNEL=appstore`) and the build isn't signed ad hoc; `release.yml` takes the profile from the
+  `DEVELOPER_ID_PROVISIONING_PROFILE` secret, base64-encoded, and builds without iCloud when there is none.
+  Before a release: the App ID needs iCloud with the container and Push Notifications, the profiles regenerated
+  with them, and the record types deployed to Production in the CloudKit Console.
+- **Known limits.** An item deck's art (R8.5) shows on a card only where the deck's PDF or pictures are: item
+  art isn't drawn from saved pictures, nor asked for. A device that signs in to iCloud while Pawn Shop is open
+  starts syncing when the app next opens. Two devices tagging with different models tag each other's pawns again for as long as both
   run: a pawn needs tagging when its tags aren't the device's model's (`Pawn.needsTagging`). The ledger is in Pawn
   Shop's folder and the engine's state in the shared library's, so restoring one without the other leaves them out
   of step until the records next change. Nothing here has run against iCloud yet: the end-to-end check is the

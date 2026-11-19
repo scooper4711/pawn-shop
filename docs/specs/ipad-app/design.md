@@ -7,8 +7,8 @@
 - `PawnShop` (Mac executable) is `main.swift` calling `PawnShopApp.main()`.
 - `ios/PawnShop.xcodeproj` (scheme `PawnShop-iPad`) is the iPad and iPhone app. It links `PawnShopUI` from the
   local package and bundles `Generated/` (the item catalog, card art and fonts) as a folder resource, which
-  `ItemCatalog` finds at `Bundle.main.resourceURL/Generated` as on the Mac. Signing, version and the App Group
-  entitlement follow Field Guide's `ios/` folder.
+  `ItemCatalog` finds at `Bundle.main.resourceURL/Generated` as on the Mac. Signing, version, the App Group
+  entitlement and the iCloud entitlements (pawn-shop design, "Syncing") follow Field Guide's `ios/` folder.
 - `PawnShopCore` builds for iOS. `ScrollkeeperFolder` uses security-scoped bookmark options only on the Mac
   (on iOS a bookmark to a picked folder always carries access) and `NSHomeDirectory()` where `getpwuid` fails.
 

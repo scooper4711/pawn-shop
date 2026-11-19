@@ -73,6 +73,10 @@ right.*
 - Optional room for a base: blank paper below each face's foot, so the base's slot holds that instead of
   hiding the bottom of the name. The art keeps its size and the strip gets taller.
 - Custom pawns from your own images, from small to gargantuan.
+- Keeps the library the same on your Macs, iPad and iPhone through your own iCloud, in builds signed for it: the
+  pawns, the names and keywords you gave them, and your custom pawns. The PDFs stay on the device that imported
+  them; a device without a pawn's PDF draws the pawn from a picture, downloaded when the pawn is first shown.
+  Settings › Sync says whether the library syncs and how many downloaded pictures the device keeps.
 - Item cards for every Pathfinder and Starfinder item, at the size of Paizo's item decks (63 × 88 mm): the
   name and level, traits, description with the action icons, a table of stats (Level, Price, Bulk, Usage and
   Uses, then a weapon's, armor's or shield's own) and the source book. The art of an item deck you imported
@@ -244,6 +248,13 @@ from `/Applications/OpenSCAD-2021.01.app`; set `OPENSCAD` to use another copy). 
 Building needs Xcode 16 or later (Swift 6 toolchain). `scripts/sign-app.sh` signs the app with the Developer ID when
 the keychain holds a Developer ID Application certificate, and ad hoc otherwise.
 
+The library syncs through iCloud only in a build signed for it; any other build keeps its library on the device.
+For the Mac, set `PROVISIONING_PROFILE` to a Developer ID provisioning profile that allows iCloud with the
+container `iCloud.io.github.scooper4711.tableside` when running `make app` (`ICLOUD_ENVIRONMENT=Development` to
+sync with an iPad build installed from Xcode). The iPad app has the entitlements in `ios/PawnShop.entitlements`;
+the container belongs to the team in `ios/Signing.xcconfig`, so with another team empty
+`TABLESIDE_SYNC_CONTAINER` in `ios/Local.xcconfig`. The simulator builds are unsigned and never sync.
+
 Item and spell cards need `Generated/`, which `make items` builds and `make app` bundles; it is not in the
 repository. It reads the [pf2e system](https://github.com/foundryvtt/pf2e) release named in `pf2e.release`, fetched into
 `build/pf2e` (or a checkout of your own in `PF2E_REPO`), for the items and spells,
@@ -278,14 +289,18 @@ the SwiftUI app, shared by the Mac (`Sources/PawnShop`) and the iPad (`ios/`).
 
 | What | Where |
 |---|---|
-| Library, tags | `~/Library/Application Support/Pawn Shop/library.json` |
-| Copies of the imported PDFs | `~/Library/Application Support/Pawn Shop/Sources/` |
-| Tokens' art | `~/Library/Application Support/Pawn Shop/Tokens/` |
-| Item art from decks sold as pictures | `~/Library/Application Support/Pawn Shop/Items/` |
+| Pawns read from PDFs, their names and tags | `Tableside/Library.sqlite` in the Tableside Toolkit's App Group folder, shared with Turnkeeper and Field Guide |
+| Copies of the imported PDFs | `Tableside/Sources/` there |
+| Art's pictures, tokens' art, item art from decks sold as pictures | `Tableside/Pictures/` there |
+| Custom pawns, pawns removed from Pawn Shop | `~/Library/Application Support/Pawn Shop/pawn-shop.json` |
 | Custom pawns' images | `~/Library/Application Support/Pawn Shop/Custom/` |
+| What iCloud holds of the custom pawns | `~/Library/Application Support/Pawn Shop/pawn-shop-sync.json` |
 | Sheets | wherever you save them, as `.pawnsheet` files; on the iPad, On My iPad › Pawn Shop by default |
 
-On the iPad the library is in the app's own Application Support folder, with the same layout.
+A build outside the App Group (ad hoc, or run from the command line) keeps the shared library in
+`~/Library/Application Support/Pawn Shop/Shared/` instead. On the iPad the folders are the app's own Application
+Support folder and the App Group's, with the same layout. In a build signed for iCloud the library also syncs
+through the Tableside Toolkit's container in your private iCloud database; the PDFs and sheets don't.
 
 ## Documentation
 

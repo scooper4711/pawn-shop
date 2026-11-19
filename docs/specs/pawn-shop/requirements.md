@@ -276,7 +276,8 @@ The library is the same on the user's Macs, iPads and iPhones, so a sheet made o
 - R10.8 Without iCloud the app works on the device alone, as before (library sync R2.4). A library opened with
   `PAWN_SHOP_LIBRARY` never syncs.
 - R10.9 Not synced: pawns removed from Pawn Shop only (R2.5), which stay removed on that device alone; sheets,
-  which are documents (issue #29); and settings.
+  which are documents (issue #29); and settings. An item deck's art (R8.5) shows only on a device that has the
+  deck.
 - R10.10 A build syncs only when it is signed with the iCloud entitlements and names the container in its
   `Info.plist` (library sync R6): the iPad and iPhone app, the Mac App Store app, and a Developer ID build given a
   provisioning profile. Any other build works on the device alone.
