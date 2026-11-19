@@ -281,14 +281,14 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   send. A record without an image for a pawn this device doesn't have is left out. A payload this version can't
   read is noted as unreadable and its pawn isn't sent until a record it can read arrives; the version that raises
   `CustomPawnRecordCoder.format` must make devices fetch again, as the toolkit's rule for its own `format` says.
-- **The handler** (`CustomPawnSync.swift`), on the main actor, as `PawnLibrary` is, hands records between the
-  above and the engine; `CustomPawnRecordCoder` turns them into `CKRecord`s and back. `settle` merges the server's record of a refused save (`serverRecordChanged`; it comes
-  without its image, so the image here stays), forgets the fields of a record the server doesn't know
-  (`unknownItem`), forgets the server and has the zone saved again (`zoneNotFound`), pauses (`userDeletedZone`) and
-  holds back while iCloud is full (`quotaExceeded`) until a fetch or a change here. A purged zone pauses; a zone
-  deleted any other way is uploaded again. An account that isn't the noted one forgets the server. Nothing is
-  offered while syncing is paused. While the app is in the background on the iPad the handler closes the shared
-  library after each call (shared libraries R5.4).
+- **The handler** (`CustomPawnSync.swift`), on the main actor, as `PawnLibrary` is, hands records between the above
+  and the engine; `CustomPawnRecordCoder` turns them into `CKRecord`s and back. `settle` merges the server's record of
+  a refused save (`serverRecordChanged`; it comes without its image, so the image here stays), forgets the fields of a
+  record the server doesn't know (`unknownItem`), forgets the server and has the zone saved again (`zoneNotFound`),
+  pauses (`userDeletedZone`) and holds back while iCloud is full (`quotaExceeded`) until a fetch or a change here. A
+  purged zone pauses; a zone deleted any other way is uploaded again. An account that isn't the noted one forgets the
+  server. Nothing is offered while syncing is paused. While the app is in the background on the iPad the handler
+  closes the shared library after each call (shared libraries R5.4).
 - **Starting** (`LibraryModel+Sync.swift`). At launch the app calls `LibrarySync.start(app:fallback:handlers:)` with
   the handler, unless `PAWN_SHOP_LIBRARY` is set; it gives nothing in a build that names no container or without
   an iCloud account, and `SyncStatus.withoutSync` then says which. The model follows `statusUpdates()`. A change to
@@ -297,15 +297,15 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   refresh the model. On the iPad the engine's library closes and opens with the app's.
 - **Pictures** (R10.3, R10.4). `PawnArt.picture` is the entry's picture in `Pictures/`, drawn by
   `PawnRenderer+Pictures` as large as fits above the name band, standing on it, mirrored for the back.
-  `Pawn.pictureFiles` names the files a pawn is drawn from (a token's too). `PictureRequests` gathers the names
-  asked for within 50 ms into one `LibrarySync.fetchPictures(named:)`, which downloads those missing and notes
-  all of them as shown, so a device with a limit keeps what is in use; names here and noted in the last half hour
-  aren't asked again, nor is a picture that didn't arrive within a minute (no device may have uploaded it yet),
-  except by an export or a print. `PawnThumbnail` draws what is here, asks, and draws again when its pictures
-  arrive; `SheetWindow` asks when a sheet opens or its entries change, and an export or a print waits
-  (`show(_:givingUpAfter:)`) for as long as pictures keep arriving. `LibraryModel.picturesFetched` counts the batches that brought something, and
-  is part of the pages' render key; a thumbnail's cache key says whether its pictures are here, so a placeholder
-  drawn without a connection isn't kept for the picture.
+  `Pawn.pictureFiles` names the files a pawn is drawn from (a token's too). `PictureRequests` gathers the names asked
+  for within 50 ms into one `LibrarySync.fetchPictures(named:)`, which downloads those missing and notes all of them
+  as shown, so a device with a limit keeps what is in use; names here and noted in the last half hour aren't asked
+  again, nor is a picture that didn't arrive within a minute (no device may have uploaded it yet), except by an export
+  or a print. `PawnThumbnail` draws what is here, asks, and draws again when its pictures arrive; `SheetWindow` asks
+  when a sheet opens or its entries change, and an export or a print waits (`show(_:givingUpAfter:)`) for as long as
+  pictures keep arriving. `LibraryModel.picturesFetched` counts the batches that brought something, and is part of the
+  pages' render key; a thumbnail's cache key says whether its pictures are here, so a placeholder drawn without a
+  connection isn't kept for the picture.
 - **Settings** (`SyncSettingsView`, R10.5 to R10.7), a Sync tab on the Mac and a row on the iPad: the status in
   words (`SyncSettingsText`), a picker of `PictureKeeping` (the choices of R10.6 over `PicturePolicy`; a limit
   another app set that isn't one of them is listed as it is), the downloaded pictures' size with Remove Downloaded
@@ -319,12 +319,12 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   `DEVELOPER_ID_PROVISIONING_PROFILE` secret, base64-encoded, and builds without iCloud when there is none.
   Before a release: the App ID needs iCloud with the container and Push Notifications, the profiles regenerated
   with them, and the record types deployed to Production in the CloudKit Console.
-- **Known limits.** An item deck's art (R8.5) shows on a card only where the deck's PDF or pictures are: item
-  art isn't drawn from saved pictures, nor asked for. A device that signs in to iCloud while Pawn Shop is open
-  starts syncing when the app next opens. Two devices tagging with different models tag each other's pawns again for as long as both
-  run: a pawn needs tagging when its tags aren't the device's model's (`Pawn.needsTagging`). The ledger is in Pawn
-  Shop's folder and the engine's state in the shared library's, so restoring one without the other leaves them out
-  of step until the records next change. Nothing here has run against iCloud yet: the end-to-end check is the
+- **Known limits.** An item deck's art (R8.5) shows on a card only where the deck's PDF or pictures are: item art
+  isn't drawn from saved pictures, nor asked for. A device that signs in to iCloud while Pawn Shop is open starts
+  syncing when the app next opens. Two devices tagging with different models tag each other's pawns again for as long
+  as both run: a pawn needs tagging when its tags aren't the device's model's (`Pawn.needsTagging`). The ledger is in
+  Pawn Shop's folder and the engine's state in the shared library's, so restoring one without the other leaves them
+  out of step until the records next change. Nothing here has run against iCloud yet: the end-to-end check is the
   toolkit's (library sync design), with a custom pawn added, renamed and removed on each side.
 
 ## Icon
