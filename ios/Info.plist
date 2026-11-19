@@ -3,6 +3,16 @@
 <!-- Keys Xcode can't generate, merged into the Info.plist it writes (GENERATE_INFOPLIST_FILE). -->
 <plist version="1.0">
 <dict>
+    <!-- The iCloud container the library syncs through; the app syncs only when this names one (tabletop-kit
+         library sync R6.1). Signing.xcconfig sets it, and the simulator scripts empty it: their unsigned builds
+         have no iCloud entitlement, and CloudKit stops an app that opens a container without one. -->
+    <key>TablesideSyncContainer</key>
+    <string>$(TABLESIDE_SYNC_CONTAINER)</string>
+    <!-- CKSyncEngine's silent pushes, so another device's changes arrive while the app is in the background. -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>remote-notification</string>
+    </array>
     <!-- Sheets are .pawnsheet documents, in the document browser and Files, as on the Mac. -->
     <key>CFBundleDocumentTypes</key>
     <array>

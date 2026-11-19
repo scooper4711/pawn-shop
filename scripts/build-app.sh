@@ -7,10 +7,14 @@
 # UNIVERSAL  set to 1 to build for both Apple silicon and Intel
 # TEAM_ID    the team that owns the App Group (default: read from the Developer ID certificate)
 # SIGNING_IDENTITY  passed to scripts/sign-app.sh; "-" signs ad hoc, without the App Group
+# PROVISIONING_PROFILE  Developer ID provisioning profile with iCloud; with a team, the app syncs its library
+#            through iCloud (tabletop-kit's scripts/add-icloud-entitlements.sh, which ICLOUD_ENVIRONMENT also
+#            affects; ICLOUD_ENTITLER names another copy). Without it the library stays on the Mac.
 # BUILD_NUMBER  CFBundleVersion, which must increase with every App Store upload (default: scripts/version.sh build)
 # CHANNEL    "appstore" builds the Mac App Store package, build/appstore/Pawn Shop.pkg, from the same
 #            sources, compiled with -DAPP_STORE so the updater is left out; needs TEAM_ID and the variables of
-#            tabletop-kit's scripts/package-appstore.sh (PACKAGER names another copy; TRIAL=1 checks it without them)
+#            tabletop-kit's scripts/package-appstore.sh (PACKAGER names another copy; TRIAL=1 checks it without
+#            them). PROVISIONING_PROFILE is then the Mac App Store profile, with iCloud.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -64,6 +68,13 @@ fi
 if [[ "${CHANNEL:-}" == "appstore" ]]; then
     # Only the updater saves into Downloads, and the App Store build has none (review asks what each is for).
     /usr/libexec/PlistBuddy -c "Delete :com.apple.security.files.downloads.read-write" "$ENTITLEMENTS"
+fi
+# With a provisioning profile that allows iCloud, the app joins the toolkit's container and names it in its
+# Info.plist, which turns syncing on (docs/specs/pawn-shop R10.10); an ad hoc signature can't carry them. The script
+# is found beside the package after the build above resolved it, so it follows the dependency pin.
+if [[ -n "${TEAM_ID:-}" && -n "${PROVISIONING_PROFILE:-}" && "${SIGNING_IDENTITY:-}" != "-" ]]; then
+    "${ICLOUD_ENTITLER:-.build/checkouts/tabletop-kit/scripts/add-icloud-entitlements.sh}" "$APP" "$ENTITLEMENTS" \
+        "$TEAM_ID" "$PROVISIONING_PROFILE"
 fi
 scripts/sign-app.sh "$APP" "$ENTITLEMENTS"
 echo "Built $APP ($VERSION, build $BUILD_NUMBER)"

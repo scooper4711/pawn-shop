@@ -66,6 +66,16 @@ jobs:
           DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
         run: scripts/add-signing-certificate.sh
 
+      - name: Add the provisioning profile that lets the app sync its library through iCloud
+        env:
+          DEVELOPER_ID_PROVISIONING_PROFILE: ${{ secrets.DEVELOPER_ID_PROVISIONING_PROFILE }}
+        run: |
+          # Without the secret the app builds as before, with the library on each device alone.
+          if [ -n "$DEVELOPER_ID_PROVISIONING_PROFILE" ]; then
+            printf '%s' "$DEVELOPER_ID_PROVISIONING_PROFILE" | base64 --decode > "$RUNNER_TEMP/PawnShop.provisionprofile"
+            echo "PROVISIONING_PROFILE=$RUNNER_TEMP/PawnShop.provisionprofile" >> "$GITHUB_ENV"
+          fi
+
       - name: Build the universal app
         run: UNIVERSAL=1 scripts/build-app.sh
 
