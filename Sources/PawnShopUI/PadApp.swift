@@ -10,6 +10,7 @@ public struct PawnShopApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     public init() {
+        DocumentsFolder.prepareInBackground()
         PawnTaggingModel.shared.tagNewPawns()
     }
 

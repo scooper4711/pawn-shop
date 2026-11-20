@@ -10,6 +10,7 @@ public struct PawnShopApp: App {
 
     public init() {
         WindowSnapshots.scheduleIfRequested()
+        DocumentsFolder.prepareInBackground()
         PawnTaggingModel.shared.tagNewPawns()
     }
 

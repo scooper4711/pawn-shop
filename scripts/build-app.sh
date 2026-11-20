@@ -9,7 +9,9 @@
 # SIGNING_IDENTITY  passed to scripts/sign-app.sh; "-" signs ad hoc, without the App Group
 # PROVISIONING_PROFILE  Developer ID provisioning profile with iCloud; with a team, the app syncs its library
 #            through iCloud (tabletop-kit's scripts/add-icloud-entitlements.sh, which ICLOUD_ENVIRONMENT also
-#            affects; ICLOUD_ENTITLER names another copy). Without it the library stays on the Mac.
+#            affects; ICLOUD_ENTITLER names another copy), and, when the profile allows Pawn Shop's container,
+#            keeps sheets in its iCloud Drive folder (scripts/add-icloud-documents.sh). Without it the library
+#            stays on the Mac.
 # BUILD_NUMBER  CFBundleVersion, which must increase with every App Store upload (default: scripts/version.sh build)
 # CHANNEL    "appstore" builds the Mac App Store package, build/appstore/Pawn Shop.pkg, from the same
 #            sources, compiled with -DAPP_STORE so the updater is left out; needs TEAM_ID and the variables of
@@ -75,6 +77,8 @@ fi
 if [[ -n "${TEAM_ID:-}" && -n "${PROVISIONING_PROFILE:-}" && "${SIGNING_IDENTITY:-}" != "-" ]]; then
     "${ICLOUD_ENTITLER:-.build/checkouts/tabletop-kit/scripts/add-icloud-entitlements.sh}" "$APP" "$ENTITLEMENTS" \
         "$TEAM_ID" "$PROVISIONING_PROFILE"
+    # Pawn Shop's folder in iCloud Drive, when the profile allows its container (R11.5).
+    scripts/add-icloud-documents.sh "$ENTITLEMENTS" "$PROVISIONING_PROFILE"
 fi
 scripts/sign-app.sh "$APP" "$ENTITLEMENTS"
 echo "Built $APP ($VERSION, build $BUILD_NUMBER)"

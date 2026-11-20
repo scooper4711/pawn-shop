@@ -51,6 +51,20 @@
             </array>
         </dict>
     </array>
+    <!-- Pawn Shop's folder in iCloud Drive, where sheets are offered first (docs/specs/pawn-shop R11). It shows only
+         in a build signed with the container under ubiquity-container-identifiers. -->
+    <key>NSUbiquitousContainers</key>
+    <dict>
+        <key>iCloud.io.github.scooper4711.PawnShop</key>
+        <dict>
+            <key>NSUbiquitousContainerIsDocumentScopePublic</key>
+            <true/>
+            <key>NSUbiquitousContainerName</key>
+            <string>Pawn Shop</string>
+            <key>NSUbiquitousContainerSupportedFolderLevels</key>
+            <string>None</string>
+        </dict>
+    </dict>
     <key>UTExportedTypeDeclarations</key>
     <array>
         <dict>

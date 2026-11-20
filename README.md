@@ -67,7 +67,8 @@ right.*
   each pawn's art in keywords such as "scimitar, sword, shield, turban" and suggests names for pawns printed
   without one.
 - Sheets are documents: add pawns with a number of copies, see the pages as they will print, and save the
-  sheet to print again later. Strips are packed upright or on their side, whichever needs fewer pages.
+  sheet to print again later. New sheets are offered Pawn Shop's own folder in iCloud Drive, so the same sheet
+  opens on your Mac and iPad; a pawn a device lacks shows by name until its picture arrives. Strips are packed upright or on their side, whichever needs fewer pages.
 - Cut lines shared between strips (one cut separates two pawns) or gaps between them, and an optional fold
   line.
 - Optional room for a base: blank paper below each face's foot, so the base's slot holds that instead of
@@ -254,6 +255,10 @@ container `iCloud.io.github.scooper4711.tableside` when running `make app` (`ICL
 sync with an iPad build installed from Xcode). The iPad app has the entitlements in `ios/PawnShop.entitlements`;
 the container belongs to the team in `ios/Signing.xcconfig`, so with another team empty
 `TABLESIDE_SYNC_CONTAINER` in `ios/Local.xcconfig`. The simulator builds are unsigned and never sync.
+
+Sheets get Pawn Shop's iCloud Drive folder from the container `iCloud.io.github.scooper4711.PawnShop` (iCloud
+Documents). The iPad app has it in `ios/PawnShop.entitlements`; a Mac build adds it
+(`scripts/add-icloud-documents.sh`) only when `PROVISIONING_PROFILE` allows that container.
 
 Item and spell cards need `Generated/`, which `make items` builds and `make app` bundles; it is not in the
 repository. It reads the [pf2e system](https://github.com/foundryvtt/pf2e) release named in `pf2e.release`, fetched into
