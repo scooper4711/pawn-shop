@@ -1,6 +1,6 @@
 # Pawn Shop Privacy Policy
 
-Effective November 19, 2026. This policy covers Pawn Shop for Mac, iPad and iPhone.
+Effective November 20, 2026. This policy covers Pawn Shop for Mac, iPad and iPhone.
 
 **Pawn Shop collects no data.** It has no account, no analytics, no advertising, no tracking and no third-party
 code that reports anything. Nothing you do in the app is sent to the developer or anyone else. The only network
@@ -10,7 +10,9 @@ requests the App Store version makes to the internet are to your own iCloud, des
 
 - **The PDFs you import** are read on your device to pull out their art. They are kept in the app's storage there
   and are never uploaded.
-- **The sheets you make** are files you save where you choose.
+- **The sheets you make** are files you save where you choose. Pawn Shop offers its folder in your iCloud Drive
+  first; sheets saved there are in your own iCloud Drive, like any document. A sheet holds the names of its pawns,
+  never their pictures.
 - **Your settings** are saved on your device.
 
 ## Your library in iCloud
