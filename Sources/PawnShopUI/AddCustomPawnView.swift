@@ -1,10 +1,11 @@
 import ArtExtraction
 import PawnShopCore
+import SharedLibraries
 import SwiftUI
 import UniformTypeIdentifiers
 
 /// Makes a pawn from the user's own art: choose, drop or paste an image (such as one copied from Pluck), name
-/// it, pick its size, and drag the preview to place the art in the outline.
+/// it, pick its creature's size, and drag the preview to place the art in the outline.
 struct AddCustomPawnView: View {
     /// Called with the new pawn, which is already in the library.
     let added: (Pawn) -> Void
@@ -12,14 +13,15 @@ struct AddCustomPawnView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var image: CGImage?
     @State private var name = ""
-    @State private var size = PawnSize.medium
+    /// The creature's size, one of Paizo's six (R3.1); Tiny prints the same pawn as Small.
+    @State private var size = CreatureSize.medium
     /// Placement, scaling and name choices; the image file is set when the pawn is saved.
     @State private var art = CustomArt(imageFile: "")
     @State private var isChoosingImage = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 20) {
-            CustomPawnPreview(image: image, name: name, size: size, art: $art)
+            CustomPawnPreview(image: image, name: name, size: size.pawnSize, art: $art)
                 .frame(width: 200, height: 300)
                 .dropDestination(for: URL.self) { urls, _ in load(urls.first) }
             Form {
@@ -30,7 +32,7 @@ struct AddCustomPawnView: View {
                 }
                 TextField("Name", text: $name)
                 Picker("Size", selection: $size) {
-                    ForEach(PawnSize.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                    ForEach(CreatureSize.allCases, id: \.self) { Text($0.trait).tag($0) }
                 }
                 Picker("Picture", selection: $art.scaling) {
                     ForEach(ArtScaling.allCases, id: \.self) { Text($0.displayName).tag($0) }

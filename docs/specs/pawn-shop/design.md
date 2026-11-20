@@ -15,9 +15,10 @@ is a view over it, so the app above it changes little.
 
 - **Where.** `SharedLibrary.standard(app: .pawnShop, fallback:)`: `Tableside/` in the App Group, or the library
   folder outside it (tests, `PAWN_SHOP_LIBRARY`). The store keeps the PDFs (`Sources/<sha256>.pdf`), each entry's
-  picture and tokens' and drawn items' pictures (`Pictures/`), in `Library.sqlite`. Pawn Shop's own folder
-  (`~/Library/Application Support/Pawn Shop/`, in the container) keeps `Custom/` (custom pawns' art) and
-  `pawn-shop.json` (`OwnLibrary`: the custom pawns, and the IDs of pawns removed from Pawn Shop only).
+  picture and tokens' and drawn items' pictures (`Pictures/`) and the images the user added (`Custom/`), in
+  `Library.sqlite`. Pawn Shop's own folder (`~/Library/Application Support/Pawn Shop/`, in the container) keeps
+  `pawn-shop.json` (`OwnLibrary`: how each custom pawn's art sits on it and its tags, and the IDs of pawns removed
+  from Pawn Shop only).
 - **Pawns** (`SharedPawns.swift`). Each creature entry (not an item) becomes a `Pawn`: its ID, size, traits,
   fingerprint and `needsName`; `appearances` from its prints (one per source, with copies, the drawn print's first).
   Its note (`ArtNote`) gives the name the user chose (`userName`, else the entry's name), tags, tag model,
@@ -26,11 +27,29 @@ is a view over it, so the app above it changes little.
   Battle Card), else a pawn print (`.pdf` with its back, or the front mirrored), else a token (`.token`, its
   pictures in `Pictures/`). Without a reachable PDF, a pawn is drawn from the entry's picture (`.picture`,
   R2.1.2), as a card's creature is. Item entries become `ItemArtwork` the same way (`.figure` or `.drawn`).
+- **Custom pawns** (`CreaturePawns.swift`, R3.4, R3.5; tabletop-kit shared libraries design, "Custom pawns are
+  custom creatures"). The library reads the store's `customCreatures` (keeping each one's name, size and whether
+  it has a stat block, never the stat block), `customArt` (its image's file name) and `creatureArt`. Each creature
+  with a choice under `custom.<id>` becomes a `Pawn` with the creature's ID and name and its size's pawn
+  (`CreatureSize.pawnSize`, Medium without a size), marked `isCustomCreature`: `.custom` art drawn from the
+  store's `Custom/<file>` for art the user added, or the art `Pawn(entry:)` gives the entry chosen from the
+  library (by its ID or a print's key), which prints at the size its PDF prints it. `CustomPawnSettings` in
+  `pawn-shop.json` (`pawnSettings`, by the creature's ID) gives the focus, scaling, whether the name prints, the
+  tags, their model and whether they were corrected; a creature without settings (one Turnkeeper made) has the
+  defaults. `refresh()` reads the creatures and art changed since the last reading and the choices, when the
+  store says any of the three tables changed, and a creature it lists as deleted loses its settings and its place
+  in `hidden`. Custom pawns come after the pawns read from PDFs, by name, then ID.
 - **Sources.** `PawnSource` from `SharedSource`: id, title, byte count, art found and reader version; the
   original path is the PDF's location for Pawn Shop when it has one. Only sources with pawns or items are listed.
 - **Writing.** `rename`, `correctTags`, `setTags` and `setSuggestedName` write the pawn's note
-  (`setNote(_:forArt:)`, which finds the art by any of its IDs). Custom pawns (`add`, `update`, `addCustomPawn`)
-  and removals save `pawn-shop.json`; removing a pawn read from a PDF records its ID there and hides it.
+  (`setNote(_:forArt:)`, which finds the art by any of its IDs). For a custom pawn `rename` is the store's
+  `renameCustomCreature(id:to:)` (R3.6), and the tags and `update` save its `CustomPawnSettings` in
+  `pawn-shop.json`. `addCustomPawn` writes the creature, its art (the same UUID, `<id>.png`) and the choice with
+  the store's `addCustomCreature(_:art:image:)`, and the settings. `remove` hides a pawn read from a PDF and a
+  custom pawn whose creature has a stat block (its ID in `hidden`), and deletes any other custom pawn with
+  `removeCustomCreature(id:)` and its settings; `removalWarning(for:)` gives the question the app asks first
+  (R2.5), naming Turnkeeper and its encounters when `hasMovedIn(.turnkeeper)`, and nil when nothing would be
+  deleted.
 - **Importing.** `prepareImport(of:)` is `ArtLibrary.prepare` (off the main thread); `commit(_:)` is the store's
   `commit(_:location: .kept)`, which claims the PDF, keys and merges its art (by key, then the same name and
   fingerprint or palette, then nameless art's rules: shared libraries R2.3a) and draws new pictures. Its
@@ -70,6 +89,15 @@ is a view over it, so the app above it changes little.
   printing no names keeps its stand-in name and `needsName`, and a name the user gave it is the note's
   `userName`. Custom pawns and the imported files' paths, sizes and digests go to `pawn-shop.json`, then
   `library.json` becomes `library.json.moved`.
+- **Moving the custom pawns in** (`CustomPawnMoving.swift`, R3.7), after the move above, while `pawn-shop.json`
+  lists `customPawns`. For each: its image moves from Pawn Shop's `Custom/` into the store's (a rename; an image
+  already there, as one another device moved and synced, stays, and Pawn Shop's copy is deleted); the creature,
+  its art and the choice are added under the pawn's ID unless the store has the creature; its placement, scaling,
+  name choice and tags become its `CustomPawnSettings`. Then `pawn-shop.json` is saved without `customPawns`, and
+  the emptied `Custom/` is removed. The image goes first, so a creature another app or device sees always has its
+  image, and every step is skipped when done, so a move cut short finishes at the next launch. The size becomes
+  the `CreatureSize` of the same name. On the copy of the real library the 78 custom pawns keep their IDs, names
+  and sizes, and the sheets saved before find them.
   - A version 2 library records the faces of a pawn's first product only: 2,710 other prints in 65 of the 85
     PDFs have none. The sources of every pawn printed by more than one product move in with reader version 0 and
     are listed in `pawn-shop.json` (`readAgain`) with their original files. `LibraryModel` reads those again in
@@ -229,8 +257,11 @@ is a view over it, so the app above it changes little.
 - Library ▸ Add Custom Pawn… (⌥⌘N) opens `AddCustomPawnView`: choose, drop or paste (⌘V or Paste Image; image data or a copied
   file) an image, name, size and whether
   the name prints, and Fill Pawn or Fit Whole Picture; the preview uses `PawnRenderer.artArea`, `artRect`,
-  `nameLayout` and `nameBandHeight`, so it matches the printed front, and dragging moves the art within its room. `PawnLibrary.addCustomPawn(_:)` saves the image as
-  PNG in `Custom/` and adds the pawn; the window also adds one copy to its sheet.
+  `nameLayout` and `nameBandHeight`, so it matches the printed front, and dragging moves the art within its room. `PawnLibrary.addCustomPawn(_:)` adds the creature with its image as
+  PNG (R3.4); the window also adds one copy to its sheet. The size picker lists `CreatureSize`'s six and the
+  preview draws its pawn.
+- Remove from Library (`LibraryBrowser`) asks `LibraryModel.removalWarning(for:)` first and shows its question
+  in a confirmation when custom pawns would be deleted (R2.5); otherwise it removes as before.
 - Tagging prompts (`TaggingPrompt`): `named(_:traits:)` tells the model a pawn's name and traits and asks only
   for what the art adds; `unnamed` also asks for the ancestry or kind, the role and a name. A pawn's `tagModel`
   holds `TaggingPrompt.signature(model:)`, the model's name and the prompts' `version`, so raising the version
@@ -259,33 +290,34 @@ is a view over it, so the app above it changes little.
 ## Syncing (`PawnShopCore/Sync`, R10)
 The shared art library syncs itself: tabletop-kit's `TablesideSync` puts a `CKSyncEngine` on the store
 (`LibrarySync`, its `docs/specs/library-sync/`), and names, tags and corrections are the store's notes, so they go
-with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, and asks for pictures.
+with it. A custom pawn's creature and image are the store's too (`customCreatures`, `customArt`, `creatureArt`).
+Pawn Shop starts that engine, adds a zone of its own for what is its own about custom pawns, and asks for pictures.
 
 | Question | Decision |
 |---|---|
-| Where custom pawns sync | A zone `PawnShop` in the suite's container, on the toolkit's engine (CloudKit wants one `CKSyncEngine` per database), owned by `CustomPawnSync`, a `SyncZoneHandler`. |
-| Record | One `CustomPawn` per pawn, named `pawn-<UUID>`: `format` Int64 (1), `title` String (the name, for the CloudKit Console), `payload` Bytes (`CustomPawnPayload` as JSON with sorted keys), `image` Asset (the PNG in `Custom/`). This is the record type to deploy to Production with the toolkit's. |
-| Payload | The pawn's ID, name, size, the image's focus and scaling, whether the name prints, tags, tag model, whether the tags were corrected, and `modified`. Not the image's file name: a device names the file `<ID>.png`. Fields are only added, as optionals. |
-| What needs uploading | `pawn-shop-sync.json` (`CustomPawnLedger`), the device's note of what the server holds: each record's archived system fields and the digest of its payload, and the iCloud account they describe. A pawn whose payload's digest isn't the noted one is saved; a noted record whose pawn is gone is deleted. |
-| The image | Sent with every save of its record, as the toolkit sends custom art's: a custom pawn's image never changes, and leaving it out of a save isn't worth finding out the hard way what CloudKit does with a field a save doesn't name. |
-| Conflicts | A record from another device replaces the pawn here, unless the pawn has changes still to send and its `modified` is later; then the pawn here stays and is sent. A deletion from another device removes the pawn unless it has changes still to send. `modified` is kept in `pawn-shop.json` (`customPawnsModified`). |
+| Where custom pawns' settings sync | A zone `PawnShop` in the suite's container, on the toolkit's engine (CloudKit wants one `CKSyncEngine` per database), owned by `CustomPawnSync`, a `SyncZoneHandler`. |
+| Record | One `CustomPawn` per custom pawn with settings, named `pawn-<UUID>` after its creature: `format` Int64 (1), `title` String (the creature's name when the record was saved, for the CloudKit Console), `payload` Bytes (`CustomPawnPayload` as JSON with sorted keys). No image: it is the store's custom art, which the toolkit syncs. This is the record type to deploy to Production with the toolkit's; a record saved before the image left (Development only) is read without it. |
+| Payload | The creature's ID, the image's focus and scaling, whether the name prints, tags, tag model, whether the tags were corrected, and `modified`. Not the name or the size, which are the creature's and sync with it (R3.6). Fields are only added, as optionals. |
+| What needs uploading | `pawn-shop-sync.json` (`CustomPawnLedger`), the device's note of what the server holds: each record's archived system fields and the digest of its payload, and the iCloud account they describe. Settings whose payload's digest isn't the noted one are saved; a noted record whose settings are gone is deleted. A creature Turnkeeper made has no record until Pawn Shop has something to say about it (a tag). |
+| Settings and their creature | They arrive apart, in two zones, so settings are kept whether or not their creature is here yet and apply when it comes. They go when the creature is deleted: by Pawn Shop, or when the store lists the deletion (another app's, or another device's through the toolkit), which is then sent as the record's deletion. |
+| Conflicts | A record from another device replaces the settings here, unless they have changes still to send and their `modified` is later; then the settings here stay and are sent. A deletion from another device removes the settings unless they have changes still to send. `modified` is kept in `pawn-shop.json` (`customPawnsModified`). |
 | Pause | The store's (`SharedLibrary.isSyncPaused`): deleting the app's iCloud data purges every zone of the container, so one switch covers both handlers, and `LibrarySync.resume()` turns both back on. |
 | A device without the PDF | Prints as well as previews (R10.3). On the Monster Core and Bestiary pawn boxes (672 pawns read by another app, none reachable) the saved pictures' long sides have medians of 272 pixels for small pawns, 465 for medium, 596 for large and 623 for huge, the size their PDFs embed them at; only the largest reach the 1,024 cap. A device that only previewed would be of little use at the table. |
 | Picture policy | The toolkit's default, on demand with no limit, on every kind of device: the setting is the device's and the suite's three apps share it. |
 | Removed pawns | Not synced (R10.9): `OwnLibrary.hidden` stays the device's. Adding it later is one more record type in the zone, and moves nothing. |
 
 - **The store's side** (`CustomPawnRecords.swift`, `CustomPawnSyncing.swift`, no CloudKit), on `PawnLibrary`:
-  `customPawnCandidates()` (what to save and delete), `outgoingCustomPawn(_:)` (the payload, its digest, the image
+  `customPawnCandidates()` (what to save and delete), `outgoingCustomPawn(_:)` (the payload, its digest
   and the server's last known fields; nil when the server holds this content), `markSent`, `markDeleted`,
   `forgetSystemFields(of:)`, `forgetCustomPawnServer()` and `applyRemote(_:)`, which merges saved and deleted
   records in as the table says. A saved record whose digest is the noted one only renews the noted fields, even
-  with its pawn gone: the pawn was removed here since, and merging the record in would undo a deletion still to
-  send. A record without an image for a pawn this device doesn't have is left out. A payload this version can't
+  with its settings gone: the pawn was removed here since, and merging the record in would undo a deletion still
+  to send. A payload this version can't
   read is noted as unreadable and its pawn isn't sent until a record it can read arrives; the version that raises
   `CustomPawnRecordCoder.format` must make devices fetch again, as the toolkit's rule for its own `format` says.
 - **The handler** (`CustomPawnSync.swift`), on the main actor, as `PawnLibrary` is, hands records between the above
   and the engine; `CustomPawnRecordCoder` turns them into `CKRecord`s and back. `settle` merges the server's record of
-  a refused save (`serverRecordChanged`; it comes without its image, so the image here stays), forgets the fields of a
+  a refused save (`serverRecordChanged`), forgets the fields of a
   record the server doesn't know (`unknownItem`), forgets the server and has the zone saved again (`zoneNotFound`),
   pauses (`userDeletedZone`) and holds back while iCloud is full (`quotaExceeded`) until a fetch or a change here. A
   purged zone pauses; a zone deleted any other way is uploaded again. An account that isn't the noted one forgets the
@@ -294,8 +326,10 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
 - **Starting** (`LibraryModel+Sync.swift`). At launch the app calls `LibrarySync.start(app:fallback:handlers:)` with
   the handler, unless `PAWN_SHOP_LIBRARY` is set; it gives nothing in a build that names no container or without
   an iCloud account, and `SyncStatus.withoutSync` then says which. The model follows `statusUpdates()`. A change to
-  a custom pawn has no Darwin notification, so the model tells `LibrarySync.libraryChanged()` itself, which queues
-  what every handler has to send; changes to notes reach it through the store's notification. Records merged in
+  a custom pawn's settings has no Darwin notification, so the model tells `LibrarySync.libraryChanged()` itself
+  (after its own changes, and after reading the store's, which may have deleted a creature), which queues
+  what every handler has to send; changes to notes and creatures reach it through the store's notification.
+  Records merged in
   refresh the model. On the iPad the engine's library closes and opens with the app's.
 - **Pictures** (R10.3, R10.4). `PawnArt.picture` is the entry's picture in `Pictures/`, drawn by
   `PawnRenderer+Pictures` as large as fits above the name band, standing on it, mirrored for the back.

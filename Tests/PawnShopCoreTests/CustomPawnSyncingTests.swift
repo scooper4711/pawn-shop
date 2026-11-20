@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import SharedLibraries
 import Testing
 import ArtExtractionTestSupport
 @testable import PawnShopCore
@@ -12,12 +13,21 @@ struct SyncDevice {
         library = try PawnLibrary(folder: temporaryFolder())
     }
 
+    /// Adds a pawn placed off center, so it has settings of Pawn Shop's own to sync.
     @discardableResult
     func addHero(named name: String = "Hero") throws -> Pawn {
-        try library.addCustomPawn(NewCustomPawn(image: headRedImage(), name: name))
+        try library.addCustomPawn(NewCustomPawn(image: headRedImage(), name: name, focus: CGPoint(x: 0.2, y: 0.8)))
     }
 
-    /// Sets when the user last changed a pawn, as though the change were made then.
+    /// Gives this device a pawn's creature and image, as the creature library's own sync brings them.
+    func receiveCreature(of pawn: Pawn) throws {
+        guard case .custom(let art) = pawn.art else { return }
+        let creature = NewCreature(pawn: pawn, size: CreatureSize(pawn.size), image: Data("png".utf8))
+        try library.addCreature(creature, imageFile: art.imageFile)
+        try library.refresh()
+    }
+
+    /// Sets when the user last changed a pawn's settings, as though the change were made then.
     func setModified(_ seconds: Double, of pawn: Pawn) {
         library.own.customPawnsModified[pawn.id.uuidString] = seconds
     }
@@ -26,17 +36,15 @@ struct SyncDevice {
     func send(_ pawn: Pawn, fields: String = "fields 1") throws -> RemoteCustomPawn {
         let outgoing = try #require(library.outgoingCustomPawn(pawn.id))
         try library.markSent(outgoing, systemFields: Data(fields.utf8))
-        return RemoteCustomPawn(id: outgoing.id, payload: outgoing.payload, image: outgoing.image,
-                                systemFields: Data(fields.utf8))
+        return RemoteCustomPawn(id: outgoing.id, payload: outgoing.payload, systemFields: Data(fields.utf8))
     }
 
-    func imageExists(of pawn: Pawn) -> Bool {
-        guard case .custom(let art) = pawn.art else { return false }
-        return FileManager.default.fileExists(atPath: library.customFolder.appendingPathComponent(art.imageFile).path)
+    func tags(of pawn: Pawn) -> [String]? {
+        library.pawn(id: pawn.id)?.tags
     }
 }
 
-/// What custom pawns have to send, and how another device's records are merged in (R10.2).
+/// What custom pawns' settings have to send, and how another device's records are merged in (R10.2).
 @Suite struct CustomPawnSyncingTests {
     let mac: SyncDevice
     let pad: SyncDevice
@@ -46,20 +54,38 @@ struct SyncDevice {
         pad = try SyncDevice()
     }
 
-    @Test func sendsANewPawnOnceAndAgainWhenItChanges() throws {
+    @Test func sendsNewSettingsOnceAndAgainWhenTheyChange() throws {
         let hero = try mac.addHero()
         #expect(mac.library.customPawnCandidates() == CustomPawnCandidates(saves: [hero.id]))
         let outgoing = try #require(mac.library.outgoingCustomPawn(hero.id))
         #expect(outgoing.title == "Hero" && outgoing.systemFields == nil)
-        #expect(FileManager.default.fileExists(atPath: outgoing.image.path))
 
         try mac.library.markSent(outgoing, systemFields: Data("fields 1".utf8))
         #expect(mac.library.customPawnCandidates().isEmpty && mac.library.outgoingCustomPawn(hero.id) == nil)
 
-        try mac.library.rename(hero.id, to: "Heroine")
+        try mac.library.correctTags(["sword"], of: hero.id)
         #expect(mac.library.customPawnCandidates().saves == [hero.id])
         #expect(mac.library.outgoingCustomPawn(hero.id)?.systemFields == Data("fields 1".utf8))
         #expect(mac.library.outgoingCustomPawn(UUID()) == nil)
+    }
+
+    @Test func leavesTheNameToTheCreatureLibrary() throws {
+        let hero = try mac.addHero()
+        _ = try mac.send(hero)
+        let changes = mac.library.customPawnChanges
+        try mac.library.rename(hero.id, to: "Heroine")
+        #expect(mac.library.pawn(id: hero.id)?.name == "Heroine")
+        #expect(mac.library.customPawnCandidates().isEmpty && mac.library.customPawnChanges == changes)
+        let payload = try #require(mac.library.own.pawnSettings[hero.id.uuidString].map {
+            try CustomPawnPayload(id: hero.id, settings: $0, modified: 0).encoded()
+        })
+        #expect(String(bytes: payload, encoding: .utf8)?.contains("name") == false)
+    }
+
+    @Test func aPawnWithTheDefaultsHasNothingToSend() throws {
+        let plain = try mac.library.addCustomPawn(NewCustomPawn(image: headRedImage(), name: "Plain"))
+        #expect(mac.library.customPawnCandidates().isEmpty && mac.library.outgoingCustomPawn(plain.id) == nil)
+        #expect(mac.library.own.pawnSettings.isEmpty)
     }
 
     @Test func keepsWhatTheServerHoldsBetweenLaunches() throws {
@@ -99,17 +125,25 @@ struct SyncDevice {
         #expect(mac.library.customPawnCandidates().saves == [hero.id])
     }
 
-    @Test func addsAPawnAnotherDeviceMadeWithItsImage() throws {
-        var hero = try mac.addHero()
+    @Test func takesTheSettingsAnotherDeviceMade() throws {
+        let hero = try mac.addHero()
         try mac.library.correctTags(["Sword"], of: hero.id)
-        hero = try #require(mac.library.pawn(id: hero.id))
+        try pad.receiveCreature(of: hero)
         #expect(try pad.library.applyRemote([.saved(try mac.send(hero))]))
 
         let arrived = try #require(pad.library.pawn(id: hero.id))
         #expect(arrived.name == "Hero" && arrived.tags == ["sword"] && arrived.tagsCorrected && arrived.isCustom)
-        #expect(pad.imageExists(of: arrived))
+        #expect(arrived.art == mac.library.pawn(id: hero.id)?.art, "placed as on the Mac")
         #expect(pad.library.customPawnCandidates().isEmpty, "what arrived isn't sent back")
         #expect(try PawnLibrary(folder: pad.library.folder).pawn(id: hero.id) == arrived)
+    }
+
+    @Test func keepsSettingsThatArriveBeforeTheirCreature() throws {
+        let hero = try mac.addHero()
+        #expect(try pad.library.applyRemote([.saved(try mac.send(hero))]))
+        #expect(pad.library.pawn(id: hero.id) == nil && pad.library.customPawnCandidates().isEmpty)
+        try pad.receiveCreature(of: hero)
+        #expect(pad.library.pawn(id: hero.id)?.art == hero.art)
     }
 
     @Test func aRecordItKnowsChangesNothing() throws {
@@ -121,100 +155,87 @@ struct SyncDevice {
         #expect(mac.library.customPawnCandidates().isEmpty && pad.library.customPawnCandidates().isEmpty)
     }
 
-    @Test func aRecordForAPawnRemovedHereDoesNotBringItBack() throws {
+    @Test func aRecordForAPawnRemovedHereDoesNotBringItsSettingsBack() throws {
         let hero = try mac.addHero()
         let record = try mac.send(hero)
         try mac.library.remove([hero.id])
         #expect(try !mac.library.applyRemote([.saved(record)]))
-        #expect(mac.library.pawn(id: hero.id) == nil)
+        #expect(mac.library.pawn(id: hero.id) == nil && mac.library.own.pawnSettings.isEmpty)
         #expect(mac.library.customPawnCandidates().deletions == [hero.id])
     }
 
     @Test func theLaterOfTwoChangesWins() throws {
         let hero = try mac.addHero()
+        try pad.receiveCreature(of: hero)
         try pad.library.applyRemote([.saved(try mac.send(hero))])
-        try mac.library.rename(hero.id, to: "Mac Hero")
-        try pad.library.rename(hero.id, to: "Pad Hero")
+        try mac.library.correctTags(["mac"], of: hero.id)
+        try pad.library.correctTags(["pad"], of: hero.id)
         mac.setModified(200, of: hero)
         pad.setModified(100, of: hero)
 
         let fromMac = try mac.send(hero, fields: "fields 2")
         #expect(try pad.library.applyRemote([.saved(fromMac)]))
-        #expect(pad.library.pawn(id: hero.id)?.name == "Mac Hero" && pad.library.customPawnCandidates().isEmpty)
+        #expect(pad.tags(of: hero) == ["mac"] && pad.library.customPawnCandidates().isEmpty)
 
-        try pad.library.rename(hero.id, to: "Pad Hero Again")
+        try pad.library.correctTags(["pad again"], of: hero.id)
         pad.setModified(300, of: hero)
         #expect(try !pad.library.applyRemote([.saved(fromMac)]), "known content")
-        try mac.library.rename(hero.id, to: "Mac Hero Again")
+        try mac.library.correctTags(["mac again"], of: hero.id)
         mac.setModified(250, of: hero)
         #expect(try !pad.library.applyRemote([.saved(try mac.send(hero, fields: "fields 3"))]))
-        #expect(pad.library.pawn(id: hero.id)?.name == "Pad Hero Again")
+        #expect(pad.tags(of: hero) == ["pad again"])
         #expect(pad.library.outgoingCustomPawn(hero.id)?.systemFields == Data("fields 3".utf8),
-                "the pawn here is sent over the record it beat")
+                "the settings here are sent over the record they beat")
     }
 
-    @Test func removesAPawnAnotherDeviceRemovedUnlessItChangedHere() throws {
+    @Test func removesSettingsAnotherDeviceRemovedUnlessTheyChangedHere() throws {
         let hero = try mac.addHero(), villain = try mac.addHero(named: "Villain")
+        try pad.receiveCreature(of: hero)
+        try pad.receiveCreature(of: villain)
         try pad.library.applyRemote([.saved(try mac.send(hero)), .saved(try mac.send(villain))])
-        let arrived = try #require(pad.library.pawn(id: hero.id))
-        try pad.library.rename(villain.id, to: "Changed Villain")
+        try pad.library.correctTags(["changed"], of: villain.id)
 
         #expect(try pad.library.applyRemote([.deleted(hero.id), .deleted(villain.id), .deleted(UUID())]))
-        #expect(pad.library.pawn(id: hero.id) == nil && !pad.imageExists(of: arrived))
-        #expect(pad.library.pawn(id: villain.id)?.name == "Changed Villain")
+        #expect(pad.library.own.pawnSettings.keys.sorted() == [villain.id.uuidString])
+        #expect(pad.library.pawn(id: hero.id)?.art != hero.art, "back to the defaults until its creature goes too")
+        #expect(pad.tags(of: villain) == ["changed"])
         #expect(pad.library.customPawnCandidates() == CustomPawnCandidates(saves: [villain.id]))
         #expect(pad.library.outgoingCustomPawn(villain.id)?.systemFields == nil, "sent as new")
     }
 
-    @Test func leavesOutARecordWithoutAnImageForAPawnThatIsNotHere() throws {
-        let hero = try mac.addHero()
-        var record = try mac.send(hero)
-        record.image = nil
-        #expect(try !pad.library.applyRemote([.saved(record)]))
-        #expect(pad.library.pawn(id: hero.id) == nil && pad.library.customPawnCandidates().isEmpty)
-    }
-
-    @Test func takesARecordWithoutItsImageForAPawnThatIsHere() throws {
-        let hero = try mac.addHero()
-        try pad.library.applyRemote([.saved(try mac.send(hero))])
-        try mac.library.rename(hero.id, to: "Renamed")
-        var record = try mac.send(hero, fields: "fields 2")
-        record.image = nil
-        #expect(try pad.library.applyRemote([.saved(record)]))
-        let renamed = try #require(pad.library.pawn(id: hero.id))
-        #expect(renamed.name == "Renamed" && pad.imageExists(of: renamed))
-    }
-
     @Test func doesNotSendOverARecordItCannotRead() throws {
         let hero = try mac.addHero()
+        try pad.receiveCreature(of: hero)
         try pad.library.applyRemote([.saved(try mac.send(hero))])
-        let later = RemoteCustomPawn(id: hero.id, payload: Data(#"{"size":"colossal"}"#.utf8), image: nil,
+        let later = RemoteCustomPawn(id: hero.id, payload: Data(#"{"scaling":"stretch"}"#.utf8),
                                      systemFields: Data("fields 2".utf8))
         #expect(try !pad.library.applyRemote([.saved(later)]))
-        try pad.library.rename(hero.id, to: "Renamed Here")
+        try pad.library.correctTags(["changed here"], of: hero.id)
         #expect(pad.library.customPawnCandidates().isEmpty && pad.library.outgoingCustomPawn(hero.id) == nil)
 
-        try mac.library.rename(hero.id, to: "Readable Again")
+        try mac.library.correctTags(["readable again"], of: hero.id)
         mac.setModified(.greatestFiniteMagnitude, of: hero)
         #expect(try pad.library.applyRemote([.saved(try mac.send(hero, fields: "fields 3"))]))
-        #expect(pad.library.pawn(id: hero.id)?.name == "Readable Again")
+        #expect(pad.tags(of: hero) == ["readable again"])
     }
 
-    @Test func mergesTheRestWhenAnImageCannotBeSaved() throws {
-        let hero = try mac.addHero(), villain = try mac.addHero(named: "Villain")
-        var broken = try mac.send(hero)
-        broken.image = temporaryFolder().appendingPathComponent("missing.png")
-        #expect(throws: PawnLibraryError.self) {
-            try pad.library.applyRemote([.saved(broken), .saved(try mac.send(villain))])
-        }
-        #expect(pad.library.pawn(id: hero.id) == nil && pad.library.pawn(id: villain.id)?.name == "Villain")
-        #expect(try PawnLibrary(folder: pad.library.folder).pawn(id: villain.id) != nil)
+    @Test func readsARecordSavedWhenItStillHeldTheNameAndSize() throws {
+        let hero = try mac.addHero()
+        _ = try mac.send(hero)
+        let old = #"{"focusX":0.25,"focusY":0.5,"id":"\#(hero.id.uuidString)","modified":5,"name":"Old Name","#
+            + #""scaling":"fit","showsName":false,"size":"large","tagModel":"","tags":["axe"],"tagsCorrected":true}"#
+        #expect(try mac.library.applyRemote([.saved(RemoteCustomPawn(id: hero.id, payload: Data(old.utf8),
+                                                                     systemFields: Data("fields 2".utf8)))]))
+        let pawn = try #require(mac.library.pawn(id: hero.id))
+        #expect(pawn.name == "Hero" && pawn.size == .medium && pawn.tags == ["axe"])
+        #expect(pawn.art == .custom(CustomArt(imageFile: "\(hero.id.uuidString).png", focus: CGPoint(x: 0.25, y: 0.5),
+                                               showsName: false, scaling: .fit)))
     }
 
     @Test func readsALibraryFileSavedBeforeChangesWereTimed() throws {
         let json = #"{"version":1,"customPawns":[],"hidden":[],"importedFiles":{},"readAgain":{"a":"b"}}"#
         let own = try JSONDecoder().decode(OwnLibrary.self, from: Data(json.utf8))
-        #expect(own.customPawnsModified.isEmpty && own.readAgain == ["a": "b"])
+        #expect(own.customPawnsModified.isEmpty && own.pawnSettings.isEmpty && own.readAgain == ["a": "b"])
         #expect(try JSONDecoder().decode(OwnLibrary.self, from: Data("{}".utf8)) == OwnLibrary())
     }
 

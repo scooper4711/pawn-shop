@@ -1,7 +1,8 @@
 import Foundation
 
-/// The custom pawns' side of syncing, without CloudKit (R10.2): what to send, and how a record from another device
-/// is merged in. `CustomPawnSync` hands records between this and the toolkit's engine.
+/// The custom pawns' side of syncing, without CloudKit (R10.2): which pawns' settings to send, and how a record
+/// from another device is merged in. `CustomPawnSync` hands records between this and the toolkit's engine.
+/// Settings are kept whether or not their creature is here yet: the two arrive apart.
 extension PawnLibrary {
     /// The iCloud account the ledger describes.
     var customPawnAccount: String? { ledger.account }
@@ -11,31 +12,29 @@ extension PawnLibrary {
         try saveLedger()
     }
 
-    /// The pawns whose records the server lacks or holds differently, and the records whose pawns are gone. A
-    /// pawn whose record this version can't read isn't sent over it.
+    /// The pawns whose settings the server lacks or holds differently, and the records whose settings are gone.
+    /// Settings whose record this version can't read aren't sent over it.
     func customPawnCandidates() -> CustomPawnCandidates {
         var candidates = CustomPawnCandidates()
-        for pawn in own.customPawns {
-            let noted = ledger.records[pawn.id.uuidString]
-            guard noted?.isUnreadable != true else { continue }
-            if noted?.systemFields == nil || noted?.digest != digest(of: pawn) { candidates.saves.append(pawn.id) }
+        for key in own.pawnSettings.keys.sorted() {
+            let noted = ledger.records[key]
+            guard let id = UUID(uuidString: key), noted?.isUnreadable != true else { continue }
+            if noted?.systemFields == nil || noted?.digest != digest(ofSettings: id) { candidates.saves.append(id) }
         }
-        let here = Set(own.customPawns.map(\.id.uuidString))
-        candidates.deletions = ledger.records.filter { $0.value.systemFields != nil && !here.contains($0.key) }
+        candidates.deletions = ledger.records
+            .filter { $0.value.systemFields != nil && own.pawnSettings[$0.key] == nil }
             .keys.sorted().compactMap { UUID(uuidString: $0) }
         return candidates
     }
 
-    /// The record to save for a custom pawn; nil when the pawn is gone, when the server holds this content
-    /// already, or while its record there is one this version can't read.
+    /// The record to save for a custom pawn's settings; nil when they are gone, when the server holds this
+    /// content already, or while its record there is one this version can't read.
     func outgoingCustomPawn(_ id: UUID) -> OutgoingCustomPawn? {
-        guard let pawn = own.customPawns.first(where: { $0.id == id }), case .custom(let art) = pawn.art,
-              let payload = try? payload(of: pawn)?.encoded() else { return nil }
+        guard let payload = try? payload(ofSettings: id)?.encoded() else { return nil }
         let noted = ledger.records[id.uuidString]
         let digest = CustomPawnPayload.digest(of: payload)
         guard noted?.isUnreadable != true, noted?.systemFields == nil || noted?.digest != digest else { return nil }
-        return OutgoingCustomPawn(id: id, payload: payload, digest: digest, title: pawn.name,
-                                  image: customFolder.appendingPathComponent(art.imageFile),
+        return OutgoingCustomPawn(id: id, payload: payload, digest: digest, title: creatures[id]?.name ?? "",
                                   systemFields: noted?.systemFields)
     }
 
@@ -63,35 +62,28 @@ extension PawnLibrary {
         try saveLedger()
     }
 
-    /// Merges in what other devices did, deletions first. True when the custom pawns changed. A record that
-    /// can't be merged in (its image can't be saved) doesn't cost the others: its failure is thrown at the end.
+    /// Merges in what other devices did, deletions first. True when the custom pawns' settings changed.
     @discardableResult
     func applyRemote(_ changes: [CustomPawnChange]) throws -> Bool {
         var changed = false
-        var failure: Error?
         for change in changes {
             guard case .deleted(let id) = change else { continue }
             changed = removeRemotely(id) || changed
         }
         for change in changes {
             guard case .saved(let remote) = change else { continue }
-            do {
-                changed = try merge(remote) || changed
-            } catch let error {
-                failure = failure ?? error
-            }
+            changed = merge(remote) || changed
         }
         if changed { try saveOwn() }
         try saveLedger()
-        if let failure { throw failure }
         return changed
     }
 
     // MARK: Helpers
 
-    /// Merges a saved record in. The pawn here stays when it has changes still to send that are later than the
-    /// record's; it is then sent over the record. True when the pawn changed.
-    private func merge(_ remote: RemoteCustomPawn) throws -> Bool {
+    /// Merges a saved record in. The settings here stay when they have changes still to send that are later
+    /// than the record's; they are then sent over the record. True when the settings changed.
+    private func merge(_ remote: RemoteCustomPawn) -> Bool {
         let key = remote.id.uuidString
         let noted = ledger.records[key]
         guard let incoming = CustomPawnPayload(data: remote.payload), incoming.id == remote.id,
@@ -101,69 +93,41 @@ extension PawnLibrary {
             return false
         }
         let known = CustomPawnLedger.Entry(systemFields: remote.systemFields, digest: digest)
-        let local = own.customPawns.first { $0.id == remote.id }
-        let localDigest = local.flatMap(digest(of:))
-        // Known content. With the pawn gone it was removed here since, and its deletion is still to send.
+        let localDigest = self.digest(ofSettings: remote.id)
+        // Known content. With the settings gone the pawn was removed here since, and its deletion is still to send.
         if noted?.digest == digest || localDigest == digest {
             ledger.records[key] = known
             return false
         }
-        if local != nil, localDigest != noted?.digest, modified(remote.id) > incoming.modified {
+        if localDigest != nil, localDigest != noted?.digest, modified(remote.id) > incoming.modified {
             ledger.records[key] = known
             return false
         }
-        guard try take(incoming, image: remote.image, inPlaceOf: local) else { return false }
+        own.pawnSettings[key] = incoming.settings
+        own.customPawnsModified[key] = incoming.modified
         ledger.records[key] = known
         return true
     }
 
-    /// Makes the pawn here what the record says. False when the device has no image to draw it with: the record
-    /// came without one, as the server's copy of a refused save does, for a pawn that isn't here.
-    private func take(_ incoming: CustomPawnPayload, image: URL?, inPlaceOf local: Pawn?) throws -> Bool {
-        var file = "\(incoming.id.uuidString).png"
-        if case .custom(let art)? = local?.art { file = art.imageFile }
-        let destination = customFolder.appendingPathComponent(file)
-        if let image {
-            try copyImage(at: image, to: destination)
-        } else if local == nil || !FileManager.default.fileExists(atPath: destination.path) {
-            return false
-        }
-        let pawn = incoming.pawn(imageFile: file)
-        if let index = own.customPawns.firstIndex(where: { $0.id == pawn.id }) {
-            own.customPawns[index] = pawn
-        } else {
-            own.customPawns.append(pawn)
-        }
-        own.customPawnsModified[pawn.id.uuidString] = incoming.modified
-        return true
-    }
-
-    /// Removes a pawn another device removed, unless it has changes still to send: it then stays, and is sent as
-    /// new. True when the pawn was removed.
+    /// Removes the settings of a pawn another device removed, unless they have changes still to send: they then
+    /// stay, and are sent as new. The creature itself goes with the creature library's own sync. True when the
+    /// settings were removed.
     private func removeRemotely(_ id: UUID) -> Bool {
         let key = id.uuidString
         let noted = ledger.records.removeValue(forKey: key)
-        guard let pawn = own.customPawns.first(where: { $0.id == id }), digest(of: pawn) == noted?.digest
-        else { return false }
-        removeCustomPawns([id])
+        guard let local = digest(ofSettings: id), local == noted?.digest else { return false }
+        own.pawnSettings[key] = nil
+        own.customPawnsModified[key] = nil
         return true
     }
 
-    private func copyImage(at source: URL, to destination: URL) throws {
-        do {
-            let data = try Data(contentsOf: source)
-            try data.write(to: destination, options: .atomic)
-        } catch {
-            throw PawnLibraryError.saveFailed("\(destination.lastPathComponent): \(error.localizedDescription)")
-        }
+    /// The payload of the settings kept for a custom pawn; nil without any.
+    private func payload(ofSettings id: UUID) -> CustomPawnPayload? {
+        own.pawnSettings[id.uuidString].map { CustomPawnPayload(id: id, settings: $0, modified: modified(id)) }
     }
 
-    private func payload(of pawn: Pawn) -> CustomPawnPayload? {
-        CustomPawnPayload(pawn, modified: modified(pawn.id))
-    }
-
-    private func digest(of pawn: Pawn) -> String? {
-        (try? payload(of: pawn)?.encoded()).map(CustomPawnPayload.digest(of:))
+    private func digest(ofSettings id: UUID) -> String? {
+        (try? payload(ofSettings: id)?.encoded()).map(CustomPawnPayload.digest(of:))
     }
 
     private func modified(_ id: UUID) -> Double {

@@ -3,8 +3,9 @@ import PawnShopCore
 import SharedLibraries
 import TablesideSync
 
-/// Syncing the library between the user's devices (R10): the shared art library through the toolkit's engine,
-/// custom pawns in a zone of Pawn Shop's own on it, and the pictures of pawns whose PDFs aren't on this device.
+/// Syncing the library between the user's devices (R10): the shared libraries through the toolkit's engine,
+/// custom pawns' settings in a zone of Pawn Shop's own on it, and the pictures of pawns whose PDFs aren't on this
+/// device.
 extension LibraryModel {
     /// How long an export or a print waits for pictures while none arrives.
     static let pictureStall: Duration = .seconds(8)
@@ -31,9 +32,11 @@ extension LibraryModel {
         }
     }
 
-    /// Tells syncing the user changed a custom pawn: unlike the shared library's changes, it hears of these from
-    /// nobody else.
-    func customPawnsChanged() {
+    /// Tells syncing when custom pawns' settings changed since it last heard: unlike the shared library's
+    /// changes, it hears of these from nobody else.
+    func tellSyncOfCustomPawnChanges() {
+        guard let library, library.customPawnChanges != customPawnChangesTold else { return }
+        customPawnChangesTold = library.customPawnChanges
         customPawnSync?.customPawnsChanged()
         Task { await sync?.libraryChanged() }
     }

@@ -75,7 +75,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
   Turnkeeper and Field Guide share (tabletop-kit shared libraries R1, R3): a PDF any of them read shows its pawns
   here without importing it again, and what another app changes shows while Pawn Shop is open, within a second.
 - R2.1.1 Names, tags and tag corrections are kept with the shared art, so they help the other apps, and theirs
-  show here (shared libraries R3.3). Custom pawns, sheets and settings stay Pawn Shop's own (R3.5 there).
+  show here (shared libraries R3.3). A custom pawn is a custom creature in the shared creature library (R3.4);
+  how its art sits on its pawn, its tags, the sheets and the settings stay Pawn Shop's own (R3.5 and R4.8 there).
 - R2.1.2 A pawn whose PDF Pawn Shop can't reach (another app read it from a file Pawn Shop wasn't given, or
   another device read it, R10) shows and prints from the picture saved with the art: the figure alone, as large as
   it fits above the pawn's name on white, standing on it, like a Battle Card's creature (R1.14), with the back the
@@ -86,7 +87,10 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R2.4 Pawns with the same name are shown next to each other with their product, so the art can be compared.
 - R2.5 A pawn can be removed from the library, or renamed: Rename… is in its context menu and its preview
   (R2.8). A blank name changes nothing. Removing a pawn read from a PDF hides it in Pawn Shop and leaves the art
-  to the other apps; removing a custom pawn deletes it.
+  to the other apps. Removing a custom pawn deletes its creature and art in every app (shared libraries R4.9),
+  after Pawn Shop asks; where Turnkeeper shares the library on this device, the question says that the creature
+  goes from Turnkeeper and its encounters too. A custom pawn whose creature has a stat block is only hidden, as a
+  pawn read from a PDF is.
 - R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
 - R2.7 Each pawn is tagged in the background with keywords for what its art adds to its name and traits
   (weapons, shields, armor, notable gear and clothing, animals with it, striking features) by a vision model
@@ -123,14 +127,15 @@ is cut out and folded at the heads, giving a two-ply pawn.
   any other needs HTTPS.
 - R2.14 A pawn read from a PDF has the same ID on every device that imports the PDF, in any order of import: its
   art's ID (tabletop-kit shared libraries R2), from the picture Paizo embedded and the name printed with it. A pawn
-  holding art printed by several products answers to the ID of each print. Custom pawns keep random IDs.
+  holding art printed by several products answers to the ID of each print. A custom pawn has its creature's
+  random ID (R3.4).
 - R2.15 The first launch of this version gives the library's pawns their IDs in place, without reading a PDF
   again. Each pawn keeps its old ID as an alias, so sheets saved before still find it, and the library file
   as it was is kept beside it (`library-v1.json`). Pawns whose art and name turn out to be the same merge, such as
   "Planetoid, Beetle" and "Planetoid Beetle". Moving into the shared library (R2.16) carries the aliases with it.
 - R2.16 The first launch of the version using the shared library moves Pawn Shop's library into it once
   (shared libraries R6): every pawn keeps its ID and old IDs, its name, tags, corrections and products, and the kept
-  PDFs and token pictures move rather than copy. Custom pawns stay in Pawn Shop's folder. The PDFs whose other
+  PDFs and token pictures move rather than copy. Custom pawns move in a step of their own (R3.7). The PDFs whose other
   products' pawns Pawn Shop doesn't record by place are then read again in the background from Scrollkeeper's
   folder, with progress, so each pawn lists every product again; one it can't reach is read at the next Import
   from Scrollkeeper. Nothing the user sees changes otherwise. A move cut short says why and finishes at the next
@@ -138,11 +143,25 @@ is cut out and folded at the heads, giving a two-ply pawn.
 
 ## R3 Custom pawns
 - R3.1 Library ▸ Add Custom Pawn… makes a pawn from an image (chosen, dropped, or pasted, such as one copied
-  from Pluck) with a name and a size:
-  small, medium, large, huge or gargantuan.
+  from Pluck) with a name and a size, one of Paizo's six: tiny, small, medium, large, huge or gargantuan. Tiny
+  prints the same pawn as Small.
 - R3.2 The image either fills the pawn (cropping what overflows) or fits whole above the name, with white
   around it; its position can be adjusted in a live preview either way.
 - R3.3 The back is the mirrored front.
+- R3.4 A custom pawn is a custom creature in the creature library Pawn Shop shares with Turnkeeper and Field
+  Guide (tabletop-kit shared libraries R4.6): a name, a size and art, without a stat block, under one ID.
+  Turnkeeper lists it with its other custom creatures and can give it a stat block.
+- R3.5 Every custom creature with art is a pawn here, with the creature's name and its size's pawn (Medium for
+  a creature without one of the six sizes), whichever app made it; one without art is left out. Art given to a
+  creature in Turnkeeper shows here within a second, drawn from the image the user added, or as the pawn of the
+  art chosen for it from the library is. Pasted art on a creature from a bestiary is not a pawn.
+- R3.6 Renaming a custom pawn renames its creature in every app, and a rename made in Turnkeeper shows here. The
+  image's placement and scaling, whether the name is printed, and the tags are Pawn Shop's own (shared libraries
+  R4.8); a creature made in Turnkeeper starts filled, centered and with its name printed. Changing the size after
+  adding comes with editing a custom pawn (issue #20).
+- R3.7 The first launch of this version moves the custom pawns into the creature library, once (shared libraries
+  R6.6): each keeps its ID, name and size, so sheets saved before keep finding it, and its image moves rather
+  than copies. A move cut short finishes at the next launch.
 
 ## R4 Sheets
 - R4.1 A sheet is a document (`.pawnsheet`) with New, Open, Save and Open Recent.
@@ -252,10 +271,11 @@ The library is the same on the user's Macs, iPads and iPhones, so a sheet made o
 - R10.1 The art read from PDFs, with the names, tags and tag corrections given to pawns, syncs through the
   Tableside Toolkit's container in the user's private iCloud database (library sync R1, R2), whichever of the
   suite's apps is open. The PDFs never leave the device, and nothing is sent to anyone but the user's own iCloud.
-- R10.2 Custom pawns sync as well, each with its image, name, size, the image's placement and its tags, under the
-  ID it has, so a sheet finds it on every device. Removing one removes it everywhere. Of two changes to one custom
-  pawn on two devices the later wins; a pawn removed on one device stays on another that has a change to it still
-  to send, and comes back.
+- R10.2 Custom pawns sync as well, under the ID they have, so a sheet finds one on every device. The creature's
+  name and size and its image sync with the creature library (library sync), and Pawn Shop adds what is its own:
+  the image's placement and scaling, whether the name is printed, and the tags. Removing a custom pawn removes
+  it everywhere. Of two changes to one pawn's placement or tags on two devices the later wins; they stay on a
+  device that has a change to them still to send when another device removes them, and are sent again.
 - R10.3 A device without a pawn's PDF draws the pawn from its saved picture (R2.1.2), on screen, in exported PDFs
   and in print. The picture is the figure as its PDF embeds it, about 300 pixels per inch at the pawn's size, up to
   1,024 pixels on its long side, which only the largest figures pass; so it prints about as sharply as from the

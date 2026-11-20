@@ -8,7 +8,7 @@ extension PawnLibrary {
     static let movedSuffix = ".moved"
 
     /// Moves `library.json` in while it is there and the shared library hasn't recorded the move as finished,
-    /// keying a version 1 library first (R2.15). Custom pawns stay Pawn Shop's own.
+    /// keying a version 1 library first (R2.15). Custom pawns go to `pawn-shop.json`, and move in next (R3.7).
     func moveInIfNeeded() throws {
         let index = folder.appendingPathComponent(Self.indexFile)
         guard FileManager.default.fileExists(atPath: index.path), try !shared.hasMovedIn(.pawnShop) else { return }

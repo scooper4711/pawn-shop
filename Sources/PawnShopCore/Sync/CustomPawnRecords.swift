@@ -1,16 +1,15 @@
-import ArtExtraction
 import CoreGraphics
 import CryptoKit
 import Foundation
 
-/// What a custom pawn's record holds, as JSON with sorted keys (R10.2). Fields are only ever added, as optionals,
-/// and a missing one keeps the value here. A digest is always taken of the payload as this version encodes it,
-/// never of the bytes that arrived, or two versions of the app would send their records over each other forever
-/// (tabletop-kit library sync design). The image's file name isn't here: each device names the file itself.
+/// What a custom pawn's record holds, as JSON with sorted keys (R10.2): what is Pawn Shop's own about the pawn.
+/// Its name, size and image are its creature's, and sync with the creature library. Fields are only ever added,
+/// as optionals, and a missing one keeps the value here. A digest is always taken of the payload as this version
+/// encodes it, never of the bytes that arrived, or two versions of the app would send their records over each
+/// other forever (tabletop-kit library sync design).
 struct CustomPawnPayload: Codable, Equatable {
+    /// The custom creature's ID.
     var id: UUID
-    var name: String
-    var size: PawnSize
     /// Where the image sits (`CustomArt.focus`).
     var focusX: Double
     var focusY: Double
@@ -22,19 +21,16 @@ struct CustomPawnPayload: Codable, Equatable {
     /// The user's last change, in seconds since the reference date; 0 for a pawn made before changes were timed.
     var modified: Double
 
-    /// The payload of a custom pawn; nil for a pawn read from a PDF.
-    init?(_ pawn: Pawn, modified: Double) {
-        guard case .custom(let art) = pawn.art else { return nil }
-        id = pawn.id
-        name = pawn.name
-        size = pawn.size
-        focusX = Double(art.focus.x)
-        focusY = Double(art.focus.y)
-        showsName = art.showsName
-        scaling = art.scaling
-        tags = pawn.tags
-        tagModel = pawn.tagModel
-        tagsCorrected = pawn.tagsCorrected
+    /// The payload of a custom pawn's settings.
+    init(id: UUID, settings: CustomPawnSettings, modified: Double) {
+        self.id = id
+        focusX = Double(settings.focus.x)
+        focusY = Double(settings.focus.y)
+        showsName = settings.showsName
+        scaling = settings.scaling
+        tags = settings.tags
+        tagModel = settings.tagModel
+        tagsCorrected = settings.tagsCorrected
         self.modified = modified
     }
 
@@ -51,15 +47,10 @@ struct CustomPawnPayload: Codable, Equatable {
         return try encoder.encode(self)
     }
 
-    /// The pawn the payload describes, drawn from the image in `imageFile` of the custom art folder.
-    func pawn(imageFile: String) -> Pawn {
-        let art = CustomArt(imageFile: imageFile, focus: CGPoint(x: focusX, y: focusY), showsName: showsName,
-                            scaling: scaling)
-        var pawn = Pawn(id: id, name: name, size: size, art: .custom(art))
-        pawn.tags = tags
-        pawn.tagModel = tagModel
-        pawn.tagsCorrected = tagsCorrected
-        return pawn
+    /// The settings the payload describes.
+    var settings: CustomPawnSettings {
+        CustomPawnSettings(focus: CGPoint(x: focusX, y: focusY), showsName: showsName, scaling: scaling, tags: tags,
+                           tagModel: tagModel, tagsCorrected: tagsCorrected)
     }
 
     /// The SHA-256 of a payload's bytes, in hexadecimal.
@@ -73,9 +64,6 @@ struct RemoteCustomPawn {
     var id: UUID
     /// The payload's bytes; empty when the record is in a layout this version can't read.
     var payload: Data
-    /// The image's file, for as long as the event that brought it lasts; nil for the server's copy of a save it
-    /// refused, which comes without its files.
-    var image: URL?
     /// The record's archived system fields: its change tag, so the next save of it is no conflict.
     var systemFields: Data
 }
@@ -92,9 +80,8 @@ struct OutgoingCustomPawn: Equatable {
     var payload: Data
     /// The payload's digest when the record was built, so a change made while it is on its way still counts.
     var digest: String
-    /// The pawn's name, for people reading the CloudKit Console.
+    /// The creature's name as the record is built, for people reading the CloudKit Console.
     var title: String
-    var image: URL
     /// The server's last known copy, when it has one.
     var systemFields: Data?
 }

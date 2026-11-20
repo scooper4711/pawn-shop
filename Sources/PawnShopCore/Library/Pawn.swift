@@ -173,7 +173,7 @@ public struct Appearance: Codable, Hashable, Sendable {
 
 /// One piece of pawn art with one name, in one size.
 public struct Pawn: Codable, Identifiable, Hashable, Sendable {
-    /// Extracted art's key (`ArtKey`), the same on every device; a random UUID for a custom pawn.
+    /// Extracted art's key (`ArtKey`), the same on every device; its creature's random UUID for a custom pawn.
     public internal(set) var id: UUID
     public var name: String
     public var size: PawnSize
@@ -193,6 +193,9 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     public var tagsCorrected = false
     /// The creature's traits from its Battle Card, lowercase, such as "undead" and "zombie"; searched like tags.
     public var traits: [String] = []
+    /// True for a custom creature's pawn (R3.5), whatever its art is drawn from. The creature library says so,
+    /// so it isn't saved with the pawn.
+    public internal(set) var isCustomCreature = false
 
     public init(id: UUID = UUID(), name: String, size: PawnSize, art: PawnArt,
                 fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = [],
@@ -229,9 +232,10 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
         traits = try container.decodeIfPresent([String].self, forKey: .traits) ?? []
     }
 
+    /// True for a pawn the user made: a custom creature's, or one drawn from the user's own image.
     public var isCustom: Bool {
         if case .custom = art { return true }
-        return false
+        return isCustomCreature
     }
 }
 
