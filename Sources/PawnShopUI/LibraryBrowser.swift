@@ -15,6 +15,8 @@ struct LibraryBrowser: View {
     @State private var copies = 1
     @State private var renaming: Pawn?
     @State private var editingKeywords: Pawn?
+    /// The pawns Remove from Library is asking about, when removing them deletes custom pawns (R2.5).
+    @State private var removal: PendingRemoval?
     /// The pawn the arrow keys move from: the one last clicked or arrowed to.
     @State private var cursor: UUID?
     @State private var columnCount = 1
@@ -49,6 +51,7 @@ struct LibraryBrowser: View {
         .sheet(item: $editingKeywords) { pawn in
             EditKeywordsView(pawn: pawn) { library.correctTags($0, of: pawn.id) }
         }
+        .confirmsRemoval($removal, remove: remove)
     }
 
     private func grid(_ results: [Pawn]) -> some View {
@@ -151,9 +154,15 @@ struct LibraryBrowser: View {
         Button("Rename…") { renaming = pawn }
         Button("Edit Keywords…") { editingKeywords = pawn }
         Button("Remove from Library", role: .destructive) {
-            library.remove(selection.contains(pawn.id) ? selection : [pawn.id])
-            selection.subtract([pawn.id])
+            let ids = selection.contains(pawn.id) ? selection : [pawn.id]
+            guard let warning = library.removalWarning(for: ids) else { return remove(ids) }
+            removal = PendingRemoval(ids: ids, warning: warning)
         }
+    }
+
+    private func remove(_ ids: Set<UUID>) {
+        library.remove(ids)
+        selection.subtract(ids)
     }
 
     private func dragPayload(for id: UUID) -> DraggedContent {
@@ -161,7 +170,6 @@ struct LibraryBrowser: View {
     }
 
     /// A click selects one pawn; Command-click adds or removes it from the selection.
-
     private func select(_ id: UUID) {
         cursor = id
         gridFocused = true

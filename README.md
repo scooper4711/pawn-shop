@@ -73,7 +73,8 @@ right.*
   line.
 - Optional room for a base: blank paper below each face's foot, so the base's slot holds that instead of
   hiding the bottom of the name. The art keeps its size and the strip gets taller.
-- Custom pawns from your own images, from small to gargantuan.
+- Custom pawns from your own images, from tiny to gargantuan, kept as custom creatures in the library Pawn Shop
+  shares with Turnkeeper and Field Guide.
 - Keeps the library the same on your Macs, iPad and iPhone through your own iCloud, in builds signed for it: the
   pawns, the names and keywords you gave them, and your custom pawns. The PDFs stay on the device that imported
   them; a device without a pawn's PDF draws the pawn from a picture, downloaded when the pawn is first shown.
@@ -157,9 +158,11 @@ After that it opens normally.
   then print on white. Smallest text size, in the same place, sets how far text may shrink to save a card
   (6.25 pt unless changed; 5.5 pt fits most spells on one card).
 - **Your own art:** Library › Add Custom Pawn… (⌥⌘N): choose, drop or paste an image, name it, pick a size,
-  and drag the preview to place the art. The back is the front mirrored. To use a creature's art from a
-  scenario or book PDF, open the PDF in [Pluck](https://github.com/scooper4711/pluck) and drag or copy the
-  picture from there.
+  and drag the preview to place the art. The back is the front mirrored. Tiny prints the same pawn as Small. To
+  use a creature's art from a scenario or book PDF, open the PDF in
+  [Pluck](https://github.com/scooper4711/pluck) and drag or copy the picture from there. A custom pawn is a
+  custom creature, so removing one deletes it and its art everywhere, after Pawn Shop asks; one that has a stat
+  block is only hidden in Pawn Shop.
 
 ### Tagging
 
@@ -297,9 +300,9 @@ the SwiftUI app, shared by the Mac (`Sources/PawnShop`) and the iPad (`ios/`).
 | Pawns read from PDFs, their names and tags | `Tableside/Library.sqlite` in the Tableside Toolkit's App Group folder, shared with Turnkeeper and Field Guide |
 | Copies of the imported PDFs | `Tableside/Sources/` there |
 | Art's pictures, tokens' art, item art from decks sold as pictures | `Tableside/Pictures/` there |
-| Custom pawns, pawns removed from Pawn Shop | `~/Library/Application Support/Pawn Shop/pawn-shop.json` |
-| Custom pawns' images | `~/Library/Application Support/Pawn Shop/Custom/` |
-| What iCloud holds of the custom pawns | `~/Library/Application Support/Pawn Shop/pawn-shop-sync.json` |
+| Custom pawns' names, sizes and images | `Tableside/Library.sqlite` and `Tableside/Custom/` there, as custom creatures |
+| How custom pawns' art is placed and their tags, pawns removed from Pawn Shop | `~/Library/Application Support/Pawn Shop/pawn-shop.json` |
+| What iCloud holds of that | `~/Library/Application Support/Pawn Shop/pawn-shop-sync.json` |
 | Sheets | wherever you save them, as `.pawnsheet` files; on the iPad, On My iPad › Pawn Shop by default |
 
 A build outside the App Group (ad hoc, or run from the command line) keeps the shared library in
