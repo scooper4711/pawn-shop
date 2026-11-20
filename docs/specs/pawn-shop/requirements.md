@@ -278,8 +278,22 @@ The library is the same on the user's Macs, iPads and iPhones, so a sheet made o
 - R10.8 Without iCloud the app works on the device alone, as before (library sync R2.4). A library opened with
   `PAWN_SHOP_LIBRARY` never syncs.
 - R10.9 Not synced: pawns removed from Pawn Shop only (R2.5), which stay removed on that device alone; sheets,
-  which are documents (issue #29); and settings. An item deck's art (R8.5) shows only on a device that has the
+  which are documents in iCloud Drive instead (R11); and settings. An item deck's art (R8.5) shows only on a device that has the
   deck.
 - R10.10 A build syncs only when it is signed with the iCloud entitlements and names the container in its
   `Info.plist` (library sync R6): the iPad and iPhone app, the Mac App Store app, and a Developer ID build given a
   provisioning profile. Any other build works on the device alone.
+
+## R11 Sheets in iCloud Drive
+Sheets are documents, so they live in iCloud Drive rather than in the library (issue #29), and the same sheet opens on
+each of the user's devices.
+- R11.1 Pawn Shop has a folder of its own in iCloud Drive, named "Pawn Shop", as Pages and Numbers have. It
+  appears in Finder and the Files app once the app has run with iCloud Drive on, before the first sheet is saved.
+- R11.2 Saving a new sheet offers the Pawn Shop folder first: the Mac's save panel opens there, and the iPad's and
+  iPhone's document browser creates new sheets there.
+- R11.3 Sheets saved anywhere else open and save as before. Nothing is moved into the folder.
+- R11.4 A sheet opened on another device, or by someone else, names each pawn that device's library lacks (R4.8)
+  until its picture arrives (R10.4); it never shows a blank.
+- R11.5 The folder is in the iPad and iPhone app and the Mac App Store app, and in a Developer ID build whose
+  provisioning profile allows the folder's iCloud container. Any other build saves where the user chooses, as before.
+- R11.6 Without iCloud Drive, or signed out of iCloud, sheets save on the device as before.

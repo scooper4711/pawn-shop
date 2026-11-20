@@ -333,6 +333,31 @@ with it. Pawn Shop starts that engine, adds a zone of its own for custom pawns, 
   out of step until the records next change. Nothing here has run against iCloud yet: the end-to-end check is the
   toolkit's (library sync design), with a custom pawn added, renamed and removed on each side.
 
+## Sheets in iCloud Drive (`PawnShopCore/Documents`, R11)
+Sheets stay `FileDocument`s in a `DocumentGroup`; the system's document machinery does the iCloud work. Pawn Shop
+only says which container is its folder and makes sure the folder exists.
+
+| Question | Decision |
+|---|---|
+| Which container | Its own, `iCloud.io.github.scooper4711.PawnShop`, for iCloud Documents only; CloudKit stays in the suite's container (R10). One folder for the suite would put every app's documents under one name. |
+| How it shows | `NSUbiquitousContainers` in both `Info.plist`s: public document scope, named "Pawn Shop", no subfolders. Without the entitlement the entry does nothing. |
+| Default save place | The system's: the Mac's `NSDocument` save panel and the iPad's document browser offer an app's ubiquity container first once it has one. No code. |
+| What a sheet carries | Pawn IDs with names and products, never art (R4.10), so a sheet in iCloud Drive redistributes nothing and names what it lacks (R4.8). |
+| Existing sheets | Not moved (R11.3). |
+
+- **The folder** (`DocumentsFolder`). Apple asks apps to call `url(forUbiquityContainerIdentifier:)` once at launch,
+  off the main thread: the first call sets the container up, and its `Documents` folder is what iCloud Drive shows.
+  The app does that and creates `Documents` when it is missing, so the folder appears before the first save
+  (R11.1). The file system comes in through `UbiquityFileSystem`, so tests use a stand-in. Nil (no iCloud, signed out,
+  or no entitlement) leaves things as they were (R11.6).
+- **Builds** (R11.5). `ios/PawnShop.entitlements` lists `CloudDocuments` with `CloudKit`, both containers, and the
+  container under `ubiquity-container-identifiers`. On the Mac, `build-app.sh` runs
+  `scripts/add-icloud-documents.sh` after the toolkit's entitler. It adds the same entitlements only when the
+  provisioning profile allows the container, because a Mac app claiming an entitlement its profile lacks is
+  stopped at launch, and an old profile won't have the container (the Developer ID profile does allow iCloud
+  Documents: its `ubiquity-container-identifiers` lists the suite's container today). Before a release, the App ID needs
+  iCloud Documents with the container, and the profiles must be regenerated with it.
+
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
 `Resources/AppIcon.icns`: a cream pawn with Paizo's rounded top and red cut line, standing in a black base on
