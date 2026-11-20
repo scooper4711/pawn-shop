@@ -2,22 +2,15 @@ import Foundation
 import SharedLibraries
 
 /// Changing pawns: an extracted pawn's name, tags and suggestion are a note on its art in the shared library
-/// (R2.1.1); custom pawns are Pawn Shop's own (`OwnLibrary`).
+/// (R2.1.1); a custom pawn's name is its creature's, and its placement and tags are Pawn Shop's own (R3.6).
 extension PawnLibrary {
-    /// Adds a pawn made from the user's own art and saves.
-    public func add(_ pawn: Pawn) throws {
-        own.customPawns.append(pawn)
-        noteChange(toCustomPawn: pawn.id)
-        try saveOwn()
-    }
-
-    /// Replaces the pawn with the same id and saves: a custom pawn in Pawn Shop's library, an extracted one's
-    /// name, tags and suggestion as its art's note.
+    /// Saves a pawn's changes: a custom pawn's name as its creature's and the rest as Pawn Shop's settings, an
+    /// extracted one's name, tags and suggestion as its art's note.
     public func update(_ pawn: Pawn) throws {
-        if let index = own.customPawns.firstIndex(where: { $0.id == pawn.id }) {
-            own.customPawns[index] = pawn
-            noteChange(toCustomPawn: pawn.id)
-            try saveOwn()
+        if let creature = creatures[pawn.id] {
+            if creature.name != pawn.name { try shared.renameCustomCreature(id: pawn.id, to: pawn.name) }
+            keepSettings(of: pawn)
+            try saveOwnAndRefresh()
         } else if let entry = entries[pawn.id] {
             try shared.setNote(pawn.note(printedName: entry.name), forArt: entry.id)
             unsavedNotes.remove(pawn.id)
@@ -58,14 +51,24 @@ extension PawnLibrary {
         change(id) { $0.suggestedName = name }
     }
 
-    /// Removes pawns and saves: custom pawns with their art, extracted ones from Pawn Shop only (R2.5).
+    /// Removes pawns and saves (R2.5): a custom pawn's creature and art from every app, unless the creature has
+    /// a stat block; that one, and a pawn read from a PDF, from Pawn Shop only. The app asks first
+    /// (`removalWarning(for:)`).
     public func remove(_ ids: Set<UUID>) throws {
-        if removeCustomPawns(ids) { customPawnChanges += 1 }
-        own.hidden.formUnion(ids.compactMap { pawn(id: $0)?.id }.filter { entries[$0] != nil })
-        try saveOwn()
+        let found = Set(ids.compactMap { pawn(id: $0)?.id })
+        let deleted = found.filter(isDeletedWhenRemoved)
+        for id in deleted.sorted(by: { $0.uuidString < $1.uuidString }) { try shared.removeCustomCreature(id: id) }
+        forgetCustomPawns(deleted)
+        own.hidden.formUnion(found.subtracting(deleted))
+        try saveOwnAndRefresh()
     }
 
-    /// Saves the notes `setTags` and `setSuggestedName` recorded, and the custom pawns.
+    /// True for a custom pawn whose creature only Pawn Shop knows anything about: it has no stat block.
+    func isDeletedWhenRemoved(_ id: UUID) -> Bool {
+        creatures[id]?.hasStatBlock == false
+    }
+
+    /// Saves the notes `setTags` and `setSuggestedName` recorded, and the custom pawns' settings.
     public func save() throws {
         for id in unsavedNotes.sorted(by: { $0.uuidString < $1.uuidString }) {
             guard let pawn = pawn(id: id), let entry = entries[id] else { continue }
@@ -76,36 +79,25 @@ extension PawnLibrary {
         try refresh()
     }
 
-    /// Takes custom pawns out with their art and the times of their changes, without saving. True when any of
-    /// `ids` was one.
-    @discardableResult
-    func removeCustomPawns(_ ids: Set<UUID>) -> Bool {
-        let removed = own.customPawns.filter { ids.contains($0.id) }
-        for pawn in removed {
-            if case .custom(let art) = pawn.art {
-                try? FileManager.default.removeItem(at: customFolder.appendingPathComponent(art.imageFile))
-            }
-            own.customPawnsModified[pawn.id.uuidString] = nil
-        }
-        own.customPawns.removeAll { ids.contains($0.id) }
-        return !removed.isEmpty
+    /// Keeps what is Pawn Shop's own about a custom pawn, without saving, and notes the change for syncing
+    /// (R10.2) when there is one. A pawn with nothing but the defaults keeps no settings.
+    func keepSettings(of pawn: Pawn) {
+        let current = settings(ofCustomPawn: pawn.id)
+        let settings = current.taking(pawn)
+        guard settings != current else { return }
+        own.pawnSettings[pawn.id.uuidString] = settings
+        own.customPawnsModified[pawn.id.uuidString] = Date().timeIntervalSinceReferenceDate
+        customPawnChanges += 1
     }
 
     // MARK: Helpers
-
-    /// Notes that the user changed a custom pawn now, which syncing sends (R10.2).
-    private func noteChange(toCustomPawn id: UUID) {
-        own.customPawnsModified[id.uuidString] = Date().timeIntervalSinceReferenceDate
-        customPawnChanges += 1
-    }
 
     /// Changes a pawn in memory, to be saved by `save()`.
     private func change(_ id: UUID, _ edit: (inout Pawn) -> Void) {
         guard let current = pawn(id: id), let index = pawnIndexes[current.id] else { return }
         edit(&pawns[index])
-        if let custom = own.customPawns.firstIndex(where: { $0.id == current.id }) {
-            own.customPawns[custom] = pawns[index]
-            noteChange(toCustomPawn: current.id)
+        if creatures[current.id] != nil {
+            keepSettings(of: pawns[index])
         } else {
             notes[current.id] = pawns[index].note(printedName: entries[current.id]?.name ?? pawns[index].name)
             unsavedNotes.insert(current.id)
@@ -115,5 +107,11 @@ extension PawnLibrary {
     func saveOwn() throws {
         try own.save(to: folder)
         rebuild()
+    }
+
+    /// Saves Pawn Shop's own library and reads what a change just made to the shared one did.
+    func saveOwnAndRefresh() throws {
+        try own.save(to: folder)
+        if try !refresh() { rebuild() }
     }
 }

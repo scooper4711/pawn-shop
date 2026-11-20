@@ -18,14 +18,14 @@ public enum PawnLibraryError: Error, Equatable, CustomStringConvertible {
 }
 
 /// The pawns of every imported PDF, kept in the art library Pawn Shop shares with Turnkeeper and Field Guide
-/// (R2.1), and the custom pawns, kept in a folder of Pawn Shop's own.
+/// (R2.1), and the custom pawns, which are the custom creatures of the creature library they share (R3.4).
 public final class PawnLibrary {
     /// Pawn Shop's library before the shared one, moved into it once (`LibraryMoving.swift`).
     static let indexFile = "library.json"
     /// The library as version 1 saved it, kept when its pawns were given their keys.
     static let version1File = "library-v1.json"
 
-    /// Pawn Shop's own folder: custom pawns' art and `OwnLibrary`.
+    /// Pawn Shop's own folder: `OwnLibrary` and the sync ledger.
     public let folder: URL
     public let shared: SharedLibrary
     public internal(set) var sources: [PawnSource] = []
@@ -35,9 +35,14 @@ public final class PawnLibrary {
     var own = OwnLibrary()
     /// What this device knows iCloud holds of the custom pawns (R10.2).
     var ledger = CustomPawnLedger()
-    /// Counts the user's changes to custom pawns, so the app can tell syncing there is something to send; the
+    /// Counts the changes to custom pawns' settings, so the app can tell syncing there is something to send; the
     /// shared library tells of its own changes itself.
     public internal(set) var customPawnChanges = 0
+    /// The custom creatures, the files of the images the user added, and the art chosen for each custom
+    /// creature, as last read (`CreaturePawns.swift`).
+    var creatures: [UUID: CustomCreature] = [:]
+    var customArtFiles: [UUID: String] = [:]
+    var creatureArt: [UUID: CreatureArtChoice] = [:]
     /// The shared library's art, notes and sources as last read, and its change counter then.
     var entries: [UUID: SharedArtEntry] = [:]
     var notes: [UUID: ArtNote] = [:]
@@ -63,14 +68,16 @@ public final class PawnLibrary {
         try self.init(folder: folder, shared: shared)
     }
 
-    /// Opens the library in `folder` over `shared`, moving Pawn Shop's old library into it first (R2.16).
+    /// Opens the library in `folder` over `shared`, moving Pawn Shop's old library into it first (R2.16), then
+    /// its custom pawns (R3.7).
     public init(folder: URL, shared: SharedLibrary) throws {
         self.folder = folder
         self.shared = shared
-        try FileManager.default.createDirectory(at: folders.custom, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         own = try OwnLibrary.read(from: folder)
         ledger = CustomPawnLedger.read(from: folder)
         try moveInIfNeeded()
+        try moveCustomPawnsIfNeeded()
         try reload()
     }
 
@@ -104,11 +111,12 @@ public final class PawnLibrary {
         entries = Dictionary(uniqueKeysWithValues: try shared.artEntries().map { ($0.id, $0) })
         notes = try shared.notes()
         try readSources()
+        try readCreatures()
         rebuild()
     }
 
-    /// Reads what the shared library changed since it was last read, by this app or another (R2.1): the art and
-    /// notes changed, and those deleted. False when nothing changed.
+    /// Reads what the shared library changed since it was last read, by this app or another (R2.1): the art,
+    /// notes and custom creatures changed, and those deleted. False when nothing changed.
     @discardableResult
     public func refresh() throws -> Bool {
         let changes = try shared.changes(since: counter)
@@ -125,6 +133,7 @@ public final class PawnLibrary {
         if !changes.changedTables.isDisjoint(with: [.sources, .sourceAccess]) || changes.deletions[.sources] != nil {
             try readSources()
         }
+        try readCreatures(changed: changes)
         counter = changes.counter
         rebuild()
         return true
@@ -142,7 +151,7 @@ public final class PawnLibrary {
         sharedSources = Dictionary(uniqueKeysWithValues: try shared.sources().map { ($0.id, $0) })
     }
 
-    /// Makes the pawns, item art and sources from the art and notes read, with the custom pawns.
+    /// Makes the pawns, item art and sources from the art and notes read, with the custom creatures' pawns.
     func rebuild() {
         let reachable = Set(sharedSources.values.filter(\.isKept).map(\.id))
         var extracted: [Pawn] = []
@@ -157,7 +166,7 @@ public final class PawnLibrary {
             }
         }
         extracted.sort(by: Self.isOrdered)
-        pawns = extracted + own.customPawns
+        pawns = extracted + creaturePawns(reachable: reachable)
         itemArt = items.sorted { $0.name == $1.name ? $0.id.uuidString < $1.id.uuidString : $0.name < $1.name }
         pawnIndexes = Dictionary(uniqueKeysWithValues: pawns.enumerated().map { ($1.id, $0) })
         let used = Set(pawns.flatMap { $0.appearances.map(\.sourceID) } + itemArt.map(\.sourceID))
@@ -166,7 +175,7 @@ public final class PawnLibrary {
     }
 
     /// The library's order: by name, then ID, the same on every launch.
-    private static func isOrdered(_ first: Pawn, _ second: Pawn) -> Bool {
+    static func isOrdered(_ first: Pawn, _ second: Pawn) -> Bool {
         first.name == second.name ? first.id.uuidString < second.id.uuidString : first.name < second.name
     }
 
@@ -191,8 +200,10 @@ public struct LibraryFolders: Hashable, Sendable {
 
     /// The kept PDFs, named by their digest.
     public var sources: URL { shared.appendingPathComponent("Sources", isDirectory: true) }
-    /// Images for custom pawns.
-    public var custom: URL { root.appendingPathComponent("Custom", isDirectory: true) }
+    /// The images the user added for custom creatures, which custom pawns are drawn from.
+    public var custom: URL { shared.appendingPathComponent("Custom", isDirectory: true) }
+    /// Where custom pawns' images were before they moved into the shared library (R3.7).
+    var ownCustom: URL { root.appendingPathComponent("Custom", isDirectory: true) }
     /// Tokens' art drawn alone, items' pictures cut out of decks sold as pictures, and each art's picture.
     public var pictures: URL { shared.appendingPathComponent("Pictures", isDirectory: true) }
     /// Tokens' art drawn alone (see `TokenArt`).

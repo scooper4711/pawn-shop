@@ -10,6 +10,13 @@ import ArtExtractionTestSupport
 
     func library() throws -> PawnLibrary { try PawnLibrary(folder: folder.appendingPathComponent("Library")) }
 
+    /// Imports a pawn printed without a name, which needs one. Pawns read from PDFs come before custom ones.
+    func importNamelessPawn(into library: PawnLibrary) throws -> Pawn {
+        let stranger = DrawnPawn(rect: CGRect(x: 120, y: 600, width: 81, height: 138), art: artImage(variant: 2))
+        try library.importPDF(at: writePawnPDF([stranger], named: "Mystery Box PDF.pdf", in: folder))
+        return try #require(library.pawns.first { $0.needsName })
+    }
+
     @Test func keepsTagsBetweenLaunchesAndFindsPawnsByThem() throws {
         let library = try library()
         let hero = Pawn(name: "Hero", size: .medium, art: .custom(CustomArt(imageFile: "hero.png")))
@@ -46,10 +53,8 @@ import ArtExtractionTestSupport
     @Test func asksAboutPawnsNeedingANameFirstUntilOneIsSuggested() throws {
         let library = try library()
         let named = Pawn(name: "Hero", size: .medium, art: .custom(CustomArt(imageFile: "hero.png")))
-        let nameless = Pawn(name: "Unknown Heroes", size: .medium, art: .custom(CustomArt(imageFile: "x.png")),
-                            needsName: true)
         try library.add(named)
-        try library.add(nameless)
+        let nameless = try importNamelessPawn(into: library)
         #expect(library.pawnsNeedingTags(by: "model").map(\.id) == [nameless.id, named.id])
         library.setTags(["bow"], by: "model", of: named.id)
         library.setTags(["bow"], by: "model", of: nameless.id)
@@ -67,29 +72,26 @@ import ArtExtractionTestSupport
 
     @Test func asksAboutPawnsOnScreenFirst() throws {
         let library = try library()
-        let names = ["First", "Second", "Third", "Fourth"]
-        for name in names {
-            try library.add(Pawn(name: name, size: .medium, art: .custom(CustomArt(imageFile: "x.png")),
-                                 needsName: name == "Fourth"))
+        for name in ["First", "Second", "Third"] {
+            try library.add(Pawn(name: name, size: .medium, art: .custom(CustomArt(imageFile: "x.png"))))
         }
+        let nameless = try importNamelessPawn(into: library).name
         let ids = Dictionary(uniqueKeysWithValues: library.pawns.map { ($0.name, $0.id) })
         let order = { (visible: Set<String>) in
             library.pawnsNeedingTags(by: "model", visible: Set(visible.compactMap { ids[$0] })).map(\.name)
         }
-        #expect(order([]) == ["Fourth", "First", "Second", "Third"])
-        #expect(order(["Third", "Second"]) == ["Second", "Third", "Fourth", "First"])
+        #expect(order([]) == [nameless, "First", "Second", "Third"])
+        #expect(order(["Third", "Second"]) == ["Second", "Third", nameless, "First"])
         library.setTags(["axe"], by: "model", of: ids["Second"]!)
-        #expect(order(["Third", "Second"]) == ["Third", "Fourth", "First"])
+        #expect(order(["Third", "Second"]) == ["Third", nameless, "First"])
     }
 
     @Test func keepsTagsTheUserCorrected() throws {
         let library = try library()
         let forgeSpurned = Pawn(name: "Accursed Forge-Spurned", size: .medium,
                                 art: .custom(CustomArt(imageFile: "x.png")))
-        let nameless = Pawn(name: "Unknown Heroes", size: .medium, art: .custom(CustomArt(imageFile: "y.png")),
-                            needsName: true)
         try library.add(forgeSpurned)
-        try library.add(nameless)
+        let nameless = try importNamelessPawn(into: library)
         library.setTags(["orc"], by: "model", of: forgeSpurned.id)
         try library.correctTags(["Undead", "dwarf", "undead"], of: forgeSpurned.id)
         try library.correctTags(["elf"], of: nameless.id)

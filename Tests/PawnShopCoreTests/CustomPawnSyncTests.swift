@@ -5,7 +5,7 @@ import TablesideSync
 import Testing
 @testable import PawnShopCore
 
-/// A device whose custom pawns sync: its library and the handler of its zone.
+/// A device whose custom pawns' settings sync: its library and the handler of its zone.
 @MainActor
 struct SyncingDevice {
     let device: SyncDevice
@@ -60,7 +60,7 @@ private func conflict(with server: CKRecord) -> CKError {
         pad = try SyncingDevice()
     }
 
-    @Test func savesEachPawnAsARecordOfItsZoneWithItsImage() throws {
+    @Test func savesEachPawnsSettingsAsARecordOfItsZoneWithoutItsImage() throws {
         let hero = try mac.device.addHero()
         #expect(mac.sync.zones().map(\.zoneName) == ["PawnShop"])
         let recordID = CKRecord.ID(recordName: "pawn-\(hero.id.uuidString)", zoneID: CustomPawnRecordCoder.zone)
@@ -68,7 +68,7 @@ private func conflict(with server: CKRecord) -> CKError {
 
         let record = try #require(mac.sync.record(for: recordID))
         #expect(record.recordType == "CustomPawn" && record["format"] == Int64(1) && record["title"] == "Hero")
-        #expect((record["image"] as? CKAsset)?.fileURL != nil && record["payload"] is Data)
+        #expect(record["image"] == nil && record["payload"] is Data)
 
         mac.sync.sent(saved: [record], deleted: [])
         #expect(mac.sync.pendingChanges().isEmpty && mac.sync.record(for: recordID) == nil)
@@ -76,10 +76,11 @@ private func conflict(with server: CKRecord) -> CKError {
         #expect(mac.sync.record(for: CKRecord.ID(recordName: recordID.recordName, zoneID: .default)) == nil)
     }
 
-    @Test func savesAChangedPawnOverTheServersCopy() throws {
+    @Test func savesChangedSettingsOverTheServersCopy() throws {
         let hero = try mac.device.addHero()
         let first = try #require(mac.sendEverything().first)
         try mac.library.rename(hero.id, to: "Heroine")
+        try mac.library.correctTags(["sword"], of: hero.id)
         let fields = CustomPawnRecordCoder.systemFields(of: first)
         #expect(mac.library.outgoingCustomPawn(hero.id)?.systemFields == fields)
         let second = try #require(mac.sync.record(for: first.recordID))
@@ -91,8 +92,9 @@ private func conflict(with server: CKRecord) -> CKError {
         let hero = try mac.device.addHero()
         var told = 0
         pad.sync.onChange = { told += 1 }
+        try pad.device.receiveCreature(of: hero)
         pad.fetch(mac.sendEverything())
-        #expect(pad.library.pawn(id: hero.id)?.name == "Hero" && told == 1)
+        #expect(pad.library.pawn(id: hero.id)?.art == hero.art && told == 1)
         #expect(pad.sync.pendingChanges().isEmpty && pad.sync.problem == nil)
 
         try mac.library.remove([hero.id])
@@ -106,31 +108,32 @@ private func conflict(with server: CKRecord) -> CKError {
             .init(recordID: deletion.changedRecord, recordType: "CustomPawn"),
             .init(recordID: other, recordType: "Note")
         ]))
-        #expect(pad.library.pawns.isEmpty && told == 2)
+        #expect(pad.library.own.pawnSettings.isEmpty && told == 2)
     }
 
     @Test func ignoresRecordsThatAreNotCustomPawns() throws {
         let record = CKRecord(recordType: "Note", recordID: CustomPawnRecordCoder.recordID(of: UUID()))
         pad.fetch([record])
-        #expect(pad.library.pawns.isEmpty)
+        #expect(pad.library.own.pawnSettings.isEmpty)
     }
 
     @Test func passesOverARecordInALaterLayout() throws {
         let hero = try mac.device.addHero()
+        try pad.device.receiveCreature(of: hero)
         pad.fetch(mac.sendEverything())
-        try mac.library.rename(hero.id, to: "Later")
+        try mac.library.correctTags(["later"], of: hero.id)
         let later = try #require(mac.sendEverything().first)
         later["format"] = Int64(2)
         pad.fetch([later])
-        #expect(pad.library.pawn(id: hero.id)?.name == "Hero")
-        try pad.library.rename(hero.id, to: "Changed Here")
-        #expect(pad.sync.pendingChanges().isEmpty, "the pawn isn't sent over a record this version can't read")
+        #expect(pad.device.tags(of: hero) == [])
+        try pad.library.correctTags(["changed here"], of: hero.id)
+        #expect(pad.sync.pendingChanges().isEmpty, "settings aren't sent over a record this version can't read")
     }
 
     @Test func reportsRecordsItCouldNotMergeIn() throws {
         try mac.device.addHero()
         let record = try #require(mac.sendEverything().first)
-        try FileManager.default.removeItem(at: pad.library.customFolder)
+        try FileManager.default.removeItem(at: pad.library.folder)
         var told = 0
         pad.sync.onChange = { told += 1 }
         pad.fetch([record])
@@ -139,32 +142,32 @@ private func conflict(with server: CKRecord) -> CKError {
 
     @Test func settlesARefusedSaveByMergingTheServersRecord() throws {
         let hero = try mac.device.addHero()
+        try pad.device.receiveCreature(of: hero)
         pad.fetch(mac.sendEverything())
-        try mac.library.rename(hero.id, to: "Mac Hero")
-        let server = try #require(mac.sendEverything().first)
-        server["image"] = nil
+        try mac.library.correctTags(["mac"], of: hero.id)
         mac.device.setModified(200, of: hero)
+        let server = try #require(mac.sendEverything().first)
 
-        try pad.library.rename(hero.id, to: "Pad Hero")
+        try pad.library.correctTags(["pad"], of: hero.id)
         pad.device.setModified(100, of: hero)
         let refused = try #require(pad.sync.record(for: server.recordID))
         #expect(!pad.sync.settle([(record: refused, error: conflict(with: server))]))
-        #expect(pad.library.pawn(id: hero.id)?.name == "Mac Hero" && pad.sync.pendingChanges().isEmpty)
+        #expect(pad.device.tags(of: hero) == ["mac"] && pad.sync.pendingChanges().isEmpty)
 
-        try pad.library.rename(hero.id, to: "Pad Hero Again")
+        try pad.library.correctTags(["pad again"], of: hero.id)
         pad.device.setModified(300, of: hero)
         try pad.library.forgetSystemFields(of: hero.id)
         let again = try #require(pad.sync.record(for: server.recordID))
         #expect(!pad.sync.settle([(record: again, error: conflict(with: server))]))
-        #expect(pad.library.pawn(id: hero.id)?.name == "Pad Hero Again")
+        #expect(pad.device.tags(of: hero) == ["pad again"])
         #expect(pad.library.outgoingCustomPawn(hero.id)?.systemFields == CustomPawnRecordCoder.systemFields(of: server),
-                "the pawn here is sent over the server's record")
+                "the settings here are sent over the server's record")
     }
 
     @Test func sendsARecordTheServerDoesNotKnowAsNew() throws {
         let hero = try mac.device.addHero()
         let record = try #require(mac.sendEverything().first)
-        try mac.library.rename(hero.id, to: "Heroine")
+        try mac.library.correctTags(["sword"], of: hero.id)
         #expect(!mac.sync.settle([(record: record, error: CKError(.unknownItem))]))
         #expect(mac.library.outgoingCustomPawn(hero.id)?.systemFields == nil)
         #expect(!mac.sync.settle([(record: record, error: CKError(.networkFailure))]))

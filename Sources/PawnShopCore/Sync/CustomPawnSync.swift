@@ -3,8 +3,9 @@ import Foundation
 import SharedLibraries
 import TablesideSync
 
-/// Syncs custom pawns through the zone `PawnShop` of the suite's container (R10.2): one of the owners of zones on
-/// the toolkit's engine, beside the shared library's own. The library decides what to send and how a record from
+/// Syncs what is Pawn Shop's own about custom pawns, their placement and tags, through the zone `PawnShop` of the
+/// suite's container (R10.2): one of the owners of zones on the toolkit's engine, beside the shared library's
+/// own, which syncs their creatures and images. The library decides what to send and how a record from
 /// another device is merged in (`CustomPawnSyncing.swift`); this hands records between it and the engine. It
 /// lives on the main actor, as the library does.
 @MainActor
@@ -73,8 +74,8 @@ public final class CustomPawnSync: SyncZoneHandler {
         }
     }
 
-    /// Settles refused saves. A record the server holds in another version is merged in as a fetched one is; it
-    /// comes without its image, so the image here stays. A zone the server lacks holds none of the records, so
+    /// Settles refused saves. A record the server holds in another version is merged in as a fetched one is.
+    /// A zone the server lacks holds none of the records, so
     /// the server is forgotten and everything goes up with the zone. Anything not named here the engine retries.
     public func settle(_ failures: [FailedSave]) -> Bool {
         defer { finish() }

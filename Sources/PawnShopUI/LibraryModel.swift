@@ -48,8 +48,8 @@ final class LibraryModel {
     @ObservationIgnored var sync: LibrarySync?
     @ObservationIgnored var customPawnSync: CustomPawnSync?
     @ObservationIgnored var pictureRequests: PictureRequests?
-    /// The library's count of changes to custom pawns that syncing was last told of.
-    @ObservationIgnored private var customPawnChangesTold = 0
+    /// The library's count of changes to custom pawns' settings that syncing was last told of.
+    @ObservationIgnored var customPawnChangesTold = 0
     /// The reading of the shared library's changes that is waiting, so a run of changes is read once.
     @ObservationIgnored private var changesToRead: Task<Void, Never>?
     static let changeReadingInterval: Duration = .milliseconds(500)
@@ -97,6 +97,8 @@ final class LibraryModel {
         } catch {
             errorMessage = "Reading the shared library failed: \(error)"
         }
+        // A creature another app or device deleted took its pawn's settings with it.
+        tellSyncOfCustomPawnChanges()
     }
 
     /// Lets go of the shared library's file as the app goes to the background on the iPad; syncing lets go of it
@@ -248,8 +250,9 @@ final class LibraryModel {
         removed.forEach { backgroundRenderer?.forget($0) }
     }
 
-    func add(_ pawn: Pawn) {
-        perform { try $0.add(pawn) }
+    /// The question to ask before removing pawns; nil when removing them deletes nothing (R2.5).
+    func removalWarning(for ids: Set<UUID>) -> RemovalWarning? {
+        library?.removalWarning(for: ids)
     }
 
     /// Adds a pawn made from the user's art; nil when it could not be saved.
@@ -284,10 +287,7 @@ final class LibraryModel {
             errorMessage = "\(error)"
         }
         refresh()
-        if library.customPawnChanges != customPawnChangesTold {
-            customPawnChangesTold = library.customPawnChanges
-            customPawnsChanged()
-        }
+        tellSyncOfCustomPawnChanges()
     }
 
     func refresh() {

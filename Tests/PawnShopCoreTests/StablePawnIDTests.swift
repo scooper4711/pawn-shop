@@ -122,7 +122,8 @@ func printedPawn(_ name: String, digest: String, source: String, size: PawnSize 
                                 fingerprint: goblin.fingerprint, face: goblin.art.front)
         #expect(keyed.id == ArtKey.keys(for: [input]).first)
         #expect(library.pawn(id: goblin.id)?.id == keyed.id)
-        #expect(library.pawn(id: custom.id) == custom)
+        let moved = try #require(library.pawn(id: custom.id))
+        #expect(moved.name == "Hero" && moved.art == custom.art && moved.isCustomCreature)
     }
 
     @Test func mergesPawnsWithOneKey() throws {

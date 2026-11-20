@@ -40,6 +40,19 @@ enum RealLibrary {
         #expect(Set(customs).isSubset(of: Set(library.pawns.map(\.id))))
     }
 
+    @Test func movesTheCustomPawnsIntoTheCreatureLibrary() throws {
+        let customs = old.pawns.filter(\.isCustom)
+        let creatures = Dictionary(uniqueKeysWithValues: try library.shared.customCreatures().map { ($0.id, $0) })
+        #expect(creatures.count == customs.count && !customs.isEmpty)
+        for custom in customs {
+            let moved = try #require(library.pawn(id: custom.id), "\(custom.name)")
+            #expect(moved.name == custom.name && moved.size == custom.size && moved.art == custom.art)
+            #expect(moved.tags == custom.tags && moved.tagsCorrected == custom.tagsCorrected)
+            #expect(creatures[custom.id]?.size?.pawnSize == custom.size && creatures[custom.id]?.hasStatBlock == false)
+        }
+        #expect(library.own.customPawns.isEmpty)
+    }
+
     @Test func mergesOnlyPawnsThatShareAKey() {
         let merged = old.pawns.count - library.pawns.count
         #expect(merged <= 5, "merged \(merged) pawns")

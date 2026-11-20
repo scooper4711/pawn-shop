@@ -2,8 +2,8 @@ import CloudKit
 import Foundation
 
 /// Turns custom pawns' records into CloudKit records and back (R10.2): the type `CustomPawn` in the zone `PawnShop`
-/// of the suite's container, one per pawn, named `pawn-<UUID>`, with the fields `format`, `title`, `payload` and
-/// `image`.
+/// of the suite's container, one per pawn with settings, named `pawn-<UUID>` after its creature, with the fields
+/// `format`, `title` and `payload`. The image is the creature library's, which the toolkit syncs.
 enum CustomPawnRecordCoder {
     static let zoneName = "PawnShop"
     static let recordType = "CustomPawn"
@@ -15,16 +15,13 @@ enum CustomPawnRecordCoder {
     static let zone = CKRecordZone.ID(zoneName: zoneName, ownerName: CKCurrentUserDefaultName)
 
     /// The record to save, over the server's last known copy when there is one, so the save is a change to it
-    /// and not a conflict. The image goes with every save, as the toolkit sends custom art's.
+    /// and not a conflict.
     static func record(for outgoing: OutgoingCustomPawn) -> CKRecord {
         let record = outgoing.systemFields.flatMap(record(withSystemFields:))
             ?? CKRecord(recordType: recordType, recordID: recordID(of: outgoing.id))
         record["format"] = format
         record["title"] = outgoing.title
         record["payload"] = outgoing.payload
-        if FileManager.default.fileExists(atPath: outgoing.image.path) {
-            record["image"] = CKAsset(fileURL: outgoing.image)
-        }
         return record
     }
 
@@ -34,8 +31,7 @@ enum CustomPawnRecordCoder {
         guard record.recordType == recordType, let id = pawnID(of: record.recordID) else { return nil }
         let isReadable = record["format"] as? Int64 ?? format <= format
         let payload = isReadable ? record["payload"] as? Data ?? Data() : Data()
-        let image = (record["image"] as? CKAsset)?.fileURL
-        return .saved(RemoteCustomPawn(id: id, payload: payload, image: image, systemFields: systemFields(of: record)))
+        return .saved(RemoteCustomPawn(id: id, payload: payload, systemFields: systemFields(of: record)))
     }
 
     static func recordID(of id: UUID) -> CKRecord.ID {

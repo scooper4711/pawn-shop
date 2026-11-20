@@ -2,6 +2,7 @@ import CoreGraphics
 import Foundation
 import Testing
 import ArtExtractionTestSupport
+import SharedLibraries
 @testable import PawnShopCore
 
 @Suite struct CustomPawnTests {
@@ -47,8 +48,9 @@ import ArtExtractionTestSupport
 
     @Test func reportsArtThatCannotBeSaved() throws {
         try FileManager.default.removeItem(at: library.customFolder)
-        #expect(throws: PawnLibraryError.self) {
+        #expect(throws: SharedLibraryError.self) {
             try library.addCustomPawn(NewCustomPawn(image: headRedImage(), name: "Lost"))
         }
+        #expect(library.pawns.isEmpty && library.own.pawnSettings.isEmpty)
     }
 }
