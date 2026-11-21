@@ -5,18 +5,17 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=scooper4711_pawn-shop&metric=coverage)](https://sonarcloud.io/summary/new_code?id=scooper4711_pawn-shop)
 [![GitHub Release](https://img.shields.io/github/v/release/scooper4711/pawn-shop)](https://github.com/scooper4711/pawn-shop/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/scooper4711/pawn-shop/total)](https://github.com/scooper4711/pawn-shop/releases)
-[![Platform](https://img.shields.io/badge/platform-macOS%2015%2B%20%7C%20iPadOS%2018%2B-informational)](#requirements)
+[![Platform](https://img.shields.io/badge/platform-macOS%2015%2B%20%7C%20iPadOS%2018%2B%20%7C%20iOS%2018%2B-informational)](#requirements)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 Do you have pawn PDFs you never print because the double-sided layout is so hard to line up? And when you
 do get it to work, needing six goblins means printing the goblins' page six times, along with the other 29
 pawns on it that you don't want.
 
-Pawn Shop is an unofficial Mac and iPad app for Pathfinder and Starfinder that fixes both. Give it the pawn PDFs you
-own, or import them all from [Scrollkeeper](https://github.com/scooper4711/scrollkeeper). It reads Paizo's
-pawn boxes, Battle Cards and Starfinder Second Edition's round tokens, and builds a library of pawns.
-Search for exactly the ones you want, add as many of each as you need, and they all print together on as few
-sheets as possible.
+Pawn Shop is an unofficial Mac, iPad and iPhone app for Pathfinder and Starfinder that fixes both. Give it the pawn
+PDFs you own, or import them all from [Scrollkeeper](https://github.com/scooper4711/scrollkeeper). It reads Paizo's
+pawn boxes, Battle Cards and Starfinder Second Edition's round tokens, and builds a library of pawns. Search for
+exactly the ones you want, add as many of each as you need, and they all print together on as few sheets as possible.
 
 The best part: it prints single-sided. Each pawn is one strip, its front below and its back above it upside
 down, head to head. Cut it out and fold it at the heads. It is easier to print, and the folded pawn is two
@@ -99,7 +98,7 @@ Clone with `git clone --recursive`, or run `git submodule update --init` after c
 licensed and not redistributable. Without access to it, the build still works and falls back to built-in
 artwork.
 
-### On the iPad
+### On the iPad and iPhone
 
 The iPad app (it runs on the iPhone too) builds the same library and prints the same sheets. Sheets are documents
 in the document browser. The Library button in the toolbar holds the Library menu, with Export PDF… and
@@ -205,9 +204,8 @@ by default, so the whole name stays in view.
 
 ## Tableside Toolkit
 
-Pawn Shop is part of the Tableside Toolkit, free Mac apps for running Pathfinder and Starfinder games in person;
-Turnkeeper and Field Guide run on the iPad too. Like any good toolkit, each one grants a +1 item bonus to game
-prep.
+Pawn Shop is part of the Tableside Toolkit, free apps for the Mac, iPad and iPhone for running Pathfinder and
+Starfinder games in person. Like any good toolkit, each one grants a +1 item bonus to game prep.
 
 - [Scrollkeeper](https://github.com/scooper4711/scrollkeeper) keeps your Paizo library in order and downloads your
   purchases.
@@ -215,9 +213,9 @@ prep.
 - **Pawn Shop** prints just the pawns you need, single-sided, from your pawn PDFs.
 - [Mapsmith](https://github.com/scooper4711/mapsmith) prints battle maps at true scale on ordinary paper.
 - [Turnkeeper](https://github.com/scooper4711/turnkeeper) builds encounters and runs initiative at the table, with
-  the battle card of whoever's turn it is, on the iPad and the Mac.
+  the battle card of whoever's turn it is.
 - [Field Guide](https://github.com/scooper4711/field-guide) carries the Pathfinder and Starfinder compendium,
-  offline, on the iPad and the Mac.
+  offline.
 
 ## Supporting the project
 
