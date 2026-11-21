@@ -5,6 +5,82 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-11-21
+
+### Added
+- Ask before deleting a custom pawn
+- Make custom pawns custom creatures
+- Show the iCloud Drive folder before the first save
+- Offer Pawn Shop's iCloud Drive folder for sheets
+- Sign builds for iCloud so the library syncs
+- Fetch a pawn's picture when it is first shown
+- Start syncing at launch and show it in Settings
+- Ask iCloud for pictures a batch at a time
+- Sync custom pawns in a zone on the toolkit's engine
+- Work out what custom pawns have to sync
+- Draw a pawn without its PDF from its saved picture
+- Read PDFs again at launch when the reader is newer
+- Follow other apps' changes to the shared art library
+- Keep pawns in the toolkit's shared art library
+- Give pawns the same IDs on every device
+- Add the iPad app
+- Build the core for the iPad and name paper sizes
+
+### Fixed
+- Keep a plain bookmark of Scrollkeeper's folder when a scoped one can't be made
+- Keep the window answering while a library syncs in
+- Keep asking for a picture while its pawn is on screen
+- Wait a minute before asking again for a missing picture
+- Draw a tile at once, then ask iCloud for its pictures
+- Keep a page's PDF open while its pictures are read
+- Read the action icons' font once, one thread at a time
+- Pack sheet strips in columns when rows take more pages
+- Show the pages, the sheet and Print on the iPhone
+- Show the About screen from the iPad's menu bar
+- Show the buttons of Rename and other sheets on the iPad
+
+### Changed
+- Ignore Xcode's per-user state wherever the project is
+- Give the tag storage tests a file of their own
+- Specify custom pawns as custom creatures
+- Require tabletop-kit 1.12.0
+- Describe sheets in iCloud Drive
+- Specify Pawn Shop's folder in iCloud Drive
+- Update tabletop-kit to 1.11.4
+- Wrap the syncing design's long lines
+- Name the record coder and how tiles ask for pictures
+- Give picture requests time to meet in one round
+- Describe syncing, where things are stored and privacy
+- Keep a strip's place on the page beside its cut marks
+- Time out CI jobs instead of waiting 6 hours
+- Specify syncing the library between devices
+- Require tabletop-kit 1.11.3
+- Require tabletop-kit 1.11.2
+- Require tabletop-kit 1.11.1
+- Pin the GitHub actions to commit hashes
+- Run the tests on the self-hosted Mac mini
+- Require tabletop-kit 1.11.0
+- Require tabletop-kit 1.10.0
+- Require tabletop-kit 1.9.0
+- Keep pawns in the toolkit's shared art library
+- Require tabletop-kit 1.8.0
+- Require tabletop-kit 1.7.0
+- Require tabletop-kit 1.6.0
+- Require tabletop-kit 1.5.0
+- Require tabletop-kit 1.4.1
+- Require tabletop-kit 1.4.0
+- Drop the AI disclosure rule from CONTRIBUTING
+- Specify the iPhone's tabs
+- Keep the release checkout to one with block
+- Number every build by the commits on main
+- Number every build by the commits on main
+- Specify About in the iPad's menu bar
+- Specify renaming pawns and sheet buttons on the iPad
+- Share the app between the Mac and the iPad in PawnShopUI
+- Add the iPad app spec
+
+[2.1.0]: https://github.com/scooper4711/pawn-shop/releases/tag/v2.1.0
+
 ## [2.0.1] - 2026-11-13
 
 ### Fixed
