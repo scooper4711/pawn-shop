@@ -12,7 +12,7 @@ let package = Package(
         .library(name: "PawnShopUI", targets: ["PawnShopUI"])
     ],
     dependencies: [
-        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.13.0")
+        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.14.0")
     ],
     targets: [
         .target(name: "PawnShopCore", dependencies: [
