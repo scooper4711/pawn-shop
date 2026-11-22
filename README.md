@@ -235,7 +235,6 @@ make lint     # runs SwiftLint
 make coverage # runs the tests and enforces the coverage threshold
 make items    # builds Generated/: the item list and the item cards' art
 make dmg      # packages the app into a disk image
-make release-dmg # builds the tagged version's disk image here and attaches it, if GitHub's build fails
 make icon     # redraws Resources/AppIcon.icns and the iPad's icon
 make ipad-simulator # builds the iPad app and starts it in a simulator
 make ipad-install   # builds the iPad app and installs it on a connected iPad

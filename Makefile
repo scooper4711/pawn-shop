@@ -1,4 +1,4 @@
-.PHONY: build test lint coverage items app run install dmg release-dmg appstore icon ipad-install ipad-simulator ipad-uitests clean
+.PHONY: build test lint coverage items app run install dmg appstore icon ipad-install ipad-simulator ipad-uitests clean
 
 build:
 	swift build
@@ -29,10 +29,6 @@ install:
 
 dmg: app
 	scripts/make-dmg.sh
-
-# Builds the universal disk image for the version tag at HEAD and attaches it to its GitHub release.
-release-dmg:
-	scripts/release-dmg.sh
 
 # Builds the Mac App Store package, build/appstore/Pawn Shop.pkg (see scripts/build-app.sh for the variables).
 appstore:
