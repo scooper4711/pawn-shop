@@ -44,6 +44,15 @@ final class StoreScreenshots: XCTestCase {
         try save("3-items")
     }
 
+    @MainActor
+    func testSpells() throws {
+        app.launch()
+        newSheet(named: "Untitled 3")
+        app.buttons["Spells"].firstMatch.tap()
+        for name in ["Aberrant Form", "Abyssal Plague", "Accelerate", "Acid Arrow", "Acid Grip", "Acid Splash"] { addToSheet(name) }
+        try save("4-spells")
+    }
+
     private static let iconics = ["Ezren", "Feiya", "Fumbus", "Harsk", "Jirelle", "Korakai", "Kyra", "Lem", "Lini",
                                   "Merisiel", "Quinn", "Sajan", "Seelah", "Seltyiel", "Seoni", "Valeros", "Yoon"]
 
@@ -65,7 +74,8 @@ final class StoreScreenshots: XCTestCase {
         let pawns = app.buttons["Pawns"].firstMatch
         XCTAssertTrue(create.waitForExistence(timeout: 15), app.debugDescription)
         for _ in 0..<4 {
-            create.tap()
+            // After a failed import the browser can take a while to show its button again.
+            if create.waitForExistence(timeout: 10) { create.tap() }
             if pawns.waitForExistence(timeout: 6) { return }
             openAfterFailedImport(named: name)
             if pawns.waitForExistence(timeout: 6) { return }
