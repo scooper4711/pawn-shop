@@ -415,8 +415,7 @@ shapes so the pawn and the hat still read at 32 px.
   PDFs are not in the repository), builds the app and sends coverage to SonarCloud; `release.yml` builds each pushed
   `v*` tag: it fetches the private `Artwork` submodule, imports the items with `REXARD_PACKS=Artwork/rexard`, tests,
   builds the universal app and attaches its disk image to the tag's release. Run by hand it keeps the image as a
-  workflow artifact. `release-dmg.sh` (`make release-dmg`) does the same on a Mac, for the tag at HEAD, should the
-  GitHub build fail, notarizing it with a notarytool keychain profile.
+  workflow artifact. If a release build fails, rerun the workflow.
 - **Signing.** `scripts/sign-app.sh` signs the app with the first Developer ID Application certificate in the
   keychain, with the hardened runtime and a secure timestamp, or ad hoc when there is none (`SIGNING_IDENTITY`
   overrides it). On GitHub, `scripts/add-signing-certificate.sh` puts the certificate from the
