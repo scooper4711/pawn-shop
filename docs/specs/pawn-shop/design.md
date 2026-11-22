@@ -392,6 +392,24 @@ only says which container is its folder and makes sure the folder exists.
   Documents: its `ubiquity-container-identifiers` lists the suite's container today). Before a release, the App ID needs
   iCloud Documents with the container, and the profiles must be regenerated with it.
 
+## Sheets in Files and Quick Look (R12)
+
+- **The file.** `SheetFile` (`PawnShopCore/Sheet`) writes the sheet's keys and, beside them, `previewPages`: one
+  JPEG per page (`SheetPreviews`, in the `SheetPreviewFile` target, which depends on nothing else so the extensions
+  stay small). Older versions ignore the key; pictures that can't be read never stop a sheet opening.
+- **Drawing.** `PawnSheetDocument` holds a `SheetPreviewKeeper`, a reference beside its value, so pictures are never
+  part of an undo step and never mark the sheet as changed. After each change `SheetPreviewPlanner` gives it a plan:
+  per page, a key that changes with the page's look and a way to draw it (`BackgroundRenderer.previewJPEG`), or no
+  pages when the device lacks some of the art (`SheetExporter.hasEveryEntry`, missing pictures). `fileWrapper` asks
+  the keeper for the pictures on the saving thread; it draws only the pages whose keys changed, and keeps the old
+  pictures when there is no plan for that sheet. The planner also draws a second after an edit, so that saving
+  rarely waits.
+- **The extensions** (`ios/Thumbnail`, `ios/Preview`) read only `SheetPreviews` from the file: the thumbnail is the
+  first page, and the preview a PDF with a page per picture. They need neither the library nor the App Group.
+- **The type.** `io.github.scooper4711.pawnsheet` conforms to `public.data` and `public.content`, no longer to
+  `public.json`, so the system never shows a sheet as text.
+- **Not yet:** the Mac's extensions, which need `build-app.sh` to assemble and sign them (pawn-shop#58).
+
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
 `Resources/AppIcon.icns`: a cream pawn with Paizo's rounded top and red cut line, standing in a black base on

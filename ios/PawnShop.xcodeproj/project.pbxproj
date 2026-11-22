@@ -7,16 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10000000000000000000017 /* Generated in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* Generated */; };
 		A1000000000000000000000A /* PawnShopUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1000000000000000000000B /* PawnShopUI */; };
+		A10000000000000000000017 /* Generated in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* Generated */; };
+		A300000000000000000000001 /* SheetPreviewFile in Frameworks */ = {isa = PBXBuildFile; productRef = A300000000000000000000002 /* SheetPreviewFile */; };
+		A300000000000000000000003 /* PawnShopThumbnail.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A300000000000000000000004 /* PawnShopThumbnail.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A400000000000000000000001 /* SheetPreviewFile in Frameworks */ = {isa = PBXBuildFile; productRef = A400000000000000000000002 /* SheetPreviewFile */; };
+		A400000000000000000000003 /* PawnShopPreview.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A400000000000000000000004 /* PawnShopPreview.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
-
-/* Begin PBXFileReference section */
-		A10000000000000000000001 /* PawnShop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PawnShop.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A10000000000000000000015 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
-		A10000000000000000000016 /* Generated */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Generated; path = ../Generated; sourceTree = "<group>"; };
-		A20000000000000000000001 /* PawnShopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PawnShopUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
 		A20000000000000000000002 /* PBXContainerItemProxy */ = {
@@ -26,15 +23,45 @@
 			remoteGlobalIDString = A10000000000000000000006;
 			remoteInfo = "PawnShop-iPad";
 		};
+		A300000000000000000000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000009 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A300000000000000000000007;
+			remoteInfo = PawnShopThumbnail;
+		};
+		A400000000000000000000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000009 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A400000000000000000000007;
+			remoteInfo = PawnShopPreview;
+		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXTargetDependency section */
-		A20000000000000000000003 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = A10000000000000000000006 /* PawnShop-iPad */;
-			targetProxy = A20000000000000000000002 /* PBXContainerItemProxy */;
+/* Begin PBXCopyFilesBuildPhase section */
+		A50000000000000000000001 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A300000000000000000000003 /* PawnShopThumbnail.appex in Embed Foundation Extensions */,
+				A400000000000000000000003 /* PawnShopPreview.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXTargetDependency section */
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		A10000000000000000000001 /* PawnShop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PawnShop.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000015 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		A10000000000000000000016 /* Generated */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Generated; path = ../Generated; sourceTree = "<group>"; };
+		A20000000000000000000001 /* PawnShopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PawnShopUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A300000000000000000000004 /* PawnShopThumbnail.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PawnShopThumbnail.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A400000000000000000000004 /* PawnShopPreview.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PawnShopPreview.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A10000000000000000000002 /* App */ = {
@@ -45,6 +72,16 @@
 		A20000000000000000000004 /* UITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = UITests;
+			sourceTree = "<group>";
+		};
+		A300000000000000000000008 /* Thumbnail */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Thumbnail;
+			sourceTree = "<group>";
+		};
+		A400000000000000000000008 /* Preview */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Preview;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -65,6 +102,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A300000000000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A300000000000000000000001 /* SheetPreviewFile in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A400000000000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A400000000000000000000001 /* SheetPreviewFile in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -73,6 +126,8 @@
 			children = (
 				A10000000000000000000002 /* App */,
 				A20000000000000000000004 /* UITests */,
+				A300000000000000000000008 /* Thumbnail */,
+				A400000000000000000000008 /* Preview */,
 				A10000000000000000000015 /* Signing.xcconfig */,
 				A10000000000000000000016 /* Generated */,
 				A10000000000000000000005 /* Products */,
@@ -84,6 +139,8 @@
 			children = (
 				A10000000000000000000001 /* PawnShop.app */,
 				A20000000000000000000001 /* PawnShopUITests.xctest */,
+				A300000000000000000000004 /* PawnShopThumbnail.appex */,
+				A400000000000000000000004 /* PawnShopPreview.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -98,10 +155,13 @@
 				A10000000000000000000007 /* Sources */,
 				A10000000000000000000003 /* Frameworks */,
 				A10000000000000000000008 /* Resources */,
+				A50000000000000000000001 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A300000000000000000000006 /* PBXTargetDependency */,
+				A400000000000000000000006 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A10000000000000000000002 /* App */,
@@ -135,6 +195,52 @@
 			productReference = A20000000000000000000001 /* PawnShopUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A300000000000000000000007 /* PawnShopThumbnail */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A30000000000000000000000A /* Build configuration list for PBXNativeTarget "PawnShopThumbnail" */;
+			buildPhases = (
+				A30000000000000000000000B /* Sources */,
+				A300000000000000000000009 /* Frameworks */,
+				A30000000000000000000000C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A300000000000000000000008 /* Thumbnail */,
+			);
+			name = PawnShopThumbnail;
+			packageProductDependencies = (
+				A300000000000000000000002 /* SheetPreviewFile */,
+			);
+			productName = PawnShopThumbnail;
+			productReference = A300000000000000000000004 /* PawnShopThumbnail.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A400000000000000000000007 /* PawnShopPreview */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A40000000000000000000000A /* Build configuration list for PBXNativeTarget "PawnShopPreview" */;
+			buildPhases = (
+				A40000000000000000000000B /* Sources */,
+				A400000000000000000000009 /* Frameworks */,
+				A40000000000000000000000C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A400000000000000000000008 /* Preview */,
+			);
+			name = PawnShopPreview;
+			packageProductDependencies = (
+				A400000000000000000000002 /* SheetPreviewFile */,
+			);
+			productName = PawnShopPreview;
+			productReference = A400000000000000000000004 /* PawnShopPreview.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -151,6 +257,12 @@
 					A20000000000000000000006 = {
 						CreatedOnToolsVersion = 26.0;
 						TestTargetID = A10000000000000000000006;
+					};
+					A300000000000000000000007 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					A400000000000000000000007 = {
+						CreatedOnToolsVersion = 26.0;
 					};
 				};
 			};
@@ -173,6 +285,8 @@
 			targets = (
 				A10000000000000000000006 /* PawnShop-iPad */,
 				A20000000000000000000006 /* PawnShopUITests */,
+				A300000000000000000000007 /* PawnShopThumbnail */,
+				A400000000000000000000007 /* PawnShopPreview */,
 			);
 		};
 /* End PBXProject section */
@@ -187,6 +301,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A20000000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A30000000000000000000000C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A40000000000000000000000C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -210,7 +338,39 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A30000000000000000000000B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A40000000000000000000000B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A20000000000000000000003 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A10000000000000000000006 /* PawnShop-iPad */;
+			targetProxy = A20000000000000000000002 /* PBXContainerItemProxy */;
+		};
+		A300000000000000000000006 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A300000000000000000000007 /* PawnShopThumbnail */;
+			targetProxy = A300000000000000000000005 /* PBXContainerItemProxy */;
+		};
+		A400000000000000000000006 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A400000000000000000000007 /* PawnShopPreview */;
+			targetProxy = A400000000000000000000005 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A10000000000000000000011 /* Debug */ = {
@@ -254,8 +414,8 @@
 			baseConfigurationReference = A10000000000000000000015 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = PawnShop.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Pawn Shop";
@@ -270,7 +430,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_NAME = "PawnShop";
+				PRODUCT_NAME = PawnShop;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -284,8 +444,8 @@
 			baseConfigurationReference = A10000000000000000000015 /* Signing.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = PawnShop.entitlements;
+				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Pawn Shop";
@@ -300,7 +460,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_NAME = "PawnShop";
+				PRODUCT_NAME = PawnShop;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -345,6 +505,106 @@
 			};
 			name = Release;
 		};
+		A30000000000000000000000D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10000000000000000000015 /* Signing.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ThumbnailInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Pawn Shop Thumbnail";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Stephen Cooper";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).Thumbnail";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A30000000000000000000000E /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10000000000000000000015 /* Signing.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ThumbnailInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Pawn Shop Thumbnail";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Stephen Cooper";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).Thumbnail";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A40000000000000000000000D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10000000000000000000015 /* Signing.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PreviewInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Pawn Shop Preview";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Stephen Cooper";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).Preview";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A40000000000000000000000E /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = A10000000000000000000015 /* Signing.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PreviewInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Pawn Shop Preview";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Stephen Cooper";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).Preview";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -375,6 +635,24 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A30000000000000000000000A /* Build configuration list for PBXNativeTarget "PawnShopThumbnail" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A30000000000000000000000D /* Debug */,
+				A30000000000000000000000E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A40000000000000000000000A /* Build configuration list for PBXNativeTarget "PawnShopPreview" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A40000000000000000000000D /* Debug */,
+				A40000000000000000000000E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -388,6 +666,14 @@
 		A1000000000000000000000B /* PawnShopUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PawnShopUI;
+		};
+		A300000000000000000000002 /* SheetPreviewFile */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SheetPreviewFile;
+		};
+		A400000000000000000000002 /* SheetPreviewFile */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SheetPreviewFile;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

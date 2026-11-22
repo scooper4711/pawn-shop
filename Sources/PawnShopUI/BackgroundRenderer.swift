@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import PawnShopCore
+import SheetPreviewFile
 
 /// What a sheet page shows, ready to draw on another thread.
 struct PageDrawing: Sendable {
@@ -75,22 +76,51 @@ final class BackgroundRenderer: @unchecked Sendable {
 
     private func drawPage(_ page: PageDrawing, width: Int, unless request: RenderRequest) async -> CGImage? {
         await onQueue { renderer in
-            guard !request.isCancelled else { return nil }
-            let paper = page.settings.paper.paperSize
-            let height = Int((CGFloat(width) * paper.height / paper.width).rounded())
-            guard width > 0, height > 0,
-                  let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
-                                          bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
-            else { return nil }
-            context.setFillColor(gray: 1, alpha: 1)
-            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
-            context.scaleBy(x: CGFloat(width) / paper.width, y: CGFloat(height) / paper.height)
-            for (strip, content) in zip(page.strips, page.contents) {
-                renderer.draw(content, in: strip, settings: page.settings, context: context)
-            }
-            return context.makeImage()
+            request.isCancelled ? nil : Self.image(of: page, width: width, drawnBy: renderer)
         }
+    }
+
+    /// A page's picture for its sheet's file (R12), drawn before returning: for the thread saving a sheet, which
+    /// can't wait any other way. It needs nothing from the main thread.
+    func previewJPEG(of page: PageDrawing) -> Data {
+        dispatchPrecondition(condition: .notOnQueue(queue))
+        let image = queue.sync { Self.image(of: page, width: SheetPreviews.pageWidth, drawnBy: readyRenderer()) }
+        return image.map(SheetPreviews.jpegData) ?? Data()
+    }
+
+    /// Changes whenever a page would look different: with its strips, its pawns' looks, its cards and their
+    /// settings, and when the pictures its pawns are drawn from arrive on the device.
+    func key(of page: PageDrawing) -> String {
+        let strips = zip(page.strips, page.contents).map { strip, content in
+            "\(contentKey(content))@\(strip.rect)\(strip.sideways)"
+        }
+        return strips.joined(separator: ";") + "|\(page.settings.hashValue)|\(ItemCardPreferences.cacheKey)"
+    }
+
+    private func contentKey(_ content: PlacedContent) -> String {
+        switch content {
+        case .pawn(.found(let pawn)): key(pawn, .front, 0) as String
+        case .pawn(.missing(let description)): "missing-\(description)"
+        case .card(let card?): "item-\(card.item.hashValue)-\(card.card)-\(card.artwork?.id.uuidString ?? "plain")"
+        case .card(nil): "item-missing"
+        }
+    }
+
+    private static func image(of page: PageDrawing, width: Int, drawnBy renderer: PawnRenderer) -> CGImage? {
+        let paper = page.settings.paper.paperSize
+        let height = Int((CGFloat(width) * paper.height / paper.width).rounded())
+        guard width > 0, height > 0,
+              let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
+                                      bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return nil }
+        context.setFillColor(gray: 1, alpha: 1)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        context.scaleBy(x: CGFloat(width) / paper.width, y: CGFloat(height) / paper.height)
+        for (strip, content) in zip(page.strips, page.contents) {
+            renderer.draw(content, in: strip, settings: page.settings, context: context)
+        }
+        return context.makeImage()
     }
 
     private func keep(_ image: CGImage, as key: NSString) {
@@ -106,13 +136,16 @@ final class BackgroundRenderer: @unchecked Sendable {
 
     private func onQueue(_ work: @escaping @Sendable (PawnRenderer) -> CGImage?) async -> CGImage? {
         await withCheckedContinuation { continuation in
-            queue.async {
-                let renderer = self.renderer ?? PawnRenderer(folders: self.folders)
-                ItemCardPreferences.apply(to: renderer)
-                self.renderer = renderer
-                continuation.resume(returning: work(renderer))
-            }
+            queue.async { continuation.resume(returning: work(self.readyRenderer())) }
         }
+    }
+
+    /// The renderer with the user's card settings, made on first use; called on `queue` only.
+    private func readyRenderer() -> PawnRenderer {
+        let renderer = self.renderer ?? PawnRenderer(folders: folders)
+        ItemCardPreferences.apply(to: renderer)
+        self.renderer = renderer
+        return renderer
     }
 
     /// Changes with what the face shows (its name, size and art, which sharper art from Battle Cards replaces,

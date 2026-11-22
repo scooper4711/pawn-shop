@@ -1,7 +1,7 @@
 #!/bin/sh
 # Runs the tests with coverage, writes coverage/sonar-coverage.xml for SonarCloud, and fails when
 # line or region coverage of
-# PawnShopCore and ItemCatalogImport is below the threshold. Swift's coverage tooling does not
+# PawnShopCore, ItemCatalogImport and SheetPreviewFile is below the threshold. Swift's coverage tooling does not
 # report branch coverage; region coverage is the closest measure.
 set -eu
 
@@ -45,7 +45,7 @@ xcrun llvm-cov export -format=lcov -instr-profile "$PROFILE" "$@" | awk -v root=
 import json
 import sys
 
-TARGETS = ["PawnShopCore", "ItemCatalogImport"]
+TARGETS = ["PawnShopCore", "ItemCatalogImport", "SheetPreviewFile"]
 report_path, threshold, mode = sys.argv[1], float(sys.argv[2]), sys.argv[3]
 files = [
     entry for entry in json.load(open(report_path))["data"][0]["files"]
@@ -66,6 +66,6 @@ if mode == "--files":
         print(f"{summary['lines']['percent']:6.1f}% lines {summary['regions']['percent']:6.1f}% regions  {name}")
 
 lines, regions = percent("lines"), percent("regions")
-print(f"PawnShopCore and ItemCatalogImport coverage: {lines:.1f}% lines, {regions:.1f}% regions (threshold {threshold:.0f}%)")
+print(f"{', '.join(TARGETS)} coverage: {lines:.1f}% lines, {regions:.1f}% regions (threshold {threshold:.0f}%)")
 sys.exit(0 if lines >= threshold and regions >= threshold else 1)
 PYTHON
