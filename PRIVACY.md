@@ -11,8 +11,9 @@ requests the App Store version makes to the internet are to your own iCloud, des
 - **The PDFs you import** are read on your device to pull out their art. They are kept in the app's storage there
   and are never uploaded.
 - **The sheets you make** are files you save where you choose. Pawn Shop offers its folder in your iCloud Drive
-  first; sheets saved there are in your own iCloud Drive, like any document. A sheet holds the names of its pawns,
-  never their pictures.
+  first; sheets saved there are in your own iCloud Drive, like any document. A sheet holds the names of its pawns
+  and small, low-resolution pictures of its pages, which Files shows as the sheet's icon and preview; it never
+  holds the pawns' art at printing quality. Whoever you give a sheet to gets those small pictures with it.
 - **Your settings** are saved on your device.
 
 ## Your library in iCloud

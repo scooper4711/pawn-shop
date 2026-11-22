@@ -177,7 +177,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R4.8 A pawn missing from the library shows as a placeholder rather than breaking the sheet. The placeholder
   and the sheet's list say what is missing, "Goblin Warrior, from Pathfinder Pawns: Monster Core Pawn Box", when
   the sheet was saved with the pawn in the library.
-- R4.10 A sheet saves each pawn's ID with its name and product, never its art (shared libraries R2.9). A sheet
+- R4.10 A sheet saves each pawn's ID with its name and product, never its art at printing quality (shared
+  libraries R2.9); the only pictures it carries are its low-resolution page previews (R12). A sheet
   saved before stable IDs (R2.14) is pointed at the pawns' new IDs and labeled when it is opened.
 - R4.9 A sheet can leave room for a base: blank paper below the foot of each face, front and back, so a base's
   slot hides it rather than the bottom of the name. The faces keep their size and the strip grows. The room
@@ -317,3 +318,16 @@ each of the user's devices.
 - R11.5 The folder is in the iPad and iPhone app and the Mac App Store app, and in a Developer ID build whose
   provisioning profile allows the folder's iCloud container. Any other build saves where the user chooses, as before.
 - R11.6 Without iCloud Drive, or signed out of iCloud, sheets save on the device as before.
+
+## R12 Sheets in Files and Quick Look
+
+- R12.1 A saved sheet carries one small JPEG per page, 612 pixels wide, for at most 24 pages. They are too coarse to
+  print or to serve as a copy of the art.
+- R12.2 The pictures are drawn when the sheet is saved, so they always match it. Drawing them is not an edit: it is
+  never undone and never marks a sheet as changed. A sheet saved earlier shows the app's document icon until it is
+  next edited and saved.
+- R12.3 A device lacking a pawn, a pawn's picture or an item of the sheet keeps the pictures already in the file
+  rather than drawing placeholders. An item's card without art from an item deck counts as complete.
+- R12.4 On the iPhone and iPad, a sheet's thumbnail in Files is its first page, and Quick Look shows its saved pages.
+  The Mac app saves the pictures; Finder thumbnails and Quick Look on the Mac are still to come (pawn-shop#58).
+- R12.5 Pictures that can't be read never stop a sheet from opening.
