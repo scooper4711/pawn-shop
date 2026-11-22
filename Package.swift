@@ -9,20 +9,24 @@ let package = Package(
         .executable(name: "ItemImport", targets: ["ItemImport"]),
         .library(name: "PawnShopCore", targets: ["PawnShopCore"]),
         // The app shared by the Mac executable and the iPad project in ios/.
-        .library(name: "PawnShopUI", targets: ["PawnShopUI"])
+        .library(name: "PawnShopUI", targets: ["PawnShopUI"]),
+        // What the Quick Look extensions read from a sheet's file, without the library.
+        .library(name: "SheetPreviewFile", targets: ["SheetPreviewFile"])
     ],
     dependencies: [
         .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.14.0")
     ],
     targets: [
+        .target(name: "SheetPreviewFile"),
         .target(name: "PawnShopCore", dependencies: [
+            "SheetPreviewFile",
             .product(name: "ArtExtraction", package: "tabletop-kit"),
             .product(name: "SharedLibraries", package: "tabletop-kit"),
             .product(name: "TablesideShared", package: "tabletop-kit"),
             .product(name: "TablesideSync", package: "tabletop-kit")
         ]),
         .target(name: "PawnShopUI", dependencies: [
-            "PawnShopCore", .product(name: "AppNotices", package: "tabletop-kit"),
+            "PawnShopCore", "SheetPreviewFile", .product(name: "AppNotices", package: "tabletop-kit"),
             .product(name: "SharedLibraries", package: "tabletop-kit"),
             .product(name: "TablesideShared", package: "tabletop-kit"),
             .product(name: "TablesideSync", package: "tabletop-kit")
@@ -34,11 +38,12 @@ let package = Package(
         ]),
         .executableTarget(name: "ItemImport", dependencies: ["ItemCatalogImport"]),
         .testTarget(name: "PawnShopCoreTests", dependencies: [
-            "PawnShopCore", .product(name: "ArtExtractionTestSupport", package: "tabletop-kit"),
+            "PawnShopCore", "SheetPreviewFile", .product(name: "ArtExtractionTestSupport", package: "tabletop-kit"),
             .product(name: "SharedLibraries", package: "tabletop-kit"),
             .product(name: "TablesideShared", package: "tabletop-kit"),
             .product(name: "TablesideSync", package: "tabletop-kit")
         ]),
-        .testTarget(name: "ItemCatalogImportTests", dependencies: ["ItemCatalogImport"])
+        .testTarget(name: "ItemCatalogImportTests", dependencies: ["ItemCatalogImport"]),
+        .testTarget(name: "SheetPreviewFileTests", dependencies: ["SheetPreviewFile"])
     ]
 )
