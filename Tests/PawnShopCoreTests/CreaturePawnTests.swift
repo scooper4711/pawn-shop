@@ -191,10 +191,11 @@ struct SharedCreatures {
 
         _ = try apps.turnkeeper.moveIn(LibraryMove(app: .turnkeeper, artFolder: nil))
         #expect(library.removalWarning(for: [hero.id])?.message == "This deletes the custom pawn and its art. "
-                + "Its creature also goes from Turnkeeper and its encounters. This can't be undone.")
+                + "Its creature will be deleted from Turnkeeper and removed from all its encounters. "
+                + "This can't be undone.")
         #expect(library.removalWarning(for: [hero.id, villain.id])?.message
-                == "This deletes the custom pawns and their art. Their creatures also go from Turnkeeper and its "
-                + "encounters. This can't be undone.")
+                == "This deletes the custom pawns and their art. Their creatures will be deleted from Turnkeeper "
+                + "and removed from all its encounters. This can't be undone.")
     }
 }
 
