@@ -17,8 +17,8 @@ extension PawnLibrary {
         let isOne = names.count == 1
         var message = "This deletes " + (isOne ? "the custom pawn and its art." : "the custom pawns and their art.")
         if (try? shared.hasMovedIn(.turnkeeper)) == true {
-            message += isOne ? " Its creature also goes from Turnkeeper and its encounters."
-                             : " Their creatures also go from Turnkeeper and its encounters."
+            message += isOne ? " Its creature will be deleted from Turnkeeper and removed from all its encounters."
+                             : " Their creatures will be deleted from Turnkeeper and removed from all its encounters."
         }
         return RemovalWarning(title: isOne ? "Delete “\(name)”?" : "Delete \(names.count) custom pawns?",
                               message: message + " This can't be undone.")

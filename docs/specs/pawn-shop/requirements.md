@@ -89,7 +89,7 @@ is cut out and folded at the heads, giving a two-ply pawn.
   (R2.8). A blank name changes nothing. Removing a pawn read from a PDF hides it in Pawn Shop and leaves the art
   to the other apps. Removing a custom pawn deletes its creature and art in every app (shared libraries R4.9),
   after Pawn Shop asks; where Turnkeeper shares the library on this device, the question says that the creature
-  goes from Turnkeeper and its encounters too. A custom pawn whose creature has a stat block is only hidden, as a
+  will be deleted from Turnkeeper and removed from all its encounters. A custom pawn whose creature has a stat block is only hidden, as a
   pawn read from a PDF is.
 - R2.6 Results can be filtered by game (Pathfinder or Starfinder) and to custom pawns only.
 - R2.7 Each pawn is tagged in the background with keywords for what its art adds to its name and traits

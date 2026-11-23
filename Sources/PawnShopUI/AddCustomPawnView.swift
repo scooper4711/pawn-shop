@@ -30,6 +30,10 @@ struct AddCustomPawnView: View {
                     Button("Paste Image", action: paste)
                         .disabled(!ImagePasteboard.hasImage)
                 }
+                #if os(iOS)
+                // In a form row on iOS, a tap fires every button in the row unless each takes only its own taps.
+                .buttonStyle(.borderless)
+                #endif
                 TextField("Name", text: $name)
                 Picker("Size", selection: $size) {
                     ForEach(CreatureSize.allCases, id: \.self) { Text($0.trait).tag($0) }
