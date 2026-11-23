@@ -8,6 +8,9 @@
          have no iCloud entitlement, and CloudKit stops an app that opens a container without one. -->
     <key>TablesideSyncContainer</key>
     <string>$(TABLESIDE_SYNC_CONTAINER)</string>
+    <!-- Which CloudKit environment this build syncs with, so the shared library keeps their sync state apart. -->
+    <key>TablesideSyncEnvironment</key>
+    <string>$(TABLESIDE_SYNC_ENVIRONMENT)</string>
     <!-- CKSyncEngine's silent pushes, so another device's changes arrive while the app is in the background. -->
     <key>UIBackgroundModes</key>
     <array>

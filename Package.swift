@@ -14,7 +14,7 @@ let package = Package(
         .library(name: "SheetPreviewFile", targets: ["SheetPreviewFile"])
     ],
     dependencies: [
-        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.14.0")
+        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.15.1")
     ],
     targets: [
         .target(name: "SheetPreviewFile"),
