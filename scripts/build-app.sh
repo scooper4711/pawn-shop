@@ -46,6 +46,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/$EXECUTABLE"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+scripts/add-asset-icon.sh "$APP"
 cp Resources/container-migration.plist "$APP/Contents/Resources/container-migration.plist"
 if [[ -d Generated ]]; then
     ditto Generated "$APP/Contents/Resources/Generated"
