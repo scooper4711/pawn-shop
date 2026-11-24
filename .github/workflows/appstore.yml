@@ -88,6 +88,20 @@ jobs:
           ASC_KEY: ${{ secrets.ASC_KEY }}
         run: .store-tools/scripts/add-store-signing.sh "$BUNDLE_ID"
 
+      - name: Add the Quick Look extensions' profiles
+        env:
+          MAS_THUMBNAIL_PROVISIONING_PROFILE: ${{ secrets.MAS_THUMBNAIL_PROVISIONING_PROFILE }}
+          MAS_PREVIEW_PROVISIONING_PROFILE: ${{ secrets.MAS_PREVIEW_PROVISIONING_PROFILE }}
+        run: |
+          # Without them the package leaves the extensions out (scripts/add-quicklook-extensions.sh).
+          for kind in THUMBNAIL PREVIEW; do
+            secret="MAS_${kind}_PROVISIONING_PROFILE"
+            [[ -n "${!secret}" ]] || continue
+            file="${RUNNER_TEMP:?}/$(printf %s "$kind" | tr "[:upper:]" "[:lower:]").provisionprofile"
+            printf '%s' "${!secret}" | base64 --decode > "$file"
+            echo "${kind}_PROVISIONING_PROFILE=$file" >> "$GITHUB_ENV"
+          done
+
       - name: Build and validate the package
         env:
           UNIVERSAL: "1"
