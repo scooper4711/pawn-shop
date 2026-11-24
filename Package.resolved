@@ -1,13 +1,13 @@
 {
-  "originHash" : "68b7b075f2ab9e7fd4cb45f78cb39c404345ba0d83330d2f3e928e3a344cce77",
+  "originHash" : "99d7354a86aa56b546912176f0324d46af18fc2b0fc82305ed1b09113f675a3e",
   "pins" : [
     {
       "identity" : "tabletop-kit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/scooper4711/tabletop-kit.git",
       "state" : {
-        "revision" : "c93c68dbdfffded66ad500e5bcc6be35819d0023",
-        "version" : "1.15.1"
+        "revision" : "54032a878b73b03026f01dbe49d137050b3ad777",
+        "version" : "1.16.0"
       }
     }
   ],
