@@ -325,7 +325,7 @@ Pawn Shop starts that engine, adds a zone of its own for what is its own about c
   closes the shared library after each call (shared libraries R5.4).
 - **Starting** (`LibraryModel+Sync.swift`). At launch the app calls `LibrarySync.start(app:fallback:handlers:)` with
   the handler, unless `PAWN_SHOP_LIBRARY` is set; it gives nothing in a build that names no container or without
-  an iCloud account, and `SyncStatus.withoutSync` then says which. The model follows `statusUpdates()`. A change to
+  an iCloud account, and `SyncStatus.withoutSync` then says which. A change to
   a custom pawn's settings has no Darwin notification, so the model tells `LibrarySync.libraryChanged()` itself
   (after its own changes, and after reading the store's, which may have deleted a creature), which queues
   what every handler has to send; changes to notes and creatures reach it through the store's notification.
@@ -346,10 +346,11 @@ Pawn Shop starts that engine, adds a zone of its own for what is its own about c
   not at every batch, and `BackgroundRenderer` skips a page drawing whose task was cancelled before its turn, so
   the page that is wanted doesn't wait behind ones that aren't. A thumbnail's cache key says whether its pictures
   are here, so a placeholder drawn without a connection isn't kept for the picture.
-- **Settings** (`SyncSettingsView`, R10.5 to R10.7), a Sync tab on the Mac and a row on the iPad: the status in
-  words (`SyncSettingsText`), a picker of `PictureKeeping` (the choices of R10.6 over `PicturePolicy`; a limit
-  another app set that isn't one of them is listed as it is), the downloaded pictures' size with Remove Downloaded
-  Pictures, and Turn Syncing Back On while paused.
+- **Settings** (`SyncSettingsView`, R10.5 to R10.7), a Sync tab on the Mac and a row on the iPad: what syncs, then
+  tabletop-kit's `SyncSettingsSection` (library sync R2.6), shared with Field Guide, which follows
+  `statusUpdates()` itself: the status in words, a picker of `PictureKeeping` (the choices of R10.6 over
+  `PicturePolicy`; a limit another app set that isn't one of them is listed as it is), the downloaded pictures' size
+  with Remove Downloaded Pictures, which bumps `picturesFetched`, and Turn Syncing Back On while paused.
 - **Builds** (R10.10). `ios/PawnShop.entitlements` has the container, CloudKit and push; `ios/Info.plist` names the
   container as `$(TABLESIDE_SYNC_CONTAINER)`, set in `Signing.xcconfig` and emptied by the simulator scripts, whose
   unsigned builds CloudKit would stop, and has the `remote-notification` background mode for the engine's silent

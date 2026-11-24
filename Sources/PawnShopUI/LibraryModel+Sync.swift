@@ -28,7 +28,6 @@ extension LibraryModel {
             requests.onArrival = { self.picturesFetched += 1 }
             pictureRequests = requests
             syncs = true
-            for await status in await sync.statusUpdates() { syncStatus = status }
         }
     }
 
@@ -89,42 +88,6 @@ extension LibraryModel {
         isWaitingForPictures = !pictureRequests.missing(among: names).isEmpty
         await pictureRequests.show(names, givingUpAfter: Self.pictureStall)
         isWaitingForPictures = false
-    }
-
-    // MARK: Settings
-
-    /// How many downloaded pictures this device keeps; nil while the library doesn't sync.
-    func pictureKeeping() async -> PictureKeeping? {
-        guard let policy = try? await sync?.picturePolicy() else { return nil }
-        return PictureKeeping(policy)
-    }
-
-    func setPictureKeeping(_ keeping: PictureKeeping) async {
-        do {
-            try await sync?.setPicturePolicy(keeping.policy)
-        } catch {
-            errorMessage = "Changing how many pictures are kept failed: \(error)"
-        }
-    }
-
-    /// The size of the pictures downloaded from iCloud, in bytes.
-    func downloadedPictureBytes() async -> Int {
-        (try? await sync?.fetchedPicturesByteCount()) ?? 0
-    }
-
-    /// Removes the downloaded pictures from this device; each comes back when its pawn is next shown.
-    func removeDownloadedPictures() async {
-        do {
-            try await sync?.clearFetchedPictures()
-        } catch {
-            errorMessage = "Removing the downloaded pictures failed: \(error)"
-        }
-        picturesFetched += 1
-    }
-
-    /// Turns syncing back on after the user deleted the library's iCloud data (R10.7).
-    func resumeSync() async {
-        await sync?.resume()
     }
 
     // MARK: Helpers
