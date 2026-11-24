@@ -404,11 +404,16 @@ only says which container is its folder and makes sure the folder exists.
   the keeper for the pictures on the saving thread; it draws only the pages whose keys changed, and keeps the old
   pictures when there is no plan for that sheet. The planner also draws a second after an edit, so that saving
   rarely waits.
-- **The extensions** (`ios/Thumbnail`, `ios/Preview`) read only `SheetPreviews` from the file: the thumbnail is the
-  first page, and the preview a PDF with a page per picture. They need neither the library nor the App Group.
+- **The extensions** (`Sources/PawnShopThumbnail`, `Sources/PawnShopPreview`) read only `SheetPreviews` from the
+  file: the thumbnail is the first page, and the preview a PDF with a page per picture. They need neither the
+  library nor the App Group. One source serves both platforms: the iPad project builds each as an extension target
+  (`ios/ThumbnailInfo.plist`, `ios/PreviewInfo.plist`), and on the Mac SwiftPM builds each as an executable whose
+  entry point is `NSExtensionMain`, which `scripts/add-quicklook-extensions.sh` bundles into `Contents/PlugIns`
+  (that Info.plist plus the bundle keys Xcode would add), signs sandboxed (`Resources/QuickLookExtension.entitlements`)
+  and, for the Mac App Store, gives its own profile (`THUMBNAIL_PROVISIONING_PROFILE`, `PREVIEW_PROVISIONING_PROFILE`;
+  without them the package leaves the extensions out). A Developer ID build needs no profile for them.
 - **The type.** `io.github.scooper4711.pawnsheet` conforms to `public.data` and `public.content`, no longer to
   `public.json`, so the system never shows a sheet as text.
-- **Not yet:** the Mac's extensions, which need `build-app.sh` to assemble and sign them (pawn-shop#58).
 
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds

@@ -47,11 +47,25 @@ add_to_array() {
     fi
 }
 
+# Puts a string first in an array of the entitlements, moving it there when it is already listed. Pawn Shop's own
+# container comes before the suite's, as in the iPad app: iCloud Drive draws the folder with the app's icon only then.
+put_first_in_array() {
+    add_to_array "$1" "$2"
+    INDEX=0
+    while VALUE="$(/usr/libexec/PlistBuddy -c "Print :$1:$INDEX" "$ENTITLEMENTS" 2>/dev/null)"; do
+        if [ "$VALUE" = "$2" ]; then
+            /usr/libexec/PlistBuddy -c "Delete :$1:$INDEX" -c "Add :$1:0 string $2" "$ENTITLEMENTS"
+            return
+        fi
+        INDEX=$((INDEX + 1))
+    done
+}
+
 if ! profile_allows_container; then
     echo "Left out iCloud Drive: the provisioning profile doesn't allow $CONTAINER."
     exit 0
 fi
 add_to_array com.apple.developer.icloud-services CloudDocuments
-add_to_array com.apple.developer.icloud-container-identifiers "$CONTAINER"
+put_first_in_array com.apple.developer.icloud-container-identifiers "$CONTAINER"
 add_to_array "$UBIQUITY" "$CONTAINER"
 echo "Added iCloud Drive ($CONTAINER)"

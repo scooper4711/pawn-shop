@@ -76,12 +76,12 @@
 		};
 		A300000000000000000000008 /* Thumbnail */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Thumbnail;
+			path = ../Sources/PawnShopThumbnail;
 			sourceTree = "<group>";
 		};
 		A400000000000000000000008 /* Preview */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Preview;
+			path = ../Sources/PawnShopPreview;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */

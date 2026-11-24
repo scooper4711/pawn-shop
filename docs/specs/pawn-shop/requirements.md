@@ -318,6 +318,8 @@ each of the user's devices.
 - R11.5 The folder is in the iPad and iPhone app and the Mac App Store app, and in a Developer ID build whose
   provisioning profile allows the folder's iCloud container. Any other build saves where the user chooses, as before.
 - R11.6 Without iCloud Drive, or signed out of iCloud, sheets save on the device as before.
+- R11.7 The folder shows the app's icon, and sheets may be kept in folders inside it. Pawn Shop's own container comes
+  first in the app's iCloud containers, before the Tableside Toolkit's shared one.
 
 ## R12 Sheets in Files and Quick Look
 
@@ -328,6 +330,6 @@ each of the user's devices.
   next edited and saved.
 - R12.3 A device lacking a pawn, a pawn's picture or an item of the sheet keeps the pictures already in the file
   rather than drawing placeholders. An item's card without art from an item deck counts as complete.
-- R12.4 On the iPhone and iPad, a sheet's thumbnail in Files is its first page, and Quick Look shows its saved pages.
-  The Mac app saves the pictures; Finder thumbnails and Quick Look on the Mac are still to come (pawn-shop#58).
+- R12.4 A sheet's thumbnail in Files on the iPhone and iPad, and in Finder on the Mac, is its first page, and Quick
+  Look shows its saved pages on each.
 - R12.5 Pictures that can't be read never stop a sheet from opening.

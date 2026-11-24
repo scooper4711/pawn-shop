@@ -34,6 +34,18 @@ import Testing
         #expect(previews.firstPageImage?.width == 40)
     }
 
+    @Test func aThumbnailKeepsThePagesProportions() {
+        let page = CGSize(width: 612, height: 792)
+        #expect(SheetPreviews.size(of: page, fitting: CGSize(width: 306, height: 1000))
+            == CGSize(width: 306, height: 396))
+        #expect(SheetPreviews.size(of: page, fitting: CGSize(width: 1000, height: 396))
+            == CGSize(width: 306, height: 396))
+    }
+
+    @Test func anEmptyPictureHasNoThumbnailSize() {
+        #expect(SheetPreviews.size(of: .zero, fitting: CGSize(width: 64, height: 64)) == .zero)
+    }
+
     @Test func thePDFHasAPagePerPicture() throws {
         let previews = SheetPreviews(pages: [try jpeg(), try jpeg()])
         let provider = try #require(CGDataProvider(data: previews.pdfData() as CFData))

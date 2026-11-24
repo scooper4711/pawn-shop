@@ -62,7 +62,7 @@
             <key>NSUbiquitousContainerName</key>
             <string>Pawn Shop</string>
             <key>NSUbiquitousContainerSupportedFolderLevels</key>
-            <string>None</string>
+            <string>Any</string>
         </dict>
     </dict>
     <key>UTExportedTypeDeclarations</key>

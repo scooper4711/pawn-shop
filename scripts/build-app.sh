@@ -12,6 +12,8 @@
 #            affects; ICLOUD_ENTITLER names another copy), and, when the profile allows Pawn Shop's container,
 #            keeps sheets in its iCloud Drive folder (scripts/add-icloud-documents.sh). Without it the library
 #            stays on the Mac.
+# THUMBNAIL_PROVISIONING_PROFILE, PREVIEW_PROVISIONING_PROFILE  the Quick Look extensions' Mac App Store profiles,
+#            which CHANNEL=appstore needs (scripts/add-quicklook-extensions.sh)
 # BUILD_NUMBER  CFBundleVersion, which must increase with every App Store upload (default: scripts/version.sh build)
 # CHANNEL    "appstore" builds the Mac App Store package, build/appstore/Pawn Shop.pkg, from the same
 #            sources, compiled with -DAPP_STORE so the updater is left out; needs TEAM_ID and the variables of
@@ -28,21 +30,23 @@ EXECUTABLE="PawnShop"
 SWIFT_FLAGS=()
 [[ "${CHANNEL:-}" == "appstore" ]] && SWIFT_FLAGS=(-Xswiftc -DAPP_STORE)
 
-if [[ "${UNIVERSAL:-0}" == "1" ]]; then
-    swift build -c release ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"} --product "$EXECUTABLE" --arch arm64 --arch x86_64
-    # Asked rather than assumed: newer SwiftPM moved universal builds out of .build/apple, and a copy left
-    # there by an older toolchain would otherwise be bundled instead.
-    BINARY="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/$EXECUTABLE"
-else
-    swift build -c release ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"} --product "$EXECUTABLE"
-    BINARY="$(swift build -c release --show-bin-path)/$EXECUTABLE"
-fi
+ARCHS=()
+[[ "${UNIVERSAL:-0}" == "1" ]] && ARCHS=(--arch arm64 --arch x86_64)
+# The app and its Quick Look extensions (scripts/add-quicklook-extensions.sh).
+for product in "$EXECUTABLE" PawnShopThumbnail PawnShopPreview; do
+    swift build -c release ${SWIFT_FLAGS[@]+"${SWIFT_FLAGS[@]}"} --product "$product" ${ARCHS[@]+"${ARCHS[@]}"}
+done
+# Asked rather than assumed: newer SwiftPM moved universal builds out of .build/apple, and a copy left there by an
+# older toolchain would otherwise be bundled instead.
+BIN_DIR="$(swift build -c release ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)"
+BINARY="$BIN_DIR/$EXECUTABLE"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/$EXECUTABLE"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+scripts/add-asset-icon.sh "$APP"
 cp Resources/container-migration.plist "$APP/Contents/Resources/container-migration.plist"
 if [[ -d Generated ]]; then
     ditto Generated "$APP/Contents/Resources/Generated"
@@ -80,6 +84,7 @@ if [[ -n "${TEAM_ID:-}" && -n "${PROVISIONING_PROFILE:-}" && "${SIGNING_IDENTITY
     # Pawn Shop's folder in iCloud Drive, when the profile allows its container (R11.5).
     scripts/add-icloud-documents.sh "$ENTITLEMENTS" "$PROVISIONING_PROFILE"
 fi
+scripts/add-quicklook-extensions.sh "$APP" "$BIN_DIR"
 scripts/sign-app.sh "$APP" "$ENTITLEMENTS"
 echo "Built $APP ($VERSION, build $BUILD_NUMBER)"
 
