@@ -35,7 +35,8 @@ add_extension() {
     write_info "$appex/Contents/Info.plist" "$name" "$identifier" "$display"
     local entitlements="build/$name.entitlements"
     write_entitlements "$entitlements" "$identifier"
-    if is_store_build; then cp "$profile" "$appex/Contents/embedded.provisionprofile"; fi
+    # Readable by all whatever the source's mode: installed, the bundle belongs to root (ITMS-90255).
+    if is_store_build; then install -m 644 "$profile" "$appex/Contents/embedded.provisionprofile"; fi
     sign "$appex" "$entitlements"
 }
 
