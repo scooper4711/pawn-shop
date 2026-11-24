@@ -52,6 +52,13 @@ public struct SheetPreviews: Codable, Hashable, Sendable {
         pages.lazy.compactMap(Self.image).first
     }
 
+    /// A picture's size scaled to fit within a thumbnail's largest size, keeping its proportions.
+    public static func size(of image: CGSize, fitting maximum: CGSize) -> CGSize {
+        guard image.width > 0, image.height > 0 else { return .zero }
+        let scale = min(maximum.width / image.width, maximum.height / image.height)
+        return CGSize(width: image.width * scale, height: image.height * scale)
+    }
+
     /// A PDF with one page per picture, for Quick Look; empty when no picture can be read.
     public func pdfData() -> Data {
         let images = pages.compactMap(Self.image)
