@@ -23,7 +23,7 @@ let package = Package(
         .executable(name: "PawnShopPreview", targets: ["PawnShopPreview"])
     ],
     dependencies: [
-        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.17.0")
+        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.19.0")
     ],
     targets: [
         .target(name: "SheetPreviewFile"),
@@ -42,7 +42,8 @@ let package = Package(
             "PawnShopCore", "SheetPreviewFile", .product(name: "AppNotices", package: "tabletop-kit"),
             .product(name: "SharedLibraries", package: "tabletop-kit"),
             .product(name: "TablesideShared", package: "tabletop-kit"),
-            .product(name: "TablesideSync", package: "tabletop-kit")
+            .product(name: "TablesideSync", package: "tabletop-kit"),
+            .product(name: "TablesideSyncUI", package: "tabletop-kit")
         ]),
         .executableTarget(name: "PawnShop", dependencies: ["PawnShopUI"]),
         .target(name: "ItemCatalogImport", dependencies: [

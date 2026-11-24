@@ -28,8 +28,6 @@ final class LibraryModel {
     /// On the iPad, the file browser for Import PDF… and for Scrollkeeper's folder; the Mac uses open panels.
     var isChoosingPDFs = false
     var isChoosingScrollkeeperFolder = false
-    /// Whether the library syncs through iCloud (R10.5).
-    var syncStatus = SyncStatus.withoutSync(containerIdentifier: LibrarySync.bundleContainer)
     /// True once syncing has started: the build names the container and the device has an iCloud account.
     var syncs = false
     /// Why custom pawns from another device couldn't all be merged in; nil when they could.
