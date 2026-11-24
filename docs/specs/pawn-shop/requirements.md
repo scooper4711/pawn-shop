@@ -318,6 +318,8 @@ each of the user's devices.
 - R11.5 The folder is in the iPad and iPhone app and the Mac App Store app, and in a Developer ID build whose
   provisioning profile allows the folder's iCloud container. Any other build saves where the user chooses, as before.
 - R11.6 Without iCloud Drive, or signed out of iCloud, sheets save on the device as before.
+- R11.7 The folder shows the app's icon, and sheets may be kept in folders inside it. Pawn Shop's own container comes
+  first in the app's iCloud containers, before the Tableside Toolkit's shared one.
 
 ## R12 Sheets in Files and Quick Look
 
