@@ -9,10 +9,12 @@ public struct ItemArtMatcher: Sendable {
     /// Words naming an item's grade rather than the item.
     static let gradeWords: Set<String> = ["minor", "lesser", "moderate", "greater", "major", "true", "standard"]
 
-    /// Names Paizo's decks print differently from the item, with the item's name: a misspelling, and a feather
-    /// token the remaster's list calls "Swan Boat".
+    /// Names Paizo's decks print differently from the item, with the item's name: a misspelling, a feather
+    /// token the remaster's list calls "Swan Boat", and names text recognition misreads on the Weapons & Armor
+    /// Deck's pictures on some devices (#94).
     static let deckMisprints = ["Olefactory Obfuscator": "Olfactory Obfuscator",
-                                "Feather Token, Boat": "Marvelous Miniature (Boat)"]
+                                "Feather Token, Boat": "Marvelous Miniature (Boat)",
+                                "Plail": "Flail", "Glawe": "Glaive"]
 
     /// Catalog items drawn with the art of a deck card of another name, as patterns of item names: every spell
     /// scroll with the Potions & Talismans deck's "Scroll". The deck prints five; the first, a rolled scroll with

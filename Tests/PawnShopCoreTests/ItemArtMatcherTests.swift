@@ -39,6 +39,15 @@ import ArtExtraction
                 == "Feather Token, Boat")
     }
 
+    @Test func findsArtWhoseNameWasMisreadOffAPicture() {
+        let misread = ItemArtMatcher(artwork: [art("Plail"), art("Glawe")])
+        #expect(misread.artwork(for: catalogItem("Flail", level: 0))?.name == "Plail")
+        #expect(misread.artwork(for: catalogItem("Glaive", level: 0))?.name == "Glawe")
+        // Art read correctly, by any deck, still comes first.
+        let both = ItemArtMatcher(artwork: [art("Plail"), art("Flail")])
+        #expect(both.artwork(for: catalogItem("Flail", level: 0))?.name == "Flail")
+    }
+
     @Test func drawsEverySpellScrollWithTheDecksFirstScroll() {
         let matcher = ItemArtMatcher(artwork: [art("Scroll", file: "first.png"), art("Scroll", file: "second.png")])
         for name in ["Scroll of 1st-rank Spell", "Scroll of 2nd-rank Spell", "Scroll of 10th-rank Spell"] {
