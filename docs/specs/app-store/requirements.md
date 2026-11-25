@@ -12,8 +12,9 @@ are tabletop-kit's `scripts/package-appstore.sh` (its `appstore-build` spec).
 - R1.3 Its entitlements leave out the Downloads folder, which only the updater used. The network client entitlement
   stays for tagging with the user's own Ollama.
 - R1.4 The build number (`BUILD_NUMBER`) is apart from the version: it is the number of commits on main
-  (scripts/version.sh), so it increases with every merge and every upload. The bundle declares
-  `ITSAppUsesNonExemptEncryption` as false, a copyright line and the real version.
+  (scripts/version.sh), so it increases with every merge and every upload. The version is the one in the `VERSION`
+  file, which names the release being worked toward. The bundle declares `ITSAppUsesNonExemptEncryption` as false, a
+  copyright line and the real version.
 
 ## R2 Privacy
 - R2.1 A privacy manifest ships in the bundle: no tracking, no data collected, user defaults and file attributes.
