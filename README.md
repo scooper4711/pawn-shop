@@ -195,9 +195,10 @@ imported before and adds the pawns found anew, keeping your names and tags.
 
 ## Pawn bases
 
-The disk image also holds a Pawn Bases folder: 3D-printable bases sized for the pawns, from medium to
+The [pawn-bases](pawn-bases) folder holds 3D-printable bases sized for the pawns, from medium to
 gargantuan, ready to print as STL files labeled 1–4 or blank, with a slot test piece to find the slot width
-that grips your paper. To make your own, open `pawn_base.scad` in [OpenSCAD](https://openscad.org) and set the
+that grips your paper. The app links to it: Help › 3D-Printable Pawn Bases on the Mac, Settings on iPad. The
+disk image holds a copy. To make your own, open `pawn_base.scad` in [OpenSCAD](https://openscad.org) and set the
 size, the label and how far the slot curves in its Customizer. See the folder's
 [README](pawn-bases/README.md). The slot is 6 mm deep, which a sheet's Leave room for a base setting matches
 by default, so the whole name stays in view.
