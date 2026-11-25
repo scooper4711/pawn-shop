@@ -90,7 +90,7 @@ extension PawnLibrary {
         guard let digest = known ?? (try? ArtLibrary.digest(of: url)), let source = sharedSources[digest] else {
             return false
         }
-        return source.readerVersion >= PawnExtractor.version && (source.isKept || Self.isFolder(url))
+        return source.readerVersion >= PawnExtractor.version(of: url) && (source.isKept || Self.isFolder(url))
     }
 
     /// The files to import for `urls`: each once, a two-file deck as its art PDF, and a deck sold as pictures as

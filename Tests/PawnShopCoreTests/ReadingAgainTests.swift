@@ -12,13 +12,14 @@ import Testing
 
     func library() throws -> PawnLibrary { try PawnLibrary(folder: folder.appendingPathComponent("Library")) }
 
-    /// The library as the next launch opens it, after an older version of the reader read all its PDFs.
-    func libraryReadByAnOlderReader() throws -> PawnLibrary {
+    /// The library as the next launch opens it, after an older reader, version `version`, read all its PDFs.
+    func libraryReadByAnOlderReader(version: Int = 0) throws -> PawnLibrary {
         var database: OpaquePointer?
         defer { sqlite3_close(database) }
         let file = try library().folders.shared.appendingPathComponent("Library.sqlite").path
         try #require(sqlite3_open(file, &database) == SQLITE_OK)
-        try #require(sqlite3_exec(database, "UPDATE sources SET readerVersion = 0", nil, nil, nil) == SQLITE_OK)
+        let update = "UPDATE sources SET readerVersion = \(version)"
+        try #require(sqlite3_exec(database, update, nil, nil, nil) == SQLITE_OK)
         return try library()
     }
 
@@ -42,6 +43,23 @@ import Testing
         try readAgain(library)
         #expect(library.sources.map(\.readerVersion) == [PawnExtractor.version])
         #expect(library.pawns.map(\.name) == ["Goblin Warrior"] && !library.hasFilesToReadAgain)
+    }
+
+    /// Image decks have a reader version of their own (pawn-shop#61): a deck the PDF reader read is read again.
+    @Test func readsAgainAnImageDeckReadByThePDFReader() throws {
+        let deck = folder.appendingPathComponent("Pathfinder Weapons & Armor Deck")
+        try writeImageDeck(["DAGGER", "LONGSWORD", "WHIP"], in: deck)
+        try library().importPDF(at: deck)
+        #expect(try library().sources.map(\.readerVersion) == [PawnExtractor.imageDeckVersion])
+        #expect(try !library().hasFilesToReadAgain)
+
+        let library = try libraryReadByAnOlderReader(version: PawnExtractor.version)
+        #expect(!library.hasImported(deck))
+        #expect(library.filesToReadAgain.map { $0.resolvingSymlinksInPath().path }
+                == [deck.resolvingSymlinksInPath().path])
+        try readAgain(library)
+        #expect(library.sources.map(\.readerVersion) == [PawnExtractor.imageDeckVersion])
+        #expect(library.itemArt.count == 3 && library.hasImported(deck) && !library.hasFilesToReadAgain)
     }
 
     @Test func readsADeckInTwoPDFsAgainWithItsStatBlocks() throws {
