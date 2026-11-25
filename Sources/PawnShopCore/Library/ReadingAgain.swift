@@ -32,16 +32,22 @@ extension PawnLibrary {
     /// read; one imported here only while the library still has it, so a PDF the user removed stays removed.
     private var originalsToReadAgain: [String: [String]] {
         var paths: [String: [String]] = [:]
-        for (sourceID, path) in own.readAgain where readerVersion(of: sourceID) ?? 0 < PawnExtractor.version {
+        for (sourceID, path) in own.readAgain where readerVersion(of: sourceID) ?? 0 < Self.readerVersion(for: path) {
             paths[sourceID, default: []].append(path)
         }
-        for (path, file) in own.importedFiles where readerVersion(of: file.digest) ?? .max < PawnExtractor.version {
+        for (path, file) in own.importedFiles
+        where readerVersion(of: file.digest) ?? .max < Self.readerVersion(for: path) {
             paths[file.digest, default: []].append(path)
         }
         return paths
     }
 
     private func readerVersion(of sourceID: String) -> Int? { sharedSources[sourceID]?.readerVersion }
+
+    /// The current reader's version for the file at `path`: image decks have their own (pawn-shop#61).
+    private static func readerVersion(for path: String) -> Int {
+        PawnExtractor.version(of: URL(fileURLWithPath: path))
+    }
 }
 
 private extension URL {

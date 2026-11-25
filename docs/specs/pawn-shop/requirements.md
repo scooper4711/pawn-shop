@@ -241,7 +241,9 @@ Players forget the consumables they are given at the table; a printed card for e
   JPGs). Their art adds no pawns; when a deck prints an item's art, the item's card shows it behind the text,
   40% opaque unless set otherwise in Settings › Item Cards (from none to solid, with a card to see it on). An item finds deck art printed under its own name, or else under its name without its grade ("Healing
   Potion (Minor)" finds "Healing Potion"), or under the name it had before the remaster, from the pf2e
-  system's list of renamed items ("Thunderstone" is "Blasting Stone").
+  system's list of renamed items ("Thunderstone" is "Blasting Stone"). The art of a deck sold as pictures has the
+  same IDs on every device (shared libraries R2.2a), so syncing files each item once; a library holding older IDs
+  reads the deck again at launch (R1.7) and keeps them as aliases (pawn-shop#61).
 - R8.6 The item list, the Rexard art and the action icon font are built from local copies of the pf2e
   repository and the Rexard packs into `Generated/`, which is not committed, and bundled into the app; without
   it the Items list says how to build it. The item text is used under the ORC and OGL licenses, whose notices
