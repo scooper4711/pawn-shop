@@ -51,51 +51,81 @@ struct ItemCardSettingsView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 20) {
             Form {
-                Toggle("Print card backgrounds", isOn: $printsBackgrounds)
-                Text("Pathfinder cards print on parchment in a wooden frame, and Starfinder cards in a cyan frame. "
-                     + "Turn this off to print them on white with a gray frame and save ink.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Divider()
-                Picker("Smallest text size", selection: $smallestTextSize) {
-                    ForEach(Self.textSizes, id: \.self) { size in
-                        Text(size == Double(ItemCard.defaultSmallestTextSize) ? "\(size.formatted()) pt (default)"
-                             : "\(size.formatted()) pt").tag(size)
-                    }
-                }
-                Text("Card text is 7 pt. Text a little too long for its card is set smaller, down to this size, "
-                     + "when that saves a card; smaller sizes mean fewer cards but harder reading.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Divider()
-                Slider(value: $opacity, in: 0...1) {
-                    Text("Art behind the text")
-                } minimumValueLabel: {
-                    Text("None")
-                } maximumValueLabel: {
-                    Text("Solid")
-                }
-                Text("\(Int((opacity * 100).rounded()))% opaque")
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-                Text("When an item deck you imported prints the item, its picture is drawn behind the card's text. "
-                     + "Fainter art keeps the text easy to read.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("Restore Default") { opacity = Double(ItemCard.defaultArtOpacity) }
-                    .disabled(opacity == Double(ItemCard.defaultArtOpacity))
+                backgroundSection
+                textSizeSection
+                artSection
             }
             if let card = library.sampleCard {
-                ItemCardThumbnail(card: card, pixelHeight: 640)
-                    .frame(width: 180, height: 252)
+                preview(of: card)
             }
         }
         .padding(20)
         #if os(macOS)
         .frame(width: 560)
         #endif
+    }
+
+    private var backgroundSection: some View {
+        Section {
+            Toggle("Print card backgrounds", isOn: $printsBackgrounds)
+            note("Pathfinder cards print on parchment in a wooden frame, and Starfinder cards in a cyan frame. "
+                 + "Turn this off to print them on white with a gray frame and save ink.")
+        }
+    }
+
+    private var textSizeSection: some View {
+        Section {
+            Picker("Smallest text size", selection: $smallestTextSize) {
+                ForEach(Self.textSizes, id: \.self) { size in
+                    Text(size == Double(ItemCard.defaultSmallestTextSize) ? "\(size.formatted()) pt (default)"
+                         : "\(size.formatted()) pt").tag(size)
+                }
+            }
+            note("Card text is 7 pt. Text a little too long for its card is set smaller, down to this size, "
+                 + "when that saves a card; smaller sizes mean fewer cards but harder reading.")
+        }
+    }
+
+    private var artSection: some View {
+        Section {
+            #if os(iOS)
+            // iOS doesn't show a slider's label.
+            Text("Art behind the text")
+            #endif
+            Slider(value: $opacity, in: 0...1) {
+                Text("Art behind the text")
+            } minimumValueLabel: {
+                Text("None")
+            } maximumValueLabel: {
+                Text("Solid")
+            }
+            Text("\(Int((opacity * 100).rounded()))% opaque")
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+            note("When an item deck you imported prints the item, its picture is drawn behind the card's text. "
+                 + "Fainter art keeps the text easy to read.")
+            Button("Restore Default") { opacity = Double(ItemCard.defaultArtOpacity) }
+                .disabled(opacity == Double(ItemCard.defaultArtOpacity))
+        }
+    }
+
+    /// The sample card, and why the art setting can't show on it when no imported item deck has its art.
+    private func preview(of card: ItemCardContent) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ItemCardThumbnail(card: card, pixelHeight: 640)
+                .frame(width: 180, height: 252)
+            if card.artwork == nil {
+                note("No item deck imported on this device has art, so this card shows none. Import one to see "
+                     + "the art setting here.")
+            }
+        }
+        .frame(width: 180)
+    }
+
+    private func note(_ text: String) -> some View {
+        Text(text)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
