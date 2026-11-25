@@ -2,12 +2,13 @@ name: Release
 
 # Builds the app and attaches a disk image to the GitHub release for a version tag, creating a draft release if
 # none exists yet. Run by hand, it builds the branch and keeps the disk image as a workflow artifact instead, to
-# try the build without releasing. It runs when a tag is pushed, and from the weekly pf2e update. The items come
+# try the build without releasing. It runs from the weekly pf2e update. The items come
 # from the pf2e release in pf2e.release, and the cards' art and action icon font from the private Artwork
 # submodule, as a local "REXARD_PACKS=Artwork/rexard make items" does.
+#
+# It no longer runs when a tag is pushed: a v* tag now marks the build Apple accepted, and that build ships
+# through the App Store.
 on:
-  push:
-    tags: ['v*']
   workflow_call:
     inputs:
       tag:

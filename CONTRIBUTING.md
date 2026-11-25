@@ -89,7 +89,8 @@ from the user's own copies on their device. Tests use small documents and PDFs t
 - Start the message with a type (`feat`, `fix`, `refactor`, `docs`, `test`, `style`, `chore`, or `chore(ci)` for
   CI), then a capitalized summary of what changes for the user, with no period:
   `feat: Roll a group's initiative from one die`. The body says why.
-- Leave `CHANGELOG.md` alone: it is written at release.
+- When a user would notice the change, add a line under `## [Unreleased]` in `CHANGELOG.md`, written for
+  users. Changes to CI, tests and dependencies need none.
 
 ## Pull requests
 

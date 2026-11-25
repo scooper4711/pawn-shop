@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Sheets show their pages in Finder and in Quick Look on the Mac
+- A link to the 3D-printable pawn bases, in the Help menu on the Mac and in Settings on the iPad
+
+### Fixed
+- Image decks read by an earlier version are read again, so synced Weapons & Armor Deck items are no longer filed
+  twice
+- Flail and Glaive find their art when text recognition misreads their names
+- The large preview opens from the context menu on the iPad and iPhone
+- Item Cards settings says why the preview card has no art when no imported deck has any
+- Pawn Shop's folder in iCloud Drive shows its icon
+- Deleting a custom pawn says plainly what it does
+- Paste Image no longer opens the image picker
+
 ## [2.1.0] - 2026-11-21
 
 ### Added
