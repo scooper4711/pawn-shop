@@ -106,7 +106,8 @@ is cut out and folded at the heads, giving a two-ply pawn.
   the model is changed.
 - R2.8 Space shows the selected pawn's front and back large over the window, with its name, size, products,
   traits and tags. The arrow keys move the selection and the preview with it; Space, Escape or a click outside
-  closes it.
+  closes it. Preview in a pawn's, item's or spell's context menu opens it too, which is the way on a touch
+  screen (a long press), where a tap outside closes it.
 - R2.10 Clicking a tile selects it immediately. Dragging a tile, or the selection when the tile is part of it,
   from the library onto the sheet adds the add bar's number of copies of each, as a double-click does; this holds for pawns, items and spells.
 - R2.9 Tagging is turned on and off in Settings; it is off until turned on, as it needs Ollama, which most

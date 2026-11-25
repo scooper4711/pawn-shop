@@ -147,6 +147,9 @@ struct LibraryBrowser: View {
 
     @ViewBuilder
     private func menu(for pawn: Pawn) -> some View {
+        // The touch way to the preview, which the keyboard opens with Space.
+        Button("Preview") { preview = pawn.id }
+        Divider()
         ForEach([1, 2, 4, 6], id: \.self) { count in
             Button("Add \(count) to Sheet") { sheet.add(pawn.id, copies: count) }
         }
@@ -267,32 +270,5 @@ struct EmptyLibraryView: View {
             Button("Import PDF…") { library.chooseAndImportPDFs() }
         }
         .frame(maxHeight: .infinity)
-    }
-}
-
-/// Asks for a pawn's new name.
-struct RenamePawnView: View {
-    let pawn: Pawn
-    let rename: (String) -> Void
-    @State private var name = ""
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        Form {
-            TextField("Name", text: $name)
-        }
-        .padding()
-        .frame(width: 320)
-        .onAppear { name = pawn.name }
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Rename") {
-                    rename(name)
-                    dismiss()
-                }
-            }
-        }
-        .sheetToolbar(title: "Rename Pawn")
     }
 }

@@ -45,6 +45,19 @@ final class LayoutUITests: XCTestCase {
         keepScreenshot("Items")
     }
 
+    func testItemPreviewOpensFromTheContextMenu() {
+        showNewSheet(.landscapeLeft)
+        app.buttons["Items"].firstMatch.tap()
+        let card = app.staticTexts["Ablative Armor Plating (Lesser)"]
+        XCTAssertTrue(card.waitForExistence(timeout: 10), app.debugDescription)
+        card.press(forDuration: 1)
+        let preview = app.buttons["Preview"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 5), app.debugDescription)
+        preview.tap()
+        XCTAssertTrue(app.otherElements["Item Preview"].waitForExistence(timeout: 5), app.debugDescription)
+        keepScreenshot("Item preview")
+    }
+
     private func showNewSheet(_ orientation: UIDeviceOrientation) {
         XCUIDevice.shared.orientation = orientation
         app.launch()
