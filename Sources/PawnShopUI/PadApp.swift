@@ -105,6 +105,11 @@ struct PadSettingsView: View {
                 NavigationLink("Item Cards") { ItemCardSettingsView().navigationTitle("Item Cards") }
                 NavigationLink("Sync") { SyncSettingsView().navigationTitle("Sync") }
                 NavigationLink("About Pawn Shop") { ScrollView { AboutView(info: .pawnShop) }.navigationTitle("About") }
+                Section {
+                    Link("3D-Printable Pawn Bases", destination: HelpLinks.pawnBases)
+                } footer: {
+                    Text("Bases to stand your paper pawns in, with instructions, on GitHub.")
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

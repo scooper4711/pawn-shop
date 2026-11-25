@@ -27,7 +27,7 @@ public struct PawnShopApp: App {
             #if !APP_STORE
             UpdateCommands(updater: .shared)
             #endif
-            PrivacyCommands()
+            HelpLinkCommands()
             SheetFileCommands()
             LibraryCommands(library: library)
         }
@@ -60,15 +60,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-/// The privacy policy, in the Help menu.
-struct PrivacyCommands: Commands {
-    // A literal URL that is known to parse.
-    // swiftlint:disable:next force_unwrapping
-    private static let policy = URL(string: "https://github.com/scooper4711/pawn-shop/blob/main/PRIVACY.md")!
-
+/// The pawn bases and the privacy policy, in the Help menu.
+struct HelpLinkCommands: Commands {
     var body: some Commands {
         CommandGroup(after: .help) {
-            Link("Pawn Shop Privacy Policy", destination: Self.policy)
+            Link("3D-Printable Pawn Bases", destination: HelpLinks.pawnBases)
+            Link("Pawn Shop Privacy Policy", destination: HelpLinks.privacyPolicy)
         }
     }
 }
