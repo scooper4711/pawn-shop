@@ -424,9 +424,13 @@ only says which container is its folder and makes sure the folder exists.
   and a lookup, which the app gives as `PawnLibrary.pawn(id:)`: a pawn found is added under its own ID, and any
   other line becomes an entry labeled with the creature's name (`SheetEntry.label`), under the ID sent or a new one.
 - **The window.** SwiftUI offers no way to open a new document with given contents from outside a view, so
-  `IncomingSheets` parks the sheet and asks `NSDocumentController` for an untitled document; `DocumentGroup`'s
-  `newDocument` closure takes the parked sheet, or an empty one for File › New. The document is then named after
-  the request's title and marked as changed.
+  `IncomingSheets` parks a `PawnSheetDocument` and asks `NSDocumentController` for an untitled document;
+  `DocumentGroup`'s `newDocument` closure takes what is parked, or makes an empty sheet for File › New. The document
+  is then marked as changed. Its title travels in `PawnSheetDocument.requestedTitle`, which is never saved: the
+  window shows it through `navigationTitle` while the sheet has no file (setting the `NSDocument`'s `displayName`
+  alone left the window saying "Untitled"), and `displayName` offers it as the file's name in the save panel.
+- **Tried by hand** on a copy of the app with its own bundle ID and an empty library (2026-11-26): a link opens
+  exactly one window, from a cold start and with the app running.
 
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds

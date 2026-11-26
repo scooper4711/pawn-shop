@@ -2,6 +2,7 @@
 import AppNotices
 import PawnShopCore
 import SwiftUI
+import TablesideShared
 
 /// The Mac app: a window per sheet, the Library menu and Settings.
 public struct PawnShopApp: App {
@@ -15,9 +16,11 @@ public struct PawnShopApp: App {
     }
 
     public var body: some Scene {
-        DocumentGroup(newDocument: PawnSheetDocument()) { file in
+        // A sheet another app asked for is parked until its document is made (`IncomingSheets`, R13).
+        DocumentGroup(newDocument: IncomingSheets.newDocument()) { file in
             SheetWindow(document: file.$document, fileURL: file.fileURL)
                 .environment(library)
+                .requestedTitle(file.fileURL == nil ? file.document.requestedTitle : nil)
                 // Wide enough for the library and inspector at their ideal widths plus the page; any narrower and
                 // the split view clips both side columns instead of shrinking their contents.
                 .frame(minWidth: 1100, minHeight: 600)
@@ -57,6 +60,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #if !APP_STORE
         Task { await UpdateAlerts.checkAtLaunch(.shared) }
         #endif
+    }
+
+    /// The links other Tableside Toolkit apps send, whether or not the app was running.
+    func application(_: NSApplication, open urls: [URL]) {
+        urls.filter { $0.scheme?.lowercased() == PawnSheetRequest.scheme }.forEach { IncomingSheets.open($0) }
+    }
+}
+
+private extension View {
+    /// Names an unsaved sheet's window after the title another app asked for (R13); a saved sheet shows its file's
+    /// name, as any other does.
+    @ViewBuilder
+    func requestedTitle(_ title: String?) -> some View {
+        if let title { navigationTitle(title) } else { self }
     }
 }
 
