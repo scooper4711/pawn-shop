@@ -39,6 +39,12 @@ is a view over it, so the app above it changes little.
   defaults. `refresh()` reads the creatures and art changed since the last reading and the choices, when the
   store says any of the three tables changed, and a creature it lists as deleted loses its settings and its place
   in `hidden`. Custom pawns come after the pawns read from PDFs, by name, then ID.
+- **Pasted art of other creatures** (`CreaturePawns.swift`, R3.5a). Reading the creature library also keeps
+  `artLabels` (each custom art's `ArtSubjectLabel`, read from its record) and `pastedArt` (the art chosen for each
+  subject that isn't `custom.`, by `SharedLibrary.pawnID(forSubject:)`). `pastedArtPawns()` makes a pawn of each
+  that has a label and a file and isn't hidden, flagged `isCreatureArt`, which turns Rename off. Its settings are
+  kept like a custom pawn's (`keepsOwnSettings`), under the creature's pawn ID, so they survive the art being
+  replaced and sync with the others (R10.2).
 - **Sources.** `PawnSource` from `SharedSource`: id, title, byte count, art found and reader version; the
   original path is the PDF's location for Pawn Shop when it has one. Only sources with pawns or items are listed.
 - **Writing.** `rename`, `correctTags`, `setTags` and `setSuggestedName` write the pawn's note
@@ -422,6 +428,25 @@ only says which container is its folder and makes sure the folder exists.
   without them the package leaves the extensions out). A Developer ID build needs no profile for them.
 - **The type.** `io.github.scooper4711.pawnsheet` conforms to `public.data` and `public.content`, no longer to
   `public.json`, so the system never shows a sheet as text.
+
+## Sheets asked for by another app (R13)
+
+- **The link.** The Mac's `Resources/Info.plist` registers the `pawnshop` scheme; the iPad's doesn't. The app
+  delegate's `application(_:open:)` passes links of that scheme to `IncomingSheets` (`PawnShopUI`, Mac only).
+- **The sheet.** `PawnSheet(request:pawn:)` (`PawnShopCore/Sheet/RequestedSheet.swift`) takes a `PawnSheetRequest`
+  and a lookup, which the app gives as `PawnLibrary.pawn(id:)`: a pawn found is added under its own ID, and any
+  other line becomes an entry labeled with the creature's name (`SheetEntry.label`), under the ID sent or a new one.
+- **The window.** SwiftUI offers no way to open a new document with given contents from outside a view, so
+  `IncomingSheets` parks a `PawnSheetDocument` and asks `NSDocumentController` for an untitled document;
+  `DocumentGroup`'s `newDocument` closure takes what is parked, or makes an empty sheet for File › New. The document
+  is then marked as changed. Its title travels in `PawnSheetDocument.requestedTitle`, which is never saved. While
+  the sheet has no file, `DocumentNamer`, an `NSView` behind the sheet's window, sets the `NSDocument`'s
+  `displayName`, which the save panel offers as the file's name, and asks the window controller to show it. It
+  works from the window because a document opened as the app starts has no window yet when it is made: a name set
+  then stayed out of the title bar, and `navigationTitle` does nothing in a document window. After the app is
+  quit and opened again an unsaved sheet says "Untitled": the title isn't kept.
+- **Tried by hand** on a copy of the app with its own bundle ID and an empty library (2026-11-26): a link opens
+  exactly one window with its title, from a cold start and with the app running.
 
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds

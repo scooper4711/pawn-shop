@@ -155,7 +155,13 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R3.5 Every custom creature with art is a pawn here, with the creature's name and its size's pawn (Medium for
   a creature without one of the six sizes), whichever app made it; one without art is left out. Art given to a
   creature in Turnkeeper shows here within a second, drawn from the image the user added, or as the pawn of the
-  art chosen for it from the library is. Pasted art on a creature from a bestiary is not a pawn.
+  art chosen for it from the library is.
+- R3.5a Art pasted onto a creature that isn't a custom one, such as a bestiary creature in Turnkeeper or Field
+  Guide, is a pawn here when it carries the creature's name (shared libraries R4.11): under that name, its size's
+  pawn (Medium without one of the six sizes) and the creature's pawn ID (R4.12), so replacing the art keeps the
+  pawn on its sheets. Art that carries no name is not a pawn: Pawn Shop has no bestiary to look the creature up
+  in. Its placement, scaling, printed name and tags are Pawn Shop's own, as a custom pawn's are (R3.6). Its name is
+  the creature's and can't be changed here. Removing it hides it in Pawn Shop only (R2.5), without a question.
 - R3.6 Renaming a custom pawn renames its creature in every app, and a rename made in Turnkeeper shows here. The
   image's placement and scaling, whether the name is printed, and the tags are Pawn Shop's own (shared libraries
   R4.8); a creature made in Turnkeeper starts filled, centered and with its name printed. Changing the size after
@@ -341,3 +347,18 @@ each of the user's devices.
   The app checks the format before reading the rest. A sheet in a newer format than the app knows doesn't open:
   the app says it was made by a newer Pawn Shop and to update. Keys added later are ignored and don't change the
   format's number, which rises only for a change an older app would get wrong.
+
+## R13 Sheets asked for by another app
+
+- R13.1 Another Tableside Toolkit app asks for a new sheet with a link (tabletop-kit Tableside Shared R6): a title
+  and, in order, the pawns to print, each by its creature's name, how many, and the pawn's ID when the sender knows
+  it. Turnkeeper sends one for an encounter or a scenario.
+- R13.2 On the Mac the link opens a new, unsaved sheet holding those pawns, named after the title, whether or not
+  Pawn Shop was running. Closing it asks whether to save, like any sheet with pawns on it.
+- R13.3 A line whose pawn the library has, under its own ID, a print's key or an old ID (R2.14), goes on the sheet
+  with its count. Lines for the same pawn add up.
+- R13.4 A line whose pawn the library lacks, or that names none, becomes a placeholder (R4.8) that says the
+  creature's name. One that names a pawn keeps its ID, so it shows the pawn once the library has it.
+- R13.5 A link whose list of pawns can't be read opens no sheet and says so, and so does a request in a newer
+  format than the app knows (tabletop-kit Tableside Shared R6.4), which says to update. Any other link is ignored.
+- R13.6 Not on the iPad or iPhone yet: nothing there registers the link.

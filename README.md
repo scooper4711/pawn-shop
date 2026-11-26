@@ -214,7 +214,8 @@ Starfinder games in person. Like any good toolkit, each one grants a +1 item bon
 - **Pawn Shop** prints just the pawns you need, single-sided, from your pawn PDFs.
 - [Mapsmith](https://github.com/scooper4711/mapsmith) prints battle maps at true scale on ordinary paper.
 - [Turnkeeper](https://github.com/scooper4711/turnkeeper) builds encounters and runs initiative at the table, with
-  the battle card of whoever's turn it is.
+  the battle card of whoever's turn it is. On the Mac it can open an encounter's or a scenario's pawns here as a
+  new sheet, ready to print.
 - [Field Guide](https://github.com/scooper4711/field-guide) carries the Pathfinder and Starfinder compendium,
   offline.
 - [Chronicle Keeper](https://github.com/scooper4711/chronicle-keeper) keeps a record of your Organized Play
