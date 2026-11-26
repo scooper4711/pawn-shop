@@ -25,10 +25,15 @@ public struct PaperSetup: Codable, Hashable, Sendable {
     public var paperSize: CGSize
     /// The area the printer can print, in page coordinates (origin bottom left).
     public var imageableRect: CGRect
+    /// The Mac's whole page setup (tabletop-kit's `PageSetupArchive`), so Page Setup and printing start on the
+    /// printer and paper chosen, such as a borderless size. Nil for a paper picked on the iPad and in sheets saved
+    /// before it was kept; versions that don't know it ignore it.
+    public var pageSetup: Data?
 
-    public init(paperSize: CGSize, imageableRect: CGRect) {
+    public init(paperSize: CGSize, imageableRect: CGRect, pageSetup: Data? = nil) {
         self.paperSize = paperSize
         self.imageableRect = imageableRect
+        self.pageSetup = pageSetup
     }
 
     /// US Letter with quarter-inch margins.

@@ -180,7 +180,9 @@ is cut out and folded at the heads, giving a two-ply pawn.
   or on their side, whichever takes fewer pages.
 - R4.6 Each sheet has a cut style: shared cut lines (strips edge to edge, so one cut separates two pawns) or
   gaps (each strip outlined separately, with an adjustable gap). The fold line can be shown or hidden.
-- R4.7 Paper size and margins come from File ▸ Page Setup… and are saved with the sheet.
+- R4.7 Paper size and margins come from File ▸ Page Setup… and are saved with the sheet, with the printer and
+  paper chosen, so the sheet's next Page Setup and print start on them (a printer's own paper, such as a borderless
+  size, included). A new sheet on the Mac starts on the page setup last confirmed in any sheet.
 - R4.8 A pawn missing from the library shows as a placeholder rather than breaking the sheet. The placeholder
   and the sheet's list say what is missing, "Goblin Warrior, from Pathfinder Pawns: Monster Core Pawn Box", when
   the sheet was saved with the pawn in the library.
