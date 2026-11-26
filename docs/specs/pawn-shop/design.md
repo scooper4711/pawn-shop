@@ -426,11 +426,14 @@ only says which container is its folder and makes sure the folder exists.
 - **The window.** SwiftUI offers no way to open a new document with given contents from outside a view, so
   `IncomingSheets` parks a `PawnSheetDocument` and asks `NSDocumentController` for an untitled document;
   `DocumentGroup`'s `newDocument` closure takes what is parked, or makes an empty sheet for File › New. The document
-  is then marked as changed. Its title travels in `PawnSheetDocument.requestedTitle`, which is never saved: the
-  window shows it through `navigationTitle` while the sheet has no file (setting the `NSDocument`'s `displayName`
-  alone left the window saying "Untitled"), and `displayName` offers it as the file's name in the save panel.
+  is then marked as changed. Its title travels in `PawnSheetDocument.requestedTitle`, which is never saved. While
+  the sheet has no file, `DocumentNamer`, an `NSView` behind the sheet's window, sets the `NSDocument`'s
+  `displayName`, which the save panel offers as the file's name, and asks the window controller to show it. It
+  works from the window because a document opened as the app starts has no window yet when it is made: a name set
+  then stayed out of the title bar, and `navigationTitle` does nothing in a document window. After the app is
+  quit and opened again an unsaved sheet says "Untitled": the title isn't kept.
 - **Tried by hand** on a copy of the app with its own bundle ID and an empty library (2026-11-26): a link opens
-  exactly one window, from a cold start and with the app running.
+  exactly one window with its title, from a cold start and with the app running.
 
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds

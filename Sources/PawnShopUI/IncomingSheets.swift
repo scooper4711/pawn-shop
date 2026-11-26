@@ -1,6 +1,7 @@
 #if os(macOS)
 import AppKit
 import PawnShopCore
+import SwiftUI
 import TablesideShared
 
 /// Opens the sheets other Tableside Toolkit apps ask for with a `pawnshop://sheet` link (R13). SwiftUI can't open
@@ -37,12 +38,54 @@ enum IncomingSheets {
         defer { _ = parked.take() }
         do {
             let document = try NSDocumentController.shared.openUntitledDocumentAndDisplay(true)
-            // The save panel offers the title as the file's name; the window shows it (`SheetWindow`).
-            if let title = sheet.requestedTitle { document.displayName = title }
-            // It holds pawns nobody saved, so closing its window asks.
+            // It holds pawns nobody saved, so closing its window asks. Its window names it (`requestedTitle`).
             document.updateChangeCount(.changeDone)
         } catch {
             library.errorMessage = "Opening the sheet from the link failed: \(error.localizedDescription)"
+        }
+    }
+}
+
+extension View {
+    /// Names an unsaved sheet after the title another app asked for (R13): its window shows the title and the save
+    /// panel offers it as the file's name. A saved sheet shows its file's name, as any other does.
+    func requestedTitle(_ title: String?) -> some View {
+        background { if let title { DocumentNamer(name: title) } }
+    }
+}
+
+/// Names the unsaved document of the window it sits in. The document is named from its window because one opened
+/// as the app starts has no window yet when it is made, and a name set then never reaches the title bar.
+private struct DocumentNamer: NSViewRepresentable {
+    let name: String
+
+    func makeNSView(context _: Context) -> NamingView { NamingView(name: name) }
+
+    func updateNSView(_ view: NamingView, context _: Context) { view.name = name }
+
+    final class NamingView: NSView {
+        var name: String
+
+        init(name: String) {
+            self.name = name
+            super.init(frame: .zero)
+        }
+
+        @available(*, unavailable)
+        required init?(coder _: NSCoder) { fatalError("DocumentNamer's view is made in code") }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            // The window gets its document after its views: name it once both are there.
+            DispatchQueue.main.async { [weak self] in self?.nameDocument() }
+        }
+
+        private func nameDocument() {
+            guard let controller = window?.windowController, let document = controller.document as? NSDocument,
+                  document.fileURL == nil else { return }
+            document.displayName = name
+            // In a window opened as the app starts, the title bar doesn't follow the document's name by itself.
+            controller.synchronizeWindowTitleWithDocumentName()
         }
     }
 }

@@ -68,15 +68,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-private extension View {
-    /// Names an unsaved sheet's window after the title another app asked for (R13); a saved sheet shows its file's
-    /// name, as any other does.
-    @ViewBuilder
-    func requestedTitle(_ title: String?) -> some View {
-        if let title { navigationTitle(title) } else { self }
-    }
-}
-
 /// The pawn bases and the privacy policy, in the Help menu.
 struct HelpLinkCommands: Commands {
     var body: some Commands {
