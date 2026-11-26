@@ -23,7 +23,7 @@ let package = Package(
         .executable(name: "PawnShopPreview", targets: ["PawnShopPreview"])
     ],
     dependencies: [
-        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.22.0")
+        .package(url: "https://github.com/scooper4711/tabletop-kit.git", from: "1.23.0")
     ],
     targets: [
         .target(name: "SheetPreviewFile"),
