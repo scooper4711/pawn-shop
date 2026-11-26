@@ -196,6 +196,9 @@ public struct Pawn: Codable, Identifiable, Hashable, Sendable {
     /// True for a custom creature's pawn (R3.5), whatever its art is drawn from. The creature library says so,
     /// so it isn't saved with the pawn.
     public internal(set) var isCustomCreature = false
+    /// True for the pawn of art pasted onto a creature that isn't a custom one, such as a bestiary creature
+    /// (R3.5a): its name is the creature's, so it isn't renamed here. Not saved with the pawn either.
+    public internal(set) var isCreatureArt = false
 
     public init(id: UUID = UUID(), name: String, size: PawnSize, art: PawnArt,
                 fingerprint: ArtFingerprint = ArtFingerprint(imageDigests: []), appearances: [Appearance] = [],

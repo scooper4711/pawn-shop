@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Sheets show their pages in Finder and in Quick Look on the Mac
 - A link to the 3D-printable pawn bases, in the Help menu on the Mac and in Settings on the iPad
+- Turnkeeper can open an encounter's or a scenario's pawns as a new sheet on the Mac
+- Art pasted onto a bestiary creature in Turnkeeper is a pawn here, under the creature's name
 
 ### Fixed
 - Image decks read by an earlier version are read again, so synced Weapons & Armor Deck items are no longer filed

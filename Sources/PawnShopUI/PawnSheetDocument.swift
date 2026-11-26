@@ -15,9 +15,12 @@ struct PawnSheetDocument: FileDocument {
     /// The pictures of the pages. A reference beside the document's value: drawing them is not an edit, so it is
     /// never undone and never marks the sheet as changed.
     let previewKeeper: SheetPreviewKeeper
+    /// What to call the sheet until it is saved, when another app asked for it (R13); never saved.
+    var requestedTitle: String?
 
-    init(sheet: PawnSheet = PawnSheet()) {
+    init(sheet: PawnSheet = PawnSheet(), requestedTitle: String? = nil) {
         self.sheet = sheet
+        self.requestedTitle = requestedTitle
         previewKeeper = SheetPreviewKeeper()
     }
 

@@ -36,6 +36,19 @@
     <true/>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 Stephen Cooper. MIT License.</string>
+    <!-- The link another Tableside Toolkit app sends to ask for a new sheet of pawns (docs/specs/pawn-shop R13),
+         which also tells that app a Pawn Shop taking the link is installed. -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>io.github.scooper4711.PawnShop.handoff</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>pawnshop</string>
+            </array>
+        </dict>
+    </array>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

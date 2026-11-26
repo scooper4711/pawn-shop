@@ -11,6 +11,10 @@ extension PawnLibrary {
             if creature.name != pawn.name { try shared.renameCustomCreature(id: pawn.id, to: pawn.name) }
             keepSettings(of: pawn)
             try saveOwnAndRefresh()
+        } else if pastedArt[pawn.id] != nil {
+            // Its name is its creature's, which only the app that knows the creature can change (R3.5a).
+            keepSettings(of: pawn)
+            try saveOwnAndRefresh()
         } else if let entry = entries[pawn.id] {
             try shared.setNote(pawn.note(printedName: entry.name), forArt: entry.id)
             unsavedNotes.remove(pawn.id)
@@ -21,7 +25,7 @@ extension PawnLibrary {
     /// Renames a pawn and saves; a blank name is ignored.
     public func rename(_ id: UUID, to name: String) throws {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, var pawn = pawn(id: id) else { return }
+        guard !trimmed.isEmpty, var pawn = pawn(id: id), !pawn.isCreatureArt else { return }
         pawn.name = trimmed
         pawn.needsName = false
         pawn.suggestedName = ""
@@ -96,7 +100,7 @@ extension PawnLibrary {
     private func change(_ id: UUID, _ edit: (inout Pawn) -> Void) {
         guard let current = pawn(id: id), let index = pawnIndexes[current.id] else { return }
         edit(&pawns[index])
-        if creatures[current.id] != nil {
+        if keepsOwnSettings(current.id) {
             keepSettings(of: pawns[index])
         } else {
             notes[current.id] = pawns[index].note(printedName: entries[current.id]?.name ?? pawns[index].name)
