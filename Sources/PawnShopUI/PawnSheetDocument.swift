@@ -18,7 +18,12 @@ struct PawnSheetDocument: FileDocument {
     /// What to call the sheet until it is saved, when another app asked for it (R13); never saved.
     var requestedTitle: String?
 
+    /// A new sheet. On the Mac it starts on the paper last confirmed in Page Setup.
     init(sheet: PawnSheet = PawnSheet(), requestedTitle: String? = nil) {
+        var sheet = sheet
+        #if os(macOS)
+        if let paper = SheetPaperDefault().startingPaper { sheet.settings.paper = paper }
+        #endif
         self.sheet = sheet
         self.requestedTitle = requestedTitle
         previewKeeper = SheetPreviewKeeper()
