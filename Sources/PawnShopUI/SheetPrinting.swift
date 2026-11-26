@@ -8,19 +8,19 @@ import PDFKit
 /// Page Setup and printing on the Mac.
 @MainActor
 enum SheetOutput {
-    /// Shows Page Setup for the sheet's paper and stores the result in the sheet.
+    /// Shows Page Setup for the sheet's paper and stores the result in the sheet, and as new sheets' paper.
     static func runPageSetup(for sheet: inout PawnSheet) {
-        let info = printInfo(for: sheet.settings.paper)
+        let info = sheet.settings.paper.printInfo()
         guard NSPageLayout().runModal(with: info) == NSApplication.ModalResponse.OK.rawValue else { return }
-        let imageable = info.imageablePageBounds
-        guard info.paperSize.width > 0, imageable.width > 0 else { return }
-        sheet.settings.paper = PaperSetup(paperSize: info.paperSize, imageableRect: imageable)
+        guard let paper = PaperSetup(pageSetup: info) else { return }
+        sheet.settings.paper = paper
+        SheetPaperDefault().confirm(info)
     }
 
     /// Prints exactly as laid out: no scaling, rotation or extra margins.
     static func print(_ data: Data, title: String, paper: PaperSetup) {
         guard let document = PDFDocument(data: data) else { return }
-        let info = printInfo(for: paper)
+        let info = paper.printInfo()
         info.topMargin = 0
         info.bottomMargin = 0
         info.leftMargin = 0
@@ -38,12 +38,6 @@ enum SheetOutput {
         } else {
             operation.run()
         }
-    }
-
-    private static func printInfo(for paper: PaperSetup) -> NSPrintInfo {
-        let info = (NSPrintInfo.shared.copy() as? NSPrintInfo) ?? NSPrintInfo()
-        info.paperSize = paper.paperSize
-        return info
     }
 }
 

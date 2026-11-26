@@ -139,7 +139,9 @@ is a view over it, so the app above it changes little.
 - `PawnSheet` (Codable, the `.pawnsheet` document): entries (pawn id, count, and `label`, tabletop-kit's
   `ArtReference`: id, name and product title, for a device without the pawn; adding a pawn again adds to its
   entry) and `SheetSettings`: cut style (`.sharedLines` or `.gaps(points)`, default gap 0.1"), show fold line,
-  and `PaperSetup` (paper size and imageable rect; Letter with ¼" margins by default).
+  and `PaperSetup` (paper size and imageable rect; Letter with ¼" margins by default; on the Mac also
+  `pageSetup`, the whole `NSPrintInfo` as tabletop-kit's `PageSetupArchive`, an optional key older versions
+  ignore, so the file's format version is unchanged).
 - A pawn prints as a strip of `w × 2(h + r)`: the front face in the lower half, the back face rotated 180° in
   the upper half, heads meeting at the fold, each above `r`, the blank room for a base (`SheetSettings.footRoom`:
   `baseRoom` when `leavesRoomForBase`, else 0; `defaultBaseRoom` is the 6 mm `slot_depth` of
@@ -252,7 +254,10 @@ is a view over it, so the app above it changes little.
   empty or not.
 - Menus: Library ▸ Import PDF… (⇧⌘I) and Import from Scrollkeeper; File ▸ Page Setup… (⇧⌘P), Export PDF… (⌘E)
   and Print… (⌘P), routed to the frontmost window through a focused scene value (`SheetActions`).
-- `SheetOutput`: Page Setup stores the chosen paper size and imageable area in the sheet. Export and Print
+- `SheetOutput`: Page Setup starts from the sheet's kept page setup (`PaperSetup.printInfo()`), and stores the
+  chosen paper size, imageable area and page setup in the sheet, and in `SheetPaperDefault` (tabletop-kit's
+  `PageSetupStore`), which `PawnSheetDocument` reads for a new sheet's paper. Choosing a named paper on the iPad
+  drops the kept page setup. Export and Print
   first show `OutputOptionsView` (cut style, gap, fold line, starting from the sheet's settings, applied to
   that run only), then write the exporter's PDF or print it with zero margins, no scaling and no
   auto-rotation. The inspector shows the paper size with a Page Setup button.
