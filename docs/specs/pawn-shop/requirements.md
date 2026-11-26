@@ -345,6 +345,10 @@ each of the user's devices.
 - R12.4 A sheet's thumbnail in Files on the iPhone and iPad, and in Finder on the Mac, is its first page, and Quick
   Look shows its saved pages on each.
 - R12.5 Pictures that can't be read never stop a sheet from opening.
+- R12.6 A saved sheet says which format it is written in; a sheet saved before formats were numbered is in format 1.
+  The app checks the format before reading the rest. A sheet in a newer format than the app knows doesn't open:
+  the app says it was made by a newer Pawn Shop and to update. Keys added later are ignored and don't change the
+  format's number, which rises only for a change an older app would get wrong.
 
 ## R13 Sheets asked for by another app
 
@@ -357,5 +361,6 @@ each of the user's devices.
   with its count. Lines for the same pawn add up.
 - R13.4 A line whose pawn the library lacks, or that names none, becomes a placeholder (R4.8) that says the
   creature's name. One that names a pawn keeps its ID, so it shows the pawn once the library has it.
-- R13.5 A link whose list of pawns can't be read opens no sheet and says so. Any other link is ignored.
+- R13.5 A link whose list of pawns can't be read opens no sheet and says so, and so does a request in a newer
+  format than the app knows (tabletop-kit Tableside Shared R6.4), which says to update. Any other link is ignored.
 - R13.6 Not on the iPad or iPhone yet: nothing there registers the link.
