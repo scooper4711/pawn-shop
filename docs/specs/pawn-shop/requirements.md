@@ -337,3 +337,17 @@ each of the user's devices.
 - R12.4 A sheet's thumbnail in Files on the iPhone and iPad, and in Finder on the Mac, is its first page, and Quick
   Look shows its saved pages on each.
 - R12.5 Pictures that can't be read never stop a sheet from opening.
+
+## R13 Sheets asked for by another app
+
+- R13.1 Another Tableside Toolkit app asks for a new sheet with a link (tabletop-kit Tableside Shared R6): a title
+  and, in order, the pawns to print, each by its creature's name, how many, and the pawn's ID when the sender knows
+  it. Turnkeeper sends one for an encounter or a scenario.
+- R13.2 On the Mac the link opens a new, unsaved sheet holding those pawns, named after the title, whether or not
+  Pawn Shop was running. Closing it asks whether to save, like any sheet with pawns on it.
+- R13.3 A line whose pawn the library has, under its own ID, a print's key or an old ID (R2.14), goes on the sheet
+  with its count. Lines for the same pawn add up.
+- R13.4 A line whose pawn the library lacks, or that names none, becomes a placeholder (R4.8) that says the
+  creature's name. One that names a pawn keeps its ID, so it shows the pawn once the library has it.
+- R13.5 A link whose list of pawns can't be read opens no sheet and says so. Any other link is ignored.
+- R13.6 Not on the iPad or iPhone yet: nothing there registers the link.

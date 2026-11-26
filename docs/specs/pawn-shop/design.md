@@ -416,6 +416,18 @@ only says which container is its folder and makes sure the folder exists.
 - **The type.** `io.github.scooper4711.pawnsheet` conforms to `public.data` and `public.content`, no longer to
   `public.json`, so the system never shows a sheet as text.
 
+## Sheets asked for by another app (R13)
+
+- **The link.** The Mac's `Resources/Info.plist` registers the `pawnshop` scheme; the iPad's doesn't. The app
+  delegate's `application(_:open:)` passes links of that scheme to `IncomingSheets` (`PawnShopUI`, Mac only).
+- **The sheet.** `PawnSheet(request:pawn:)` (`PawnShopCore/Sheet/RequestedSheet.swift`) takes a `PawnSheetRequest`
+  and a lookup, which the app gives as `PawnLibrary.pawn(id:)`: a pawn found is added under its own ID, and any
+  other line becomes an entry labeled with the creature's name (`SheetEntry.label`), under the ID sent or a new one.
+- **The window.** SwiftUI offers no way to open a new document with given contents from outside a view, so
+  `IncomingSheets` parks the sheet and asks `NSDocumentController` for an untitled document; `DocumentGroup`'s
+  `newDocument` closure takes the parked sheet, or an empty one for File › New. The document is then named after
+  the request's title and marked as changed.
+
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
 `Resources/AppIcon.icns`: a cream pawn with Paizo's rounded top and red cut line, standing in a black base on
