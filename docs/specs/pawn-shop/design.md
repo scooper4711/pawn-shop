@@ -398,6 +398,13 @@ only says which container is its folder and makes sure the folder exists.
 - **The file.** `SheetFile` (`PawnShopCore/Sheet`) writes the sheet's keys and, beside them, `previewPages`: one
   JPEG per page (`SheetPreviews`, in the `SheetPreviewFile` target, which depends on nothing else so the extensions
   stay small). Older versions ignore the key; pictures that can't be read never stop a sheet opening.
+- **The format's number (R12.6).** `SheetFile` also writes `formatVersion` (`currentFormatVersion`, 1) beside the
+  sheet's keys, and reads it first with a small decoder of its own: a newer number throws
+  `SheetFileError.newerFormat` before the entries are looked at, and the document group shows its message. The
+  number lives in the file, not in `PawnSheet`, so it is no part of the sheet's value, its undo steps or what is
+  dragged. It was added before the app reached the App Store, because an app that is already installed can't be
+  taught to check. The PDF reader's version isn't in the file yet: an older app loses nothing by ignoring it, so it
+  can come with the handoff from the iPad (#104).
 - **Drawing.** `PawnSheetDocument` holds a `SheetPreviewKeeper`, a reference beside its value, so pictures are never
   part of an undo step and never mark the sheet as changed. After each change `SheetPreviewPlanner` gives it a plan:
   per page, a key that changes with the page's look and a way to draw it (`BackgroundRenderer.previewJPEG`), or no

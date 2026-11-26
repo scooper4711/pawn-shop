@@ -337,3 +337,7 @@ each of the user's devices.
 - R12.4 A sheet's thumbnail in Files on the iPhone and iPad, and in Finder on the Mac, is its first page, and Quick
   Look shows its saved pages on each.
 - R12.5 Pictures that can't be read never stop a sheet from opening.
+- R12.6 A saved sheet says which format it is written in; a sheet saved before formats were numbered is in format 1.
+  The app checks the format before reading the rest. A sheet in a newer format than the app knows doesn't open:
+  the app says it was made by a newer Pawn Shop and to update. Keys added later are ignored and don't change the
+  format's number, which rises only for a change an older app would get wrong.
