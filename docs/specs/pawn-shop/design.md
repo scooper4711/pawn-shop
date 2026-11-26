@@ -39,6 +39,12 @@ is a view over it, so the app above it changes little.
   defaults. `refresh()` reads the creatures and art changed since the last reading and the choices, when the
   store says any of the three tables changed, and a creature it lists as deleted loses its settings and its place
   in `hidden`. Custom pawns come after the pawns read from PDFs, by name, then ID.
+- **Pasted art of other creatures** (`CreaturePawns.swift`, R3.5a). Reading the creature library also keeps
+  `artLabels` (each custom art's `ArtSubjectLabel`, read from its record) and `pastedArt` (the art chosen for each
+  subject that isn't `custom.`, by `SharedLibrary.pawnID(forSubject:)`). `pastedArtPawns()` makes a pawn of each
+  that has a label and a file and isn't hidden, flagged `isCreatureArt`, which turns Rename off. Its settings are
+  kept like a custom pawn's (`keepsOwnSettings`), under the creature's pawn ID, so they survive the art being
+  replaced and sync with the others (R10.2).
 - **Sources.** `PawnSource` from `SharedSource`: id, title, byte count, art found and reader version; the
   original path is the PDF's location for Pawn Shop when it has one. Only sources with pawns or items are listed.
 - **Writing.** `rename`, `correctTags`, `setTags` and `setSuggestedName` write the pawn's note

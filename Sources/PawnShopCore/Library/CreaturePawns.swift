@@ -34,6 +34,7 @@ extension PawnLibrary {
     func readCreatures() throws {
         creatures = [:]
         customArtFiles = [:]
+        artLabels = [:]
         try readCreatures(changedSince: 0)
     }
 
@@ -44,15 +45,19 @@ extension PawnLibrary {
         let hasDeletions = tables.contains { changes.deletions[$0] != nil }
         guard hasDeletions || !changes.changedTables.isDisjoint(with: tables) else { return }
         try readCreatures(changedSince: counter)
-        for id in Self.ids(changes.deletions[.customArt]) { customArtFiles[id] = nil }
+        for id in Self.ids(changes.deletions[.customArt]) {
+            customArtFiles[id] = nil
+            artLabels[id] = nil
+        }
         let deleted = Self.ids(changes.deletions[.customCreatures])
         deleted.forEach { creatures[$0] = nil }
         if forgetCustomPawns(Set(deleted)) { try own.save(to: folder) }
     }
 
-    /// The custom creatures' pawns, by name, then ID: each creature with art that isn't hidden here.
+    /// The pawns of creatures' own art, by name, then ID: each custom creature with art, and each image pasted
+    /// onto another creature that says which (R3.5a), unless hidden here.
     func creaturePawns(reachable: Set<String>) -> [Pawn] {
-        creatureArt.compactMap { id, choice -> Pawn? in
+        let custom = creatureArt.compactMap { id, choice -> Pawn? in
             guard let creature = creatures[id], !own.hidden.contains(id),
                   var pawn = drawnPawn(choice, reachable: reachable) else { return nil }
             pawn.id = id
@@ -60,14 +65,41 @@ extension PawnLibrary {
             pawn.size = creature.size?.pawnSize ?? .medium
             pawn.needsName = false
             pawn.isCustomCreature = true
-            let settings = settings(ofCustomPawn: id)
-            pawn.tags = settings.tags
-            pawn.tagModel = settings.tagModel
-            pawn.tagsCorrected = settings.tagsCorrected
-            if case .custom(let art) = pawn.art { pawn.art = .custom(settings.art(imageFile: art.imageFile)) }
-            return pawn
+            return withOwnSettings(pawn)
         }
-        .sorted(by: Self.isOrdered)
+        return (custom + pastedArtPawns()).sorted(by: Self.isOrdered)
+    }
+
+    /// The pawns of images pasted onto creatures that aren't custom ones, such as the bestiary's, in Turnkeeper
+    /// or Field Guide: each under the name and size its record gives, and the creature's pawn ID. An image that
+    /// names no creature has no pawn, since Pawn Shop has no bestiary to look the creature up in.
+    private func pastedArtPawns() -> [Pawn] {
+        pastedArt.compactMap { id, artID -> Pawn? in
+            guard let label = artLabels[artID], let file = customArtFiles[artID], !own.hidden.contains(id) else {
+                return nil
+            }
+            var pawn = Pawn(id: id, name: label.subjectName, size: label.subjectSize?.pawnSize ?? .medium,
+                            art: .custom(CustomArt(imageFile: file)))
+            pawn.isCreatureArt = true
+            return withOwnSettings(pawn)
+        }
+    }
+
+    /// The pawn with what Pawn Shop keeps about it: its tags and how its image sits on it.
+    private func withOwnSettings(_ pawn: Pawn) -> Pawn {
+        var pawn = pawn
+        let settings = settings(ofCustomPawn: pawn.id)
+        pawn.tags = settings.tags
+        pawn.tagModel = settings.tagModel
+        pawn.tagsCorrected = settings.tagsCorrected
+        if case .custom(let art) = pawn.art { pawn.art = .custom(settings.art(imageFile: art.imageFile)) }
+        return pawn
+    }
+
+    /// True for a pawn whose tags and placement are Pawn Shop's own settings: a custom creature's, and one of
+    /// art pasted onto another creature.
+    func keepsOwnSettings(_ id: UUID) -> Bool {
+        creatures[id] != nil || pastedArt[id] != nil
     }
 
     /// What Pawn Shop keeps about a custom pawn, or the defaults.
@@ -95,11 +127,19 @@ extension PawnLibrary {
         for creature in try shared.customCreatures(changedSince: counter) {
             creatures[creature.id] = CustomCreature(creature)
         }
-        for art in try shared.customArt(changedSince: counter) { customArtFiles[art.id] = art.fileName }
+        for art in try shared.customArt(changedSince: counter) {
+            customArtFiles[art.id] = art.fileName
+            artLabels[art.id] = art.subjectLabel
+        }
         creatureArt = [:]
-        for (subject, choice) in try shared.creatureArt() where subject.hasPrefix(Self.customSubjectPrefix) {
-            guard let id = UUID(uuidString: String(subject.dropFirst(Self.customSubjectPrefix.count))) else { continue }
-            creatureArt[id] = choice
+        pastedArt = [:]
+        for (subject, choice) in try shared.creatureArt() {
+            if subject.hasPrefix(Self.customSubjectPrefix) {
+                let id = UUID(uuidString: String(subject.dropFirst(Self.customSubjectPrefix.count)))
+                if let id { creatureArt[id] = choice }
+            } else if case .custom(let artID) = choice {
+                pastedArt[SharedLibrary.pawnID(forSubject: subject)] = artID
+            }
         }
     }
 

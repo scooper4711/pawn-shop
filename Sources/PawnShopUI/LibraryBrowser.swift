@@ -155,6 +155,7 @@ struct LibraryBrowser: View {
         }
         Divider()
         Button("Rename…") { renaming = pawn }
+            .disabled(pawn.isCreatureArt)
         Button("Edit Keywords…") { editingKeywords = pawn }
         Button("Remove from Library", role: .destructive) {
             let ids = selection.contains(pawn.id) ? selection : [pawn.id]

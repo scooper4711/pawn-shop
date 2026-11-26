@@ -43,6 +43,10 @@ public final class PawnLibrary {
     var creatures: [UUID: CustomCreature] = [:]
     var customArtFiles: [UUID: String] = [:]
     var creatureArt: [UUID: CreatureArtChoice] = [:]
+    /// The creature each image shows, where its record says (shared libraries R4.11), and the image pasted onto
+    /// each creature that isn't a custom one, by the creature's pawn ID (R3.5a).
+    var artLabels: [UUID: ArtSubjectLabel] = [:]
+    var pastedArt: [UUID: UUID] = [:]
     /// The shared library's art, notes and sources as last read, and its change counter then.
     var entries: [UUID: SharedArtEntry] = [:]
     var notes: [UUID: ArtNote] = [:]

@@ -155,7 +155,13 @@ is cut out and folded at the heads, giving a two-ply pawn.
 - R3.5 Every custom creature with art is a pawn here, with the creature's name and its size's pawn (Medium for
   a creature without one of the six sizes), whichever app made it; one without art is left out. Art given to a
   creature in Turnkeeper shows here within a second, drawn from the image the user added, or as the pawn of the
-  art chosen for it from the library is. Pasted art on a creature from a bestiary is not a pawn.
+  art chosen for it from the library is.
+- R3.5a Art pasted onto a creature that isn't a custom one, such as a bestiary creature in Turnkeeper or Field
+  Guide, is a pawn here when it carries the creature's name (shared libraries R4.11): under that name, its size's
+  pawn (Medium without one of the six sizes) and the creature's pawn ID (R4.12), so replacing the art keeps the
+  pawn on its sheets. Art that carries no name is not a pawn: Pawn Shop has no bestiary to look the creature up
+  in. Its placement, scaling, printed name and tags are Pawn Shop's own, as a custom pawn's are (R3.6). Its name is
+  the creature's and can't be changed here. Removing it hides it in Pawn Shop only (R2.5), without a question.
 - R3.6 Renaming a custom pawn renames its creature in every app, and a rename made in Turnkeeper shows here. The
   image's placement and scaling, whether the name is printed, and the tags are Pawn Shop's own (shared libraries
   R4.8); a creature made in Turnkeeper starts filled, centered and with its name printed. Changing the size after

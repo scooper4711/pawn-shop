@@ -34,6 +34,7 @@ struct PawnPreview: View {
                         Text(pawn.tags.joined(separator: ", ")).font(.callout).foregroundStyle(.secondary)
                     }
                     Button("Rename…") { renaming = true }
+                        .disabled(pawn.isCreatureArt)
                         .controlSize(.small)
                     Button("Edit Keywords…") { editingKeywords = true }
                         .controlSize(.small)
