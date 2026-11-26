@@ -35,10 +35,16 @@ cp "$WORK"/AppIcon.iconset/*.png "$iconset/"
 write_icon_set "$iconset"
 echo '{"info":{"version":1,"author":"xcode"}}' > "$catalog/Contents.json"
 target="$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$INFO")"
+# Compiled into a folder of its own: beside the catalog, actool writes an AppIcon.icns with fewer sizes, which must
+# not replace the app's. The App Store package compiles its catalog from the app's file, and App Store Connect
+# refuses a package whose catalog lacks the 512pt @2x icon (ITMS-90236).
+compiled="$WORK/compiled"
+mkdir -p "$compiled"
 # actool exits 0 when it fails, so look for what it should have written.
-xcrun actool "$catalog" --compile "$RESOURCES" --platform macosx --minimum-deployment-target "$target" \
+xcrun actool "$catalog" --compile "$compiled" --platform macosx --minimum-deployment-target "$target" \
     --app-icon AppIcon --output-partial-info-plist "$WORK/partial.plist" > "$WORK/actool.log" 2>&1 || true
-[[ -f "$RESOURCES/Assets.car" ]] || { cat "$WORK/actool.log" >&2; fail "actool didn't compile the icon"; }
+[[ -f "$compiled/Assets.car" ]] || { cat "$WORK/actool.log" >&2; fail "actool didn't compile the icon"; }
+cp "$compiled/Assets.car" "$RESOURCES/Assets.car"
 name="$(/usr/libexec/PlistBuddy -c "Print :CFBundleIconName" "$WORK/partial.plist" 2>/dev/null)" \
     || fail "actool didn't name the icon"
 /usr/libexec/PlistBuddy -c "Delete :CFBundleIconName" "$INFO" 2>/dev/null || true
