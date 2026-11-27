@@ -349,6 +349,13 @@ each of the user's devices.
   The app checks the format before reading the rest. A sheet in a newer format than the app knows doesn't open:
   the app says it was made by a newer Pawn Shop and to update. Keys added later are ignored and don't change the
   format's number, which rises only for a change an older app would get wrong.
+  - Format 2 lets a sheet leave its settings out, as a sheet another app made does (R13.7); the app opens formats
+    1 and 2.
+  - The app saves format 1, since a sheet it saves holds its settings: apps that only know format 1 keep opening
+    it.
+- R12.7 A saved sheet says which version of the PDF reader made the library its pawns come from. A sheet from a
+  newer reader than the app's may name pawns the app doesn't find; where it lacks one, the sheet's list says the
+  sheet was made with a newer Pawn Shop and to update.
 
 ## R13 Sheets asked for by another app
 
@@ -363,4 +370,8 @@ each of the user's devices.
   creature's name. One that names a pawn keeps its ID, so it shows the pawn once the library has it.
 - R13.5 A link whose list of pawns can't be read opens no sheet and says so, and so does a request in a newer
   format than the app knows (tabletop-kit Tableside Shared R6.4), which says to update. Any other link is ignored.
-- R13.6 Not on the iPad or iPhone yet: nothing there registers the link.
+- R13.6 The iPad and iPhone take no link: an app can't open a document from code there.
+- R13.7 On the iPad and iPhone the other app shares the request as a sheet file (tabletop-kit Tableside Shared
+  R6.5), and choosing Pawn Shop opens it as a sheet named after the file, with the pawns and placeholders of R13.3
+  and R13.4. The file holds no settings: the sheet gets those of a new one. It is a sheet file like any other, so
+  it also opens on the Mac and on another person's device, where it shows the pawns that library has.

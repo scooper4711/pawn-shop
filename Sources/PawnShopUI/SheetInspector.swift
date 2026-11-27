@@ -6,16 +6,22 @@ struct SheetInspector: View {
     @Binding var sheet: PawnSheet
     @Binding var selectedEntry: UUID?
     let pageCount: Int
+    /// True when the sheet's file came from a newer reader than this app's (R12.7).
+    var isFromNewerReader = false
     @Environment(LibraryModel.self) private var library
 
     var body: some View {
         VStack(spacing: 0) {
             List(selection: $selectedEntry) {
-                Section("Pawns and Items") {
+                Section {
                     ForEach($sheet.entries) { $entry in
                         SheetEntryRow(entry: $entry) { sheet.remove(entry.id) }
                             .tag(entry.id)
                     }
+                } header: {
+                    Text("Pawns and Items")
+                } footer: {
+                    if isFromNewerReader, lacksAPawn { Text(SheetFile.newerReaderNotice) }
                 }
             }
             Divider()
@@ -33,6 +39,11 @@ struct SheetInspector: View {
                 .foregroundStyle(.secondary)
                 .padding(8)
         }
+    }
+
+    /// True when the library has no pawn for one of the sheet's entries.
+    private var lacksAPawn: Bool {
+        sheet.entries.contains { entry in entry.pawnID.map { library.pawn(id: $0) == nil } ?? false }
     }
 
     private var paperDescription: String {

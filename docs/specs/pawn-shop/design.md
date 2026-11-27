@@ -409,13 +409,21 @@ only says which container is its folder and makes sure the folder exists.
 - **The file.** `SheetFile` (`PawnShopCore/Sheet`) writes the sheet's keys and, beside them, `previewPages`: one
   JPEG per page (`SheetPreviews`, in the `SheetPreviewFile` target, which depends on nothing else so the extensions
   stay small). Older versions ignore the key; pictures that can't be read never stop a sheet opening.
-- **The format's number (R12.6).** `SheetFile` also writes `formatVersion` (`currentFormatVersion`, 1) beside the
-  sheet's keys, and reads it first with a small decoder of its own: a newer number throws
+- **The format's number (R12.6).** `SheetFile` writes `formatVersion` beside the sheet's keys, and reads it first
+  with a small decoder of its own (`SheetFileHeader`): a number above `currentFormatVersion` (2) throws
   `SheetFileError.newerFormat` before the entries are looked at, and the document group shows its message. The
   number lives in the file, not in `PawnSheet`, so it is no part of the sheet's value, its undo steps or what is
   dragged. It was added before the app reached the App Store, because an app that is already installed can't be
-  taught to check. The PDF reader's version isn't in the file yet: an older app loses nothing by ignoring it, so it
-  can come with the handoff from the iPad (#104).
+  taught to check.
+  - Format 2 came with the sheets Turnkeeper shares (R13.7), which leave `settings` out: `PawnSheet` decodes a
+    missing `settings` as a new sheet's, and the header's `hasSettings` tells `PawnSheetDocument` to put the sheet
+    on the paper a new one starts on.
+  - The app writes `savedFormatVersion` (1), not the newest it reads: its files hold their settings, so nothing in
+    them asks for more than format 1.
+- **The reader's version (R12.7).** `SheetFile` writes `readerVersion` (`PawnExtractor.version`) and keeps what a
+  file says; `isFromNewerReader` compares it with the app's. The document carries that flag, unsaved, to
+  `SheetInspector`, which shows `SheetFile.newerReaderNotice` under the list when the library lacks one of the
+  sheet's pawns. Image decks have a version of their own, which the file doesn't carry: pawns come from PDFs.
 - **Drawing.** `PawnSheetDocument` holds a `SheetPreviewKeeper`, a reference beside its value, so pictures are never
   part of an undo step and never mark the sheet as changed. After each change `SheetPreviewPlanner` gives it a plan:
   per page, a key that changes with the page's look and a way to draw it (`BackgroundRenderer.previewJPEG`), or no
@@ -452,6 +460,14 @@ only says which container is its folder and makes sure the folder exists.
   quit and opened again an unsaved sheet says "Untitled": the title isn't kept.
 - **Tried by hand** on a copy of the app with its own bundle ID and an empty library (2026-11-26): a link opens
   exactly one window with its title, from a cold start and with the app running.
+- **The file (R13.7).** On the iPad and iPhone nothing in Pawn Shop is special to the handoff: the app already owns
+  `io.github.scooper4711.pawnsheet` and opens documents in place (`ios/Info.plist`), so the system offers it for
+  the file Turnkeeper shares and the document group opens it. The system puts a shared file in the app's
+  `Documents/Inbox`, where the sheet stays and is listed with the others. Tried on 2026-11-27 in an iPad
+  simulator with both apps: Share Pawn Sheet in Turnkeeper, then Pawn Shop in the share sheet, brought Pawn Shop
+  forward with a sheet named after the file and named placeholders in an empty library (Turnkeeper's
+  `PawnSheetUITests`). What the kit writes and what `SheetFile` reads are held together by
+  `SheetFileTests.opensTheSheetFileTurnkeeperShares`.
 
 ## Icon
 `scripts/make-icon.swift` draws the icon with CoreGraphics and `make-icon.sh` builds
