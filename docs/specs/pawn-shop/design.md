@@ -464,8 +464,9 @@ only says which container is its folder and makes sure the folder exists.
   `io.github.scooper4711.pawnsheet` and opens documents in place (`ios/Info.plist`), so the system offers it for
   the file Turnkeeper shares and the document group opens it. The system puts a shared file in the app's
   `Documents/Inbox`, where the sheet stays and is listed with the others. Tried on 2026-11-27 in an iPad
-  simulator: a file put there and opened by its URL came up as a sheet named after the file, with named
-  placeholders in an empty library. What the kit writes and what `SheetFile` reads are held together by
+  simulator with both apps: Share Pawn Sheet in Turnkeeper, then Pawn Shop in the share sheet, brought Pawn Shop
+  forward with a sheet named after the file and named placeholders in an empty library (Turnkeeper's
+  `PawnSheetUITests`). What the kit writes and what `SheetFile` reads are held together by
   `SheetFileTests.opensTheSheetFileTurnkeeperShares`.
 
 ## Icon
