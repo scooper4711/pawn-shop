@@ -18,13 +18,13 @@ struct PawnSheetDocument: FileDocument {
     /// What to call the sheet until it is saved, when another app asked for it (R13); never saved.
     var requestedTitle: String?
 
+    /// True when the file came from a newer reader than this app's, so some of its pawns may not be found (R12.7);
+    /// never saved.
+    var isFromNewerReader = false
+
     /// A new sheet. On the Mac it starts on the paper last confirmed in Page Setup.
     init(sheet: PawnSheet = PawnSheet(), requestedTitle: String? = nil) {
-        var sheet = sheet
-        #if os(macOS)
-        if let paper = SheetPaperDefault().startingPaper { sheet.settings.paper = paper }
-        #endif
-        self.sheet = sheet
+        self.sheet = Self.onStartingPaper(sheet)
         self.requestedTitle = requestedTitle
         previewKeeper = SheetPreviewKeeper()
     }
@@ -34,8 +34,19 @@ struct PawnSheetDocument: FileDocument {
             throw CocoaError(.fileReadCorruptFile)
         }
         let file = try SheetFile(data: data)
-        sheet = file.sheet
+        // A sheet another app made brings no settings (R13.7): it starts as a new sheet does.
+        sheet = file.hasSettings ? file.sheet : Self.onStartingPaper(file.sheet)
+        isFromNewerReader = file.isFromNewerReader
         previewKeeper = SheetPreviewKeeper(previews: file.previews)
+    }
+
+    /// The sheet on the paper a new sheet starts on: on the Mac, the one last confirmed in Page Setup.
+    private static func onStartingPaper(_ sheet: PawnSheet) -> PawnSheet {
+        var sheet = sheet
+        #if os(macOS)
+        if let paper = SheetPaperDefault().startingPaper { sheet.settings.paper = paper }
+        #endif
+        return sheet
     }
 
     func fileWrapper(configuration _: WriteConfiguration) throws -> FileWrapper {

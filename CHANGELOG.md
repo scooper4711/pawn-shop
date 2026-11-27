@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A sheet made by a newer Pawn Shop than yours now says so when it can't be opened, instead of failing oddly
 - Turnkeeper can open an encounter's or a scenario's pawns as a new sheet on the Mac
 - Art pasted onto a bestiary creature in Turnkeeper is a pawn here, under the creature's name
+- On the iPad and iPhone, a pawn sheet shared from Turnkeeper opens as a sheet, on your usual paper
+- A sheet from a newer Pawn Shop says to update when some of its pawns can't be found
 
 ### Fixed
 - Image decks read by an earlier version are read again, so synced Weapons & Armor Deck items are no longer filed

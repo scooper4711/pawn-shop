@@ -156,6 +156,15 @@ public struct PawnSheet: Codable, Hashable, Sendable {
         self.settings = settings
     }
 
+    private enum CodingKeys: String, CodingKey { case entries, settings }
+
+    /// A sheet another app made leaves its settings out (R12.6, format 2): it gets those of a new sheet.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        entries = try container.decode([SheetEntry].self, forKey: .entries)
+        settings = try container.decodeIfPresent(SheetSettings.self, forKey: .settings) ?? SheetSettings()
+    }
+
     public var copyCount: Int { entries.reduce(0) { $0 + $1.count } }
 
     /// Adds copies of a pawn, to its existing entry when it has one.

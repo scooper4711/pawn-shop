@@ -178,7 +178,8 @@ struct SheetWindow: View {
     }
 
     private var inspector: some View {
-        SheetInspector(sheet: $document.sheet, selectedEntry: $selectedEntry, pageCount: pageCount)
+        SheetInspector(sheet: $document.sheet, selectedEntry: $selectedEntry, pageCount: pageCount,
+                       isFromNewerReader: document.isFromNewerReader)
     }
 
     private var printButton: some View {
