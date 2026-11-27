@@ -59,8 +59,34 @@ jobs:
       - name: Build the app bundle
         run: scripts/build-app.sh
 
+      # The iPad app bundles the imported items in Generated/, which git ignores. Importing reads the pf2e release and
+      # the Artwork submodule (fetched above) and takes minutes, so the CI Mac keeps each import, by what decides it,
+      # in the runner user's home: not in GitHub's cache, which pull requests from forks could read. Forks' pull
+      # requests (on GitHub's machines, without the Artwork key) skip the UI tests.
+      - name: Restore the import
+        id: generated
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        env:
+          KEY: ${{ hashFiles('pf2e.release', 'import.sha256', 'scripts/import*.sh') }}
+        run: |
+          dir="$HOME/.ci-cache/${{ github.event.repository.name }}/generated-$KEY-$(git ls-tree HEAD Artwork | awk '{print $3}')"
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          if [ -d "$dir" ]; then
+            rm -rf Generated && cp -Rc "$dir" Generated && echo "hit=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Keeps this import, and drops older ones.
+      - name: Import the items
+        if: ${{ !github.event.pull_request.head.repo.fork && steps.generated.outputs.hit != 'true' }}
+        env:
+          DIR: ${{ steps.generated.outputs.dir }}
+        run: |
+          REXARD_PACKS=Artwork/rexard scripts/import-items.sh
+          rm -rf "$(dirname "$DIR")" && mkdir -p "$(dirname "$DIR")" && cp -Rc Generated "$DIR"
+
       # Builds the iPad app and runs its UI tests, in a Simulator the CI Mac keeps booted (see the script).
       - name: Run the iPad UI tests
+        if: ${{ !github.event.pull_request.head.repo.fork }}
         run: scripts/run-ipad-uitests.sh
 
       - name: Keep the UI test results
